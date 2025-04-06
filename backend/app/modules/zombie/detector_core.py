@@ -145,7 +145,9 @@ class ZombieDetector:
                     sys.path.append(
                         str(Path(__file__).parent.parent.parent.parent.parent)
                     )
-                    from ml.train import ZombieClassifier
+                    from backend.app.modules.zombie.ml.infer_zombie_classifier import (
+                        ZombieClassifier,
+                    )
 
                     logger.info("ZombieClassifierをインポートしました")
 
