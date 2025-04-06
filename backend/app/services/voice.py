@@ -90,7 +90,7 @@ _playback_state = VoicePlaybackState()
 class VoiceService:
     """音声合成・再生サービス"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初期化"""
         self.settings = get_settings()
         self.voice_lock = _playback_state.voice_lock

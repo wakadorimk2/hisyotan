@@ -1,18 +1,35 @@
 import os
 import random
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
 from PIL import Image
+from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 from torchvision import models, transforms
+from torchvision.transforms import Compose
+
+# 型チェックの設定
+# mypy: ignore-missing-imports
+# mypy: disallow-untyped-defs = False
+# mypy: disallow-incomplete-defs = False
+# mypy: allow-untyped-calls = True
+# mypy: allow-untyped-defs = True
+# mypy: allow-subclassing-any = True
 
 
-class ZombieDataset(Dataset):
-    def __init__(self, root_dir, transform=None, train=True, valid_split=0.2):
+class ZombieDataset(Dataset[Tuple[Tensor, int]]):
+    def __init__(
+        self,
+        root_dir: Union[str, Path],
+        transform: Optional[Compose] = None,
+        train: bool = True,
+        valid_split: float = 0.2,
+    ) -> None:
         """ゾンビ分類用のデータセット
 
         Args:
@@ -31,7 +48,7 @@ class ZombieDataset(Dataset):
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
 
         # 画像パスとラベルのリストを作成
-        self.images = []
+        self.images: List[Tuple[Path, int]] = []
         for cls in self.classes:
             class_dir = self.root_dir / cls
             for img_path in class_dir.glob("*.png"):
@@ -47,21 +64,29 @@ class ZombieDataset(Dataset):
         else:
             self.images = self.images[split_idx:]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.images)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Tuple[Tensor, int]:
         img_path, label = self.images[idx]
         image = Image.open(img_path).convert("RGB")
 
         if self.transform:
             image = self.transform(image)
+        else:
+            # デフォルトの変換を適用
+            image = transforms.ToTensor()(image)
 
-        return image, label
+        # 型アサーションを使用してTensor型であることを保証
+        return cast(Tensor, image), label
 
 
 class ZombieClassifier:
-    def __init__(self, data_path="../data/datasets/zombie_classifier", device=None):
+    def __init__(
+        self,
+        data_path: Union[str, Path] = "../data/datasets/zombie_classifier",
+        device: Optional[torch.device] = None,
+    ) -> None:
         """ゾンビ分類器の初期化
 
         Args:
@@ -82,7 +107,7 @@ class ZombieClassifier:
         model_file = self.model_path / "zombie_classifier.pth"
         print(f"モデルファイル: {model_file} (存在: {model_file.exists()})")
 
-        self.model = None
+        self.model: Optional[nn.Module] = None
         self.classes = ["not_zombie", "zombie"]  # クラスラベル
 
         # GPUが利用可能かチェック (明示的に指定されたデバイスを優先)
@@ -113,7 +138,9 @@ class ZombieClassifier:
             ]
         )
 
-    def prepare_data(self, batch_size=8):
+    def prepare_data(
+        self, batch_size: int = 8
+    ) -> Tuple[DataLoader[Any], DataLoader[Any]]:
         """データの準備とDataLoaderの作成
 
         Args:
@@ -160,7 +187,9 @@ class ZombieClassifier:
 
         return self.train_loader, self.valid_loader
 
-    def train(self, epochs=10, lr=1e-4):
+    def train(
+        self, epochs: int = 10, lr: float = 1e-4
+    ) -> Tuple[nn.Module, Dict[str, List[float]]]:
         """モデルの学習
 
         Args:
@@ -169,6 +198,9 @@ class ZombieClassifier:
         """
         # ResNet18モデルの作成
         self.model = models.resnet18(weights="IMAGENET1K_V1")
+
+        if self.model is None:
+            raise RuntimeError("モデルの初期化に失敗しました")
 
         # 最終層を置き換え
         num_ftrs = self.model.fc.in_features
@@ -187,17 +219,22 @@ class ZombieClassifier:
         )
 
         # 学習履歴
-        history = {"train_loss": [], "train_acc": [], "valid_loss": [], "valid_acc": []}
-        best_valid_acc = 0
+        history: Dict[str, List[float]] = {
+            "train_loss": [],
+            "train_acc": [],
+            "valid_loss": [],
+            "valid_acc": [],
+        }
+        best_valid_acc: float = 0.0
 
         # 学習ループ
         print(f"開始: {epochs}エポックの学習を開始します...")
         for epoch in range(epochs):
             # 訓練フェーズ
             self.model.train()
-            train_loss = 0
-            train_correct: float = 0
-            train_total = 0
+            train_loss: float = 0.0
+            train_correct: float = 0.0
+            train_total: int = 0
 
             for inputs, labels in self.train_loader:
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
@@ -223,9 +260,9 @@ class ZombieClassifier:
 
             # 検証フェーズ
             self.model.eval()
-            valid_loss = 0
-            valid_correct: float = 0
-            valid_total = 0
+            valid_loss: float = 0.0
+            valid_correct: float = 0.0
+            valid_total: int = 0
 
             with torch.no_grad():
                 for inputs, labels in self.valid_loader:
@@ -282,16 +319,16 @@ class ZombieClassifier:
         print(f"完了: 学習完了！最終精度: {valid_acc:.4f}")
         return self.model, history
 
-    def evaluate(self):
+    def evaluate(self) -> float:
         """モデルの評価"""
         if self.model is None:
             print("エラー: モデルが学習されていません。train()を先に実行してください。")
-            return
+            return 0.0
 
         # 混同行列のデータ収集
         self.model.eval()
-        y_true = []
-        y_pred = []
+        y_true: List[int] = []
+        y_pred: List[int] = []
 
         with torch.no_grad():
             for inputs, labels in self.valid_loader:
@@ -299,8 +336,8 @@ class ZombieClassifier:
                 outputs = self.model(inputs)
                 _, predicted = torch.max(outputs, 1)
 
-                y_true.extend(labels.cpu().numpy())
-                y_pred.extend(predicted.cpu().numpy())
+                y_true.extend(labels.cpu().numpy().tolist())
+                y_pred.extend(predicted.cpu().numpy().tolist())
 
         # 混同行列の表示
         import seaborn as sns
@@ -334,7 +371,7 @@ class ZombieClassifier:
 
         return accuracy
 
-    def predict_image(self, img_path):
+    def predict_image(self, img_path: Union[str, Path]) -> Tuple[Optional[str], float]:
         """画像の予測
 
         Args:
@@ -402,7 +439,7 @@ class ZombieClassifier:
             print(f"エラー: 画像の予測中にエラーが発生しました: {e}")
             return None, 0.0
 
-    def predict_bytes(self, img_bytes):
+    def predict_bytes(self, img_bytes: bytes) -> Tuple[Optional[str], float]:
         """バイトデータからの画像予測（ファイルI/Oを回避）
 
         Args:
@@ -496,7 +533,7 @@ class ZombieClassifier:
             return None, 0.0
 
 
-def plot_training_history(history):
+def plot_training_history(history: Dict[str, List[float]]) -> None:
     """学習履歴をプロット"""
     plt.figure(figsize=(12, 4))
 
@@ -522,7 +559,7 @@ def plot_training_history(history):
     plt.savefig("training_history.png")
 
 
-def main():
+def main() -> None:
     """メイン処理：データセットの学習と評価"""
     # GPUの状態を確認
     print(f"CUDA利用可能: {torch.cuda.is_available()}")
@@ -538,7 +575,7 @@ def main():
     train_loader, valid_loader = classifier.prepare_data(batch_size=8)
 
     # データサンプルの表示（オプション）
-    def show_batch(loader):
+    def show_batch(loader: DataLoader[Any]) -> None:
         images, labels = next(iter(loader))
         plt.figure(figsize=(10, 8))
         grid = np.zeros((4 * 224, 4 * 224, 3))

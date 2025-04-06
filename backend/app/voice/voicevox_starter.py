@@ -9,7 +9,7 @@ import subprocess
 import threading
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import requests
 
@@ -17,7 +17,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 # VOICEVOXプロセス
-voicevox_process: Optional[subprocess.Popen] = None
+voicevox_process: Optional[subprocess.Popen[Any]] = None
 # VOICEVOXが起動しているかどうか
 voicevox_running = False
 
@@ -213,41 +213,31 @@ async def is_voicevox_ready() -> bool:
 
 
 def start_voicevox_in_thread() -> bool:
-    """
-    VOICEVOXエンジンを別スレッドで起動
+    """別スレッドでVOICEVOXを起動する"""
+    global voicevox_process, voicevox_running
 
-    Returns:
-        bool: 起動成功時はTrue
-    """
-    global _voicevox_ready
+    def run_starter() -> None:
+        """スレッドで実行する関数"""
+        try:
+            start_voicevox_engine()
+        except Exception as e:
+            logger.error(f"VOICEVOX起動スレッドでエラー: {e}")
 
-    # VOICEVOXエンジン起動時に準備完了フラグをリセット
-    _voicevox_ready = False
+    # 既に起動している場合は何もしない
+    if is_voicevox_running():
+        return True
 
-    # 残りのコードは既存のままとする
-    def run_starter():
-        success = start_voicevox_engine()
-        logger.info(f"VOICEVOX起動スレッド完了: {'成功' if success else '失敗'}")
-
-    starter_thread = threading.Thread(target=run_starter)
-    starter_thread.daemon = True
-    starter_thread.start()
-    logger.info("VOICEVOX起動スレッドを開始しました")
-
+    # スレッドを開始
+    thread = threading.Thread(target=run_starter, daemon=True)
+    thread.start()
     return True
 
 
 def run_starter() -> None:
-    """
-    VOICEVOXエンジンを起動するスレッドのエントリーポイント
-    """
-    # 実装
-    pass
+    """VOICEVOX起動スレッドのメイン関数"""
+    start_voicevox_in_thread()
 
 
 def cleanup_on_exit() -> None:
-    """
-    アプリケーション終了時にVOICEVOXエンジンを停止
-    """
-    # 実装
-    pass
+    """アプリケーション終了時のクリーンアップ"""
+    stop_voicevox_engine()

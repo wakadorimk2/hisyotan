@@ -14,7 +14,7 @@ import threading
 import time
 import types
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional, Union
 
 # プロジェクトのルートディレクトリを取得
 ROOT_DIR = Path(__file__).parent.parent.absolute()
@@ -32,7 +32,6 @@ from fastapi import Body, FastAPI
 
 from backend.app.core import create_application
 from backend.app.core.logger import setup_logger
-from backend.app.events.startup_handler import on_startup
 
 # 標準出力・標準エラー出力のエンコーディングを明示的に設定
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -51,12 +50,12 @@ os.environ["PYTHONIOENCODING"] = "utf-8"
 app = create_application()
 
 # シャットダウン用のグローバル変数
-should_exit = False
-exit_code = 0
+should_exit: bool = False
+exit_code: int = 0
 
 
 # すべての子プロセスを含めて終了する関数
-def terminate_process_tree():
+def terminate_process_tree() -> None:
     """
     現在のプロセスとすべての子プロセスを強制終了します
     """
@@ -122,7 +121,7 @@ class GracefulExitHandler:
             logger.info(f"🛑 Windows環境でプロセス {pid} を終了します")
 
             # 少し遅延させて応答が返せるようにする
-            def delayed_exit():
+            def delayed_exit() -> None:
                 time.sleep(2)
                 try:
                     os.kill(pid, signal.CTRL_C_EVENT)
@@ -137,7 +136,7 @@ class GracefulExitHandler:
             logger.info(f"🛑 Unix環境でプロセス {pid} を終了します")
 
             # 少し遅延させて応答が返せるようにする
-            def delayed_exit():
+            def delayed_exit() -> None:
                 time.sleep(2)
                 try:
                     os.kill(pid, signal.SIGTERM)
@@ -155,7 +154,7 @@ exit_handler = GracefulExitHandler(app)
 
 # プロセスID取得エンドポイント
 @app.get("/api/pid")
-def get_process_id():
+def get_process_id() -> Dict[str, Union[int, str, None]]:
     """
     現在のバックエンドプロセスのPIDを返す
 
@@ -174,7 +173,7 @@ def get_process_id():
 
 # シャットダウンエンドポイント
 @app.post("/api/shutdown")
-async def shutdown(force: bool = Body(False)):
+async def shutdown(force: bool = Body(False)) -> Dict[str, str]:
     """
     アプリケーションを安全に終了するエンドポイント
 
@@ -188,7 +187,7 @@ async def shutdown(force: bool = Body(False)):
     pid = os.getpid()
 
     # 非同期で終了処理を実行（レスポンスを返してから終了するため）
-    def shutdown_app():
+    def shutdown_app() -> None:
         # 少し遅延させてレスポンスが返せるようにする
         logger.info(f"⏱️ 3秒後にアプリケーションを終了します... (PID: {pid})")
         time.sleep(3)
@@ -198,105 +197,54 @@ async def shutdown(force: bool = Body(False)):
         exit_code = 0 if not force else 1
         exit_handler.handle_exit(exit_code=exit_code)
 
-        # さらに最終手段として、明示的にexitを呼び出す（少し遅延させる）
-        def final_exit():
-            time.sleep(2)
-            logger.info("💥 最終手段: sys.exit()を実行します")
-            sys.exit(exit_code)
-
-        threading.Thread(target=final_exit).start()
-
     # 別スレッドで終了処理を実行
     threading.Thread(target=shutdown_app).start()
 
-    return {"message": f"アプリケーションをシャットダウンしています (PID: {pid})"}
-
-
-# ルートエンドポイント（ステータスチェック用）
-@app.head("/")
-@app.get("/")
-def read_root():
-    """
-    ルートエンドポイント - アプリケーションの稼働状態を確認する
-
-    Returns:
-        dict: ステータス情報
-    """
     return {
-        "status": "ok",
-        "service": "hisyotan-backend",
-        "version": "1.0.0",
-        "message": "秘書たんバックエンドサーバーが正常に動作しています",
-        "pid": os.getpid(),
+        "message": "シャットダウン処理を開始しました。数秒後にアプリケーションが終了します。",
+        "pid": str(pid),
     }
 
 
-# メイン関数（初期化処理用）
-async def main():
+@app.head("/")
+@app.get("/")
+def read_root() -> Dict[str, str]:
     """
-    メイン関数：アプリケーションの起動前の初期化処理
+    ルートエンドポイント
+
+    Returns:
+        dict: ウェルカムメッセージ
     """
-    logger.info("🔄 非同期初期化処理を実行しています...")
-    # 必要な非同期初期化処理があればここに追加
-    logger.info("✅ 非同期初期化処理が完了しました")
+    return {
+        "message": "秘書たんバックエンドサーバーへようこそ！",
+        "status": "running",
+    }
 
 
-# サーバー起動
-if __name__ == "__main__":
-    # コマンドライン引数のパース
-    parser = argparse.ArgumentParser(description="7DTD秘書たんバックエンドサーバー")
-    parser.add_argument(
-        "--enable-monitoring",
-        action="store_true",
-        help="起動時にゾンビ監視を有効にする",
-    )
-    parser.add_argument(
-        "--zombie-detection", action="store_true", help="ゾンビ検出機能を有効にする"
-    )
-    parser.add_argument(
-        "--debug", action="store_true", help="デバッグモードを有効にする"
-    )
+async def main() -> None:
+    """
+    メインエントリーポイント
+    """
+    # コマンドライン引数の解析
+    parser = argparse.ArgumentParser(description="秘書たんバックエンドサーバー")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="ホストアドレス")
+    parser.add_argument("--port", type=int, default=8000, help="ポート番号")
+    parser.add_argument("--reload", action="store_true", help="ホットリロードを有効化")
     args = parser.parse_args()
 
-    # デバッグモードの設定
-    debug_mode = args.debug or os.environ.get("DEBUG_MODE", "false").lower() == "true"
-    if debug_mode:
-        os.environ["DEBUG_MODE"] = "true"
-
-    # 非同期初期化処理の実行
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-
-    # ゾンビ監視の開始
-    monitoring_enabled = args.enable_monitoring or args.zombie_detection
-    try:
-        # ゾンビ監視を非同期で開始し、初期化処理と同じループで実行
-        monitoring_task = loop.run_until_complete(on_startup())
-        if monitoring_task:
-            logger.info("👁️ ゾンビ監視を開始しました")
-        elif monitoring_enabled:
-            logger.warning(
-                "⚠️ ゾンビ監視の自動開始が有効ですが、監視タスクを開始できませんでした"
-            )
-    except Exception as e:
-        logger.error(f"❌ ゾンビ監視の開始に失敗しました: {e}")
-
-    # 終了シグナルハンドラの設定
-    signal.signal(signal.SIGINT, exit_handler.handle_exit)
-    signal.signal(signal.SIGTERM, exit_handler.handle_exit)
-
-    # PID情報の表示
-    current_pid = os.getpid()
-    logger.info(f"🆔 バックエンドプロセスID: {current_pid}")
-
-    # FastAPIサーバーの起動
-    logger.info(f"🌐 FastAPIサーバーを起動します (デバッグモード: {debug_mode})")
-    # uvicornの型情報は重要ではないので無視
-    uvicorn.run(  # type: ignore
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=debug_mode,
-        log_level="debug" if debug_mode else "info",
-        lifespan="on",
+    # サーバー設定
+    config = uvicorn.Config(
+        app,
+        host=args.host,
+        port=args.port,
+        reload=args.reload,
+        log_level="info",
     )
+
+    # サーバーの起動
+    server = uvicorn.Server(config)
+    await server.serve()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

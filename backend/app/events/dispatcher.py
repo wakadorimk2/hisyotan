@@ -24,14 +24,14 @@ class EventDispatcher:
 
     _instance: Optional["EventDispatcher"] = None
 
-    def __new__(cls):
+    def __new__(cls) -> "EventDispatcher":
         """シングルトンパターンの実装"""
         if cls._instance is None:
             cls._instance = super(EventDispatcher, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初期化（シングルトンなので1回だけ実行）"""
         if self._initialized:
             return

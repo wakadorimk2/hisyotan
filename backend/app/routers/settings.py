@@ -42,7 +42,7 @@ class SettingResponse(BaseModel):
 
 
 @router.post("/update", response_model=SettingResponse)
-async def update_setting(request: SettingUpdateRequest):
+async def update_setting(request: SettingUpdateRequest) -> SettingResponse:
     """
     設定を更新するエンドポイント
 
@@ -89,7 +89,7 @@ async def update_setting(request: SettingUpdateRequest):
 
 
 @router.get("/all", response_model=SettingResponse)
-async def get_all_settings():
+async def get_all_settings() -> SettingResponse:
     """
     すべての設定を取得するエンドポイント
 

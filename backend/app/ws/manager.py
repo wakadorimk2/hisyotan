@@ -20,10 +20,10 @@ class ConnectionManager:
     WebSocket接続を管理するマネージャークラス
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.active_connections: List[WebSocket] = []
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket) -> None:
         """
         新しいWebSocket接続を受け入れる
         """
@@ -36,7 +36,7 @@ class ConnectionManager:
             f"[BACKEND] WebSocket接続が確立されました。現在の接続数: {len(self.active_connections)}"
         )
 
-    def disconnect(self, websocket: WebSocket):
+    def disconnect(self, websocket: WebSocket) -> None:
         """
         WebSocket接続を切断する
         """
@@ -50,7 +50,7 @@ class ConnectionManager:
 
     async def send_personal_message(
         self, message: Dict[str, Any], websocket: WebSocket
-    ):
+    ) -> None:
         """
         特定のクライアントにメッセージを送信する
         """
@@ -64,7 +64,7 @@ class ConnectionManager:
             logger.error(f"個別メッセージ送信エラー: {e}")
             print(f"[BACKEND] 個別WebSocketメッセージ送信エラー: {str(e)}")
 
-    async def broadcast(self, message: Dict[str, Any]):
+    async def broadcast(self, message: Dict[str, Any]) -> None:
         """
         接続中の全クライアントにメッセージをブロードキャストする
         """
@@ -108,7 +108,7 @@ async def send_notification(
     title: str = "通知",
     importance: str = "normal",
     skipAudio: bool = False,
-):
+) -> None:
     """
     WebSocket経由でクライアントに通知を送信
 

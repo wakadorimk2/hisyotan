@@ -21,7 +21,7 @@ router = APIRouter()
 
 
 @router.post("/event")
-async def receive_event(event: EventModel):
+async def receive_event(event: EventModel) -> dict[str, str]:
     """
     ゲームイベントを受信するエンドポイント
 
@@ -77,7 +77,7 @@ async def zombie_alert(
     count: int = Query(..., description="検出されたゾンビの数"),
     play_audio: bool = Query(True, description="音声を再生するかどうか"),
     force: bool = Query(False, description="クールダウンを無視して強制的に再生するか"),
-):
+) -> dict[str, str]:
     """
     ゾンビアラートを手動でトリガーするエンドポイント
 

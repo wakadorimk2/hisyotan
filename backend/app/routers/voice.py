@@ -26,7 +26,9 @@ settings = get_settings()
 
 
 @router.post("/api/voice/speaker")
-async def change_voice_speaker(speaker_id: int = Query(3, description="話者ID")):
+async def change_voice_speaker(
+    speaker_id: int = Query(3, description="話者ID"),
+) -> dict:
     """
     VOICEVOX話者を変更するエンドポイント
 
@@ -54,7 +56,7 @@ async def change_voice_speaker(speaker_id: int = Query(3, description="話者ID"
 
 
 @router.post("/api/voice/synthesize")
-async def synthesize_voice(request: VoiceSynthesisRequest):
+async def synthesize_voice(request: VoiceSynthesisRequest) -> Response | JSONResponse:
     """
     テキストを音声に変換して返すエンドポイント（ファイル保存・再生なし）
     VOICEVOXを使用して音声合成を行い、WAVデータを直接返す
@@ -104,7 +106,7 @@ async def synthesize_voice(request: VoiceSynthesisRequest):
 
 
 @router.get("/api/voice/check-connection")
-async def check_voicevox_connection():
+async def check_voicevox_connection() -> dict:
     """VOICEVOXとの接続状態を確認するエンドポイント"""
     try:
         host = settings.VOICEVOX_HOST
@@ -126,7 +128,7 @@ async def check_voicevox_connection():
 # 既存の再生込みのエンドポイント（互換性のために残すが、
 # 新しいsynthesizeエンドポイントにリダイレクト）
 @router.post("/api/voice/synthesize-play")
-async def synthesize_and_play_voice(request: Request):
+async def synthesize_and_play_voice(request: Request) -> Response | JSONResponse:
     """
     テキストを音声に変換して返すエンドポイント（互換性のために残す）
     実際の処理は /api/voice/synthesize にリダイレクト
@@ -173,7 +175,7 @@ async def synthesize_and_play_voice(request: Request):
 
 
 @router.post("/api/voice/analyze")
-async def analyze_voice(request: Request):
+async def analyze_voice(request: Request) -> dict | JSONResponse:
     """
     テキストの感情を分析し、適切な音声パラメータを返すエンドポイント
 
@@ -198,13 +200,10 @@ async def analyze_voice(request: Request):
         return {"status": "success", "text": text, "analysis": analysis_result}
 
     except Exception as e:
-        logger.error(f"テキスト感情分析エラー: {str(e)}")
+        logger.error(f"感情分析エラー: {str(e)}")
         return JSONResponse(
             status_code=500,
-            content={
-                "status": "error",
-                "message": f"テキスト感情分析に失敗しました: {str(e)}",
-            },
+            content={"status": "error", "message": f"感情分析に失敗しました: {str(e)}"},
         )
 
 

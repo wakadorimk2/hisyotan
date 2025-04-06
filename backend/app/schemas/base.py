@@ -41,5 +41,5 @@ class BaseEvent:
     すべてのイベントはこのクラスを継承する
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass

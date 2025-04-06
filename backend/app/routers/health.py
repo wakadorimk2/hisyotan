@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.get("/health")
-async def health_check():
+async def health_check() -> dict[str, str | float]:
     """
     ヘルスチェックエンドポイント
     サーバーの稼働状態と現在の時刻を返します
@@ -24,7 +24,9 @@ async def health_check():
 
 
 @router.post("/api/health/test")
-async def health_test_endpoint(value: int = Query(..., description="体力値（0-100）")):
+async def health_test_endpoint(
+    value: int = Query(..., description="体力値（0-100）"),
+) -> dict[str, str | int]:
     """
     体力値テストエンドポイント
 

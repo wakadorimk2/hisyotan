@@ -11,7 +11,7 @@ import logging
 import os
 import threading
 import time
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Mapping, Optional, Tuple, Union
 
 import requests
 
@@ -347,93 +347,71 @@ def speak(
     force: bool = False,
 ) -> Optional[str]:
     """
-    テキストを音声に変換して再生する
+    VOICEVOXを使用してテキストを音声に変換し、再生する
 
     Args:
-        text: 発話するテキスト
+        text: 合成するテキスト
         speaker_id: 話者ID
         speed: 話速（1.0が標準）
         pitch: ピッチ（0.0が標準）
         intonation: イントネーション（1.0が標準）
         volume: 音量（1.0が標準）
-        force: キャッシュをスキップして強制的に生成
+        force: 強制再生フラグ
 
     Returns:
         str: 生成されたWAVファイルのパス、エラー時はNone
     """
-    # テキストが空の場合は何もしない
-    if not text or len(text.strip()) == 0:
-        logger.warning("空のテキストが渡されました")
-        return None
+    from ..config import get_settings
 
     try:
-        from ..config import get_settings
-
-        # 設定を取得（VOICEVOX_HOSTを直接使用するため）
+        # 設定を取得
         settings = get_settings()
 
-        logger.info(f"音声合成: text={text[:30]}..., speaker={speaker_id}")
-        logger.debug(
-            f"音声パラメータ: speed={speed}, pitch={pitch}, intonation={intonation}"
-        )
-
-        # キャッシュパスをチェック
+        # 音声キャッシュをチェック
         cache_path = get_voice_cache_path(text, speaker_id)
-        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
-
-        # キャッシュが存在し、強制フラグがない場合はキャッシュを使用
-        if is_voice_cached(text, speaker_id) and not force:
-            logger.info(f"キャッシュされた音声ファイルを使用: {cache_path}")
-            # play_voice(cache_path)
+        if os.path.exists(cache_path):
+            logger.info(f"キャッシュから音声を再生: {cache_path}")
+            play_voice_async(cache_path)
             return cache_path
 
-        # 音声合成リクエストを2段階で行う
-        # 1. 音声合成用のクエリを作成
-        params = {"text": text, "speaker": speaker_id}
+        # VOICEVOXとの通信
+        params: Mapping[str, Union[str, int, float]] = {
+            "text": text,
+            "speaker": speaker_id,
+            "speed": speed,
+            "pitch": pitch,
+            "intonation": intonation,
+            "volume": volume,
+        }
 
-        logger.debug(f"音声合成クエリを作成: {settings.VOICEVOX_HOST}/audio_query")
-
-        # クエリ作成
-        query_response = requests.post(
-            f"{settings.VOICEVOX_HOST}/audio_query", params=params
+        response = requests.post(
+            f"{settings.VOICEVOX_HOST}/audio_query",
+            params=params,
+            timeout=10,
         )
+        response.raise_for_status()
 
-        if query_response.status_code != 200:
-            logger.error(f"音声合成クエリの作成に失敗: {query_response.text}")
-            return None
-
-        voice_params = query_response.json()
-
-        # パラメータ調整
-        voice_params["speedScale"] = speed
-        voice_params["pitchScale"] = pitch
-        voice_params["intonationScale"] = intonation
-        voice_params["volumeScale"] = volume
-
-        # 2. 音声合成の実行
-        logger.debug(f"音声合成を実行: {settings.VOICEVOX_HOST}/synthesis")
-
-        synthesis_response = requests.post(
+        # 音声合成
+        audio_query = response.json()
+        response = requests.post(
             f"{settings.VOICEVOX_HOST}/synthesis",
-            headers={"Content-Type": "application/json"},
+            json=audio_query,
             params={"speaker": speaker_id},
-            data=json.dumps(voice_params),
+            timeout=10,
         )
+        response.raise_for_status()
 
-        if synthesis_response.status_code != 200:
-            logger.error(f"音声合成に失敗: {synthesis_response.text}")
-            return None
-
-        # キャッシュに保存
+        # WAVファイルを保存
+        os.makedirs(os.path.dirname(cache_path), exist_ok=True)
         with open(cache_path, "wb") as f:
-            f.write(synthesis_response.content)
+            f.write(response.content)
 
-        logger.debug(f"WAVファイルを保存: {cache_path}")
-
+        # 非同期で再生
+        play_voice_async(cache_path)
         return cache_path
+
     except Exception as e:
-        reset_audio_playback()
-        logger.error(f"VOICEVOXエンジンエラー: {str(e)}")
+        logger.error(f"音声合成エラー: {e}")
         return None
 
 

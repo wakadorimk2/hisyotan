@@ -223,7 +223,7 @@ async def zombie_few_alert(
     additional_data: Optional[Dict[str, Any]] = None,
     play_audio: bool = True,
     force: bool = False,
-):
+) -> None:
     """
     少数のゾンビが検出された時のAPIハンドラー
 
@@ -327,7 +327,7 @@ async def zombie_warning(
     additional_data: Optional[Dict[str, Any]] = None,
     play_audio: bool = True,
     force: bool = False,
-):
+) -> None:
     """
     警戒レベルのゾンビが検出された時のAPIハンドラー
 

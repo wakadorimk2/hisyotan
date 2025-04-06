@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 # モック関数を実際のゾンビ監視状態を返す関数に変更
-def is_monitoring_started():
+def is_monitoring_started() -> bool:
     """ゾンビ監視が開始されているかどうかを返す"""
     try:
         from ..zombie.service import get_zombie_service
@@ -39,7 +39,7 @@ router = APIRouter()
 
 
 @router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket) -> None:
     """
     WebSocketエンドポイント
     クライアントとのリアルタイム通信を確立する

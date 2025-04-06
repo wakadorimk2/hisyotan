@@ -2,7 +2,7 @@ import argparse
 import os
 import random
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -65,8 +65,13 @@ class ZombieDataset(Dataset[Tuple[Any, int]]):
 
 
 def train_model(
-    data_path, batch_size, epochs, lr, finetune, model_save_path
-) -> Tuple[Dict[str, List[float]], str]:
+    data_path: Union[str, Path],
+    batch_size: int,
+    epochs: int,
+    lr: float,
+    finetune: bool,
+    model_save_path: Optional[Union[str, Path]] = None,
+) -> Tuple[Dict[str, List[float]], Optional[Path]]:
     """モデルを訓練する関数
 
     Args:
@@ -302,7 +307,9 @@ def train_model(
     return history, best_model_path
 
 
-def plot_training_history(history, save_path):
+def plot_training_history(
+    history: Dict[str, List[float]], save_path: Optional[Union[str, Path]] = None
+) -> None:
     """学習履歴をプロットする関数
 
     Args:
@@ -334,7 +341,7 @@ def plot_training_history(history, save_path):
     print(f"学習履歴をプロットしました: {save_path}")
 
 
-def main():
+def main() -> None:
     """メイン関数"""
     parser = argparse.ArgumentParser(description="ゾンビ分類器の学習スクリプト")
     parser.add_argument(

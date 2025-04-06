@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.get("/")
-async def root():
+async def root() -> dict[str, str]:
     """
     アプリケーションのルートエンドポイント
     サーバーの稼働状態を確認できます

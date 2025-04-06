@@ -4,15 +4,18 @@
 
 import sys
 from pathlib import Path
+from typing import Optional
 
 from backend.ml.train import ZombieClassifier
 
 
-def main():
+def main() -> None:
+    """メイン関数"""
     # 分類器のインスタンス化
     classifier = ZombieClassifier()
 
     # コマンドライン引数から画像パスを取得
+    img_path: Optional[str] = None
     if len(sys.argv) > 1:
         img_path = sys.argv[1]
     else:
@@ -44,6 +47,10 @@ def main():
             print("エラー: データフォルダが正しく設定されていません。")
             print("データは次の場所にあるべきです: data/datasets/zombie_classifier/")
             return
+
+    if img_path is None:
+        print("エラー: 画像パスが指定されていません。")
+        return
 
     # 画像の予測
     pred_class, prob = classifier.predict_image(img_path)

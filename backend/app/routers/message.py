@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.post("/api/message")
-async def send_message(message: MessageModel):
+async def send_message(message: MessageModel) -> dict[str, str]:
     """
     メッセージを送信するエンドポイント
 

@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, ClassVar, Dict, Optional
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
@@ -22,16 +22,17 @@ DATA_DIR = BASE_DIR / "data"
 class Settings:
     """アプリケーション設定クラス"""
 
-    _instance: Optional["Settings"] = None
+    _instance: ClassVar[Optional["Settings"]] = None
+    _initialized: bool = False
 
-    def __new__(cls):
+    def __new__(cls) -> "Settings":
         """シングルトンパターンの実装"""
         if cls._instance is None:
             cls._instance = super(Settings, cls).__new__(cls)
             cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初期化（シングルトンなので1回だけ実行）"""
         if self._initialized:
             return
@@ -141,7 +142,7 @@ class Settings:
         self._initialized = True
         logger.info("アプリケーション設定を初期化しました")
 
-    def _ensure_directories(self):
+    def _ensure_directories(self) -> None:
         """必要なディレクトリが存在することを確認し、なければ作成"""
         directories = [
             self.STATIC_DIR,
