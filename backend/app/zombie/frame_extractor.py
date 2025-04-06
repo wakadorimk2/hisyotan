@@ -67,10 +67,10 @@ class FrameExtractor:
             if cv2.cuda.getCudaEnabledDeviceCount() > 0:
                 self.has_cuda = True
                 gpu_name = cv2.cuda.getDevice()
-                logger.info(f"** GPU処理が有効になりました！デバイス: {gpu_name} **")
+                logger.info(f"✨ GPU処理が有効になりました！デバイス: {gpu_name} ✨")
             else:
-                logger.warning("GPU が見つからないか、OpenCVがCUDAサポート付きでビルドされていません")
-                logger.warning("CPU モードで処理を続行します")
+                logger.warning("😢 GPUが見つからないか、OpenCVがCUDAサポート付きでビルドされていません")
+                logger.warning("💻 CPUモードで処理を続行します")
         
     def create_output_directory(self) -> None:
         """出力ディレクトリを作成する"""
@@ -107,13 +107,12 @@ class FrameExtractor:
         saved_count = 0
         
         # GPUアップロードストリームの作成（GPUモード時）
-        gpu_stream = None
         if self.has_cuda:
             gpu_stream = cv2.cuda.Stream()
             
         # プログレスバーの設定
-        gpu_text = "GPU" if self.has_cuda else "CPU"
-        pbar = tqdm(total=frames_to_extract, desc=f"ふにゃふにゃ抽出中 ({gpu_text})", ncols=100)
+        gpu_text = "🚀 GPU" if self.has_cuda else "💻 CPU"
+        pbar = tqdm(total=frames_to_extract, desc=f"✨ ふにゃふにゃ抽出中 ({gpu_text}) ✨", ncols=100)
         
         while True:
             ret, frame = cap.read()
@@ -128,20 +127,14 @@ class FrameExtractor:
                 if self.has_cuda:
                     # CPUからGPUへフレームをアップロード
                     gpu_frame = cv2.cuda.GpuMat()
-                    if gpu_stream is not None:
-                        gpu_frame.upload(frame, gpu_stream)
-                    else:
-                        gpu_frame.upload(frame)
+                    gpu_frame.upload(frame, gpu_stream)
                     
                     # GPU上での処理（必要に応じて）
                     # 例: リサイズ、色変換など
                     # gpu_frame = cv2.cuda.resize(gpu_frame, (width, height))
                     
                     # 結果をCPUにダウンロード
-                    if gpu_stream is not None:
-                        result_frame = gpu_frame.download(stream=gpu_stream)
-                    else:
-                        result_frame = gpu_frame.download()
+                    result_frame = gpu_frame.download(stream=gpu_stream)
                 else:
                     # CPU処理モード
                     result_frame = frame
@@ -161,7 +154,7 @@ class FrameExtractor:
         cap.release()
         pbar.close()
         
-        logger.info(f"フレーム抽出完了！{saved_count}枚のフレームを保存しました")
+        logger.info(f"フレーム抽出完了！{saved_count}枚のフレームを保存しました🌟")
         return True
 
 def parse_args() -> argparse.Namespace:
