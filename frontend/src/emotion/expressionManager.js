@@ -1,7 +1,11 @@
 // expressionManager.js
 // 表情変更・アニメーション制御用のモジュール
 
-import { logDebug, logError } from '@core/logger.js';
+import {
+  logDebug,
+  // eslint-disable-next-line no-unused-vars
+  logError
+} from '@core/logger.js';
 
 // DOM要素
 let assistantImage;
@@ -24,37 +28,37 @@ export function initExpressionElements() {
 export function setExpression(expression) {
   try {
     logDebug(`表情を変更: ${currentExpression} -> ${expression}`);
-    
+
     // 画像が見つからない場合はnormalに戻す
     if (!['normal', 'happy', 'surprised', 'serious', 'sleepy', 'relieved', 'smile'].includes(expression)) {
       logDebug(`未定義の表情「${expression}」が指定されました。normalを使用します。`);
       expression = 'normal';
     }
-    
+
     currentExpression = expression;
-    
+
     try {
       // assistantImageが見つかるか確認
       if (!assistantImage) {
         assistantImage = document.getElementById('assistantImage');
         logDebug('assistantImageを再取得しました');
       }
-      
+
       // キャッシュ防止用タイムスタンプ
       const timestamp = new Date().getTime();
-      
+
       // HTTP経由で画像を読み込む（常に相対パスを使用）
       const imagePath = `/assets/images/secretary_${expression}.png?t=${timestamp}`;
       logDebug(`画像パス設定: ${imagePath}`);
       assistantImage.src = imagePath;
-      
+
       // 代替テキストを設定
       assistantImage.alt = `秘書たん（${expression}）`;
-      
+
     } catch (error) {
       console.error(`画像設定エラー: ${error.message}`);
       logDebug(`画像設定処理でエラー: ${error.message}`);
-      
+
       // エラー発生時の最終手段として相対パスを設定
       try {
         const relativePath = `/assets/images/secretary_${expression}.png`;
@@ -64,7 +68,7 @@ export function setExpression(expression) {
         console.error(`最終的な画像設定も失敗: ${e.message}`);
       }
     }
-    
+
     logDebug(`表情変更完了: ${expression}`);
     return true;
   } catch (error) {
@@ -135,13 +139,13 @@ export function stopTrembling() {
  */
 export function startLightBounce() {
   logDebug('軽いバウンスアニメーション開始処理');
-  
+
   // アニメーション対象の要素を確認
   if (!assistantImage) {
     logDebug('警告: assistantImageが見つかりません');
     return;
   }
-  
+
   // assistantImageにアニメーションクラスを追加
   assistantImage.classList.add('light-bounce');
   logDebug('assistantImageにlight-bounceクラスを追加しました');
@@ -152,7 +156,7 @@ export function startLightBounce() {
  */
 export function stopLightBounce() {
   logDebug('軽いバウンスアニメーション停止処理');
-  
+
   // assistantImageからアニメーションクラスを削除
   if (assistantImage) {
     assistantImage.classList.remove('light-bounce');

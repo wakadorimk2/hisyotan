@@ -19,15 +19,16 @@ import { setExpression, stopTalking } from '../expressionManager.js';
 //   forceShowBubble, 
 //   displayTextInBubble 
 // } from './bubbleDisplay.js.backup';
-import { 
-  speak as speakCore, 
+import {
+  speak as speakCore,
   speakWithPreset as speakWithPresetCore,
   isPlaying,
   stopPlaying
 } from './speakCore.js';
-import { 
-  requestVoiceSynthesis, 
-  checkVoicevoxConnection as checkVoicevoxConnectionAPI 
+import {
+  // eslint-disable-next-line no-unused-vars
+  requestVoiceSynthesis,
+  checkVoicevoxConnection as checkVoicevoxConnectionAPI
 } from './voicevoxClient.js';
 // import {
 //   showHordeModeToggle as showHordeModeToggleUI,
@@ -39,6 +40,7 @@ import {
  * エラーメッセージを表示する (showErrorの代替関数)
  * @param {string} message - エラーメッセージ
  */
+// eslint-disable-next-line no-unused-vars
 function displayError(message) {
   logError(`エラー: ${message}`);
   showBubble('error', message);
@@ -66,7 +68,7 @@ export class SpeechManager {
     this.config = config;
 
     // 非表示タイマーをMapで管理（イベントタイプごとに異なるタイマーを持つ）
-    this.hideTimeoutMap = new Map(); 
+    this.hideTimeoutMap = new Map();
     this.messageDisplayTime = 5000; // デフォルトのメッセージ表示時間（ミリ秒）
 
     // 表示制御用フラグと現在のイベント状態管理
@@ -124,30 +126,30 @@ export class SpeechManager {
         logError('セリフオブジェクトまたはテキストが指定されていません');
         return;
       }
-      
+
       // デフォルト値の設定
       const type = speechObj.type || 'normal';
       const emotion = speechObj.emotion || 'normal';
       const duration = speechObj.duration || this.messageDisplayTime;
       const eventType = speechObj.id || 'default';
       const autoClose = speechObj.autoClose !== false; // 明示的にfalseでない限りtrue
-      
+
       // 現在のセリフを保存
       this.currentSpeech = speechObj;
-      
+
       logDebug(`拡張セリフ表示: タイプ=${type}, ID=${eventType}, テキスト="${speechObj.text}", 自動閉じる=${autoClose}`);
-      
+
       // 設定UIタイプの場合は専用の処理
       if (type === 'setting' && speechObj.uiPayload) {
         showBubble(eventType);
         const formattedMessage = formatMessage(speechObj.text);
-        
+
         // 通常のテキスト設定（uiPayloadとともに）
         setText(formattedMessage);
         console.log("[speechText] innerHTML =", speechText.innerHTML);
         console.log("[speechText] child count =", speechText.childNodes.length);
 
-        
+
         // setText後のDOM状態をチェック
         console.log('🔍 setText()後の吹き出し状態:', {
           speechBubble: document.getElementById('speechBubble'),
@@ -155,10 +157,10 @@ export class SpeechManager {
           speechSettingUI: document.getElementById('speechSettingUI'),
           bubbleHTML: document.getElementById('speechBubble')?.innerHTML || '存在しません'
         });
-        
+
         // 設定UI要素をレンダリング
         renderSettingUI(speechObj.uiPayload);
-        
+
         // renderSettingUI後の最終状態確認
         console.log('🏁 renderSettingUI()後の最終状態:', {
           speechBubble: document.getElementById('speechBubble'),
@@ -166,22 +168,22 @@ export class SpeechManager {
           speechSettingUI: document.getElementById('speechSettingUI'),
           bubbleHTML: document.getElementById('speechBubble')?.innerHTML || '存在しません'
         });
-        
+
         // 設定UIの場合やautoCloseがfalseの場合は自動非表示しない
         return;
       }
-      
+
       // 通常の発話処理
       this.speak(
-        speechObj.text, 
-        emotion, 
-        duration, 
+        speechObj.text,
+        emotion,
+        duration,
         null, // アニメーションはemotionから自動設定
         eventType,
         null,  // プリセット音声
         autoClose // 自動クローズフラグを追加
       );
-      
+
     } catch (err) {
       logError(`拡張セリフ表示処理でエラー: ${err.message}`);
     }
@@ -208,7 +210,7 @@ export class SpeechManager {
         duration: displayTime || this.messageDisplayTime,
         autoClose: autoClose
       };
-      
+
       // コアの発話処理にオプションを渡して呼び出し
       const options = {
         hideTimeoutMap: this.hideTimeoutMap,
@@ -223,15 +225,15 @@ export class SpeechManager {
           // 発話終了時の処理
         }
       };
-      
+
       return await speakCore(
-        message, 
-        emotion, 
-        displayTime, 
-        animation, 
-        eventType, 
-        presetSound, 
-        autoClose, 
+        message,
+        emotion,
+        displayTime,
+        animation,
+        eventType,
+        presetSound,
+        autoClose,
         options
       );
     } catch (error) {
@@ -248,7 +250,7 @@ export class SpeechManager {
   async checkVoicevoxConnection() {
     try {
       const connected = await checkVoicevoxConnectionAPI();
-      
+
       if (connected) {
         // 接続成功時はリトライカウントをリセット
         this.voicevoxRetryCount = 0;
@@ -260,12 +262,12 @@ export class SpeechManager {
       }
     } catch (error) {
       logDebug(`VOICEVOX接続エラー: ${error.message}`);
-      
+
       // リトライ処理
       this.voicevoxRetryCount++;
       if (this.voicevoxRetryCount <= this.MAX_VOICEVOX_RETRIES) {
         logDebug(`VOICEVOX接続リトライ予定 (${this.voicevoxRetryCount}/${this.MAX_VOICEVOX_RETRIES}): ${this.VOICEVOX_RETRY_INTERVAL}ms後`);
-        
+
         // 数秒後に再試行
         setTimeout(() => {
           this.checkVoicevoxConnection().catch(err => logDebug(`再試行時のエラー: ${err.message}`));
@@ -275,7 +277,7 @@ export class SpeechManager {
         showBubble('error', 'VOICEVOXに接続できません。VOICEVOXが起動しているか確認してください。');
         this.voicevoxConnectionErrorShown = true;
       }
-      
+
       return false;
     }
   }
@@ -289,7 +291,7 @@ export class SpeechManager {
   sayMessage(message, emotion = 'normal', duration = 5000) {
     // テキストを吹き出しに表示
     displayTextInBubble(message);
-    
+
     // 音声合成リクエスト処理（オプションなし）
     this.speak(message, emotion, duration, null, 'say_message');
   }
@@ -309,13 +311,13 @@ export class SpeechManager {
         messageDisplayTime: this.messageDisplayTime,
         config: this.config
       };
-      
+
       return await speakWithPresetCore(
-        presetSound, 
-        message, 
-        emotion, 
-        displayTime, 
-        eventType, 
+        presetSound,
+        message,
+        emotion,
+        displayTime,
+        eventType,
         options
       );
     } catch (err) {
@@ -332,9 +334,9 @@ export class SpeechManager {
    */
   async showHordeModeToggle(currentState = false, onChangeCallback) {
     return await showHordeModeToggleUI(
-      currentState, 
-      onChangeCallback, 
-      this.speakWithObject.bind(this), 
+      currentState,
+      onChangeCallback,
+      this.speakWithObject.bind(this),
       this.speak.bind(this)
     );
   }
@@ -354,7 +356,7 @@ export class SpeechManager {
   setHordeModeState(enabled) {
     return setHordeModeState(enabled);
   }
-  
+
   /**
    * 音声再生中かどうかを確認する
    * @returns {boolean} 音声再生中ならtrue
@@ -362,7 +364,7 @@ export class SpeechManager {
   isPlaying() {
     return isPlaying();
   }
-  
+
   /**
    * フォーマット済みメッセージを取得する
    * @param {string} message - 元のメッセージ
@@ -379,7 +381,7 @@ export class SpeechManager {
   stopAllSpeech() {
     try {
       logDebug('SpeechManager: すべての音声再生を停止します');
-      
+
       // 1. すべての非表示タイマーをクリア
       if (this.hideTimeoutMap && this.hideTimeoutMap.size > 0) {
         logDebug(`${this.hideTimeoutMap.size}個の非表示タイマーを一括クリアします`);
@@ -389,18 +391,18 @@ export class SpeechManager {
         }
         this.hideTimeoutMap.clear();
       }
-      
+
       // 2. 音声再生を停止
       stopPlaying();
-      
+
       // 3. 口パクや表情を通常に戻す
       stopTalking();
       setExpression('normal');
-      
+
       // 4. 現在のセリフ状態をリセット
       this.currentSpeechEvent = null;
       this.hasAlreadyForced = false;
-      
+
       return true;
     } catch (error) {
       logError(`音声停止エラー: ${error.message}`);

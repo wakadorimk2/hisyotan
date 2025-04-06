@@ -74,15 +74,15 @@ export async function express(emotion, message = null, options = {}) {
   try {
     // 感情状態を更新
     setEmotion(emotion);
-    
+
     // メッセージが指定されていない場合は感情に合わせて自動生成
     if (!message) {
-      const emotionValue = emotion === 'happy' ? 70 : 
-                         emotion === 'sad' ? -70 :
-                         emotion === 'surprised' ? 30 :
-                         emotion === 'fearful' ? -60 :
-                         emotion === 'funya' ? 20 : 0;
-      
+      const emotionValue = emotion === 'happy' ? 70 :
+        emotion === 'sad' ? -70 :
+          emotion === 'surprised' ? 30 :
+            emotion === 'fearful' ? -60 :
+              emotion === 'funya' ? 20 : 0;
+
       // emotionHandlerの関数を使って適切なメッセージを生成
       const phraseObj = emotionValue === 0 ? getRandomCutePhrase() : null;
       if (phraseObj) {
@@ -90,16 +90,16 @@ export async function express(emotion, message = null, options = {}) {
       } else {
         // 簡易的なデフォルトメッセージ
         message = emotion === 'happy' ? 'わぁ、嬉しいな！' :
-                 emotion === 'sad' ? '少し悲しいよ...' :
-                 emotion === 'surprised' ? 'えっ！？' :
-                 emotion === 'fearful' ? 'こ、怖いよ...！' :
-                 emotion === 'funya' ? 'ふにゃ〜' : 'どうしたの？';
+          emotion === 'sad' ? '少し悲しいよ...' :
+            emotion === 'surprised' ? 'えっ！？' :
+              emotion === 'fearful' ? 'こ、怖いよ...！' :
+                emotion === 'funya' ? 'ふにゃ〜' : 'どうしたの？';
       }
     }
-    
+
     // 音声と表情でリアクション
     reactWithVoice(emotion);
-    
+
     // 吹き出しと表情を表示
     return await speak(message, emotion, options.displayTime || 5000, options.animation);
   } catch (error) {
@@ -114,30 +114,36 @@ export {
   emotionState,
   getEmotionState,
   setEmotion,
-  setEmotionValue, 
+  setEmotionValue,
   onEmotionChange,
   resetEmotionState,
   updateEmotionOverTime,
   EMOTION_TYPES,
   VOICE_TONES,
-  
+
   // 音声リアクション
   reactWithVoice,
   playPresetSound,
   playSE,
   playVoice,
   stopCurrentPlayback,
-  
+
+  // 将来使用する可能性がある関数
+  // これらの関数は将来的に使用する可能性があるため削除せずに残しています
+  addCustomSEMapping,
+  addCustomVoiceMapping,
+  testAllReactions,
+
   // 発話管理
   speak,
   speakWithPreset,
   isPlaying,
   hideTimeoutMap,
-  
+
   // 吹き出し表示
   formatMessage,
   displayTextInBubble,
-  
+
   // 表情管理
   setExpression,
   startTalking,
@@ -148,7 +154,7 @@ export {
   stopTrembling,
   startNervousShake,
   stopNervousShake,
-  
+
   // ランダムセリフ生成
   getRandomCutePhrase,
   reactToEmotionChange,
