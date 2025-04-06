@@ -4,6 +4,7 @@ ResNet18ベースのゾンビ分類器の推論スクリプト
 
 import sys
 from pathlib import Path
+from typing import Any, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -13,15 +14,22 @@ from torchvision import transforms
 class ZombieClassifier:
     """ゾンビ分類器クラス"""
 
-    def __init__(self, model_path=None):
+    def __init__(
+        self,
+        model_path: Optional[Union[str, Path]] = None,
+        data_path: Optional[str] = None,
+        device: Optional[str] = None,
+    ):
         """
         Args:
             model_path: モデルファイルのパス
+            data_path: データセットのパス（互換性のために残しています）
+            device: 使用するデバイス（'cuda'または'cpu'）
         """
         # モデルファイルのパスを設定
         if model_path is None:
             # デフォルトのモデルパス
-            model_path = Path("backend/models/zombie_classifier.pt")
+            model_path = Path("backend/trained_models/zombie_classifier.pth")
         else:
             model_path = Path(model_path)
 
@@ -29,7 +37,10 @@ class ZombieClassifier:
         print(f"モデルパス: {self.model_path} (存在: {self.model_path.exists()})")
 
         # GPUが利用可能かチェック
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if device is not None:
+            self.device = torch.device(device)
+        else:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"使用デバイス: {self.device}")
 
         # モデルの読み込み
@@ -80,7 +91,7 @@ class ZombieClassifier:
             print(f"モデルの読み込み中にエラーが発生しました: {e}")
             return False
 
-    def predict_image(self, img_path):
+    def predict_image(self, img_path: Union[str, Path]) -> Tuple[str, float]:
         """画像ファイルからゾンビを予測
 
         Args:
@@ -91,8 +102,8 @@ class ZombieClassifier:
             probability: 予測確率
         """
         if self.model is None:
-            print("エラー: モデルが読み込まれていません。")
-            return None, None
+            print("エラー: モデルが読み込まれていません。デフォルト値を返します。")
+            return "not_zombie", 0.0
 
         try:
             # 画像の読み込みと前処理
@@ -113,9 +124,9 @@ class ZombieClassifier:
 
         except Exception as e:
             print(f"予測中にエラーが発生しました: {e}")
-            return None, None
+            return "not_zombie", 0.0  # エラー時もデフォルト値を返す
 
-    def predict_bytes(self, img_bytes):
+    def predict_bytes(self, img_bytes: bytes) -> Tuple[str, float]:
         """バイトデータからゾンビを予測
 
         Args:
@@ -126,8 +137,8 @@ class ZombieClassifier:
             probability: 予測確率
         """
         if self.model is None:
-            print("エラー: モデルが読み込まれていません。")
-            return None, None
+            print("エラー: モデルが読み込まれていません。デフォルト値を返します。")
+            return "not_zombie", 0.0
 
         try:
             # バイトデータから画像を読み込み
@@ -150,9 +161,9 @@ class ZombieClassifier:
 
         except Exception as e:
             print(f"予測中にエラーが発生しました: {e}")
-            return None, None
+            return "not_zombie", 0.0  # エラー時もデフォルト値を返す
 
-    def predict_numpy(self, img_array):
+    def predict_numpy(self, img_array: Any) -> Tuple[str, float]:
         """NumPy配列からゾンビを予測（YOLOの切り出し画像用）
 
         Args:
@@ -163,8 +174,8 @@ class ZombieClassifier:
             probability: 予測確率
         """
         if self.model is None:
-            print("エラー: モデルが読み込まれていません。")
-            return None, None
+            print("エラー: モデルが読み込まれていません。デフォルト値を返します。")
+            return "not_zombie", 0.0
 
         try:
             # NumPy配列からPIL画像に変換
@@ -185,7 +196,7 @@ class ZombieClassifier:
 
         except Exception as e:
             print(f"予測中にエラーが発生しました: {e}")
-            return None, None
+            return "not_zombie", 0.0  # エラー時もデフォルト値を返す
 
 
 def main():

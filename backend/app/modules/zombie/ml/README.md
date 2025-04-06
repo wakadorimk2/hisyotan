@@ -40,7 +40,7 @@ python backend/app/modules/zombie/ml/train_zombie_classifier.py --epochs 30 --ba
 
 ### 出力ファイル
 
-- **モデルファイル**: `backend/models/zombie_classifier.pt`
+- **モデルファイル**: `backend/trained_models/zombie_classifier.pth`
 - **混同行列**: `backend/app/modules/zombie/ml/confusion_matrix.png`
 - **学習履歴**: `backend/app/modules/zombie/ml/training_history.png`
 - **分類レポート**: ターミナルに出力（精度・再現率・F1スコア）

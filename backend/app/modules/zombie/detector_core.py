@@ -596,6 +596,14 @@ class ZombieDetector:
                             lambda: self.resnet_classifier.predict_image(temp_filename),
                         )
 
+                        # Noneチェックを追加
+                        if result_class is None or prob is None:
+                            logger.warning(
+                                "ResNet分類器がNoneを返しました。デフォルト値を使用します。"
+                            )
+                            result_class = "not_zombie"
+                            prob = 0.0
+
                         # 結果を格納
                         resnet_result = {
                             "is_zombie_scene": result_class == "zombie",

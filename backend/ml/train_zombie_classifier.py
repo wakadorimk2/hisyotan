@@ -246,7 +246,7 @@ def train_model(data_path, batch_size, epochs, lr, finetune, model_save_path):
         # 最良モデルの保存
         if valid_acc > best_valid_acc:
             best_valid_acc = valid_acc
-            best_model_path = str(model_save_path / "zombie_classifier.pt")
+            best_model_path = str(model_save_path / "zombie_classifier.pth")
 
             # 保存するデータの準備
             model_data = {

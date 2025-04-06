@@ -24,7 +24,7 @@ class ZombieClassifier:
             # デフォルトのモデルパス
             current_file = Path(os.path.abspath(__file__))
             backend_dir = current_file.parent.parent
-            model_path = backend_dir / "models" / "zombie_classifier.pt"
+            model_path = backend_dir / "trained_models" / "zombie_classifier.pth"
         else:
             model_path = Path(model_path)
 
