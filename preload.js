@@ -88,6 +88,44 @@ contextBridge.exposeInMainWorld('electron', {
     }
   },
 
+  // ウィンドウを最前面に表示する
+  setAlwaysOnTop: async (value, level) => {
+    try {
+      console.log(`🔝 alwaysOnTop設定を変更します: ${value}, レベル: ${level || 'デフォルト'}`);
+      const result = await ipcRenderer.invoke('set-always-on-top', value, level);
+      console.log('✅ alwaysOnTop設定結果:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ alwaysOnTop設定エラー:', error);
+      return false;
+    }
+  },
+
+  // ウィンドウの最前面表示状態を取得する
+  isAlwaysOnTop: async () => {
+    try {
+      const result = await ipcRenderer.invoke('get-always-on-top');
+      console.log('🔍 alwaysOnTop状態:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ alwaysOnTop取得エラー:', error);
+      return false;
+    }
+  },
+
+  // ウィンドウを最前面に強制的に表示する
+  forceFront: async () => {
+    try {
+      console.log('🔝 ウィンドウを最前面に強制表示します');
+      const result = await ipcRenderer.invoke('force-front');
+      console.log('✅ 強制表示結果:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ 強制表示エラー:', error);
+      return false;
+    }
+  },
+
   // 他のIPC通信関数をここに追加していく
   speakText: (text, emotion) => ipcRenderer.invoke('speak-text', text, emotion),
   getSettings: () => ipcRenderer.invoke('get-settings'),

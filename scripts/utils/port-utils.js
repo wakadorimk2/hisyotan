@@ -36,7 +36,7 @@ const isPortInUse = (port) => {
  */
 const killProcessOnPort = async (port) => {
   console.log(`🔄 ポート${port}を使用しているプロセスを検索しています...`);
-  
+
   if (process.platform === 'win32') {
     // Windows環境での処理
     return new Promise((resolve) => {
@@ -51,7 +51,7 @@ const killProcessOnPort = async (port) => {
         // 出力からPIDを抽出
         const lines = stdout.split('\n');
         const pids = new Set();
-        
+
         for (const line of lines) {
           const match = line.match(/\s+(\d+)$/);
           if (match && match[1]) {
@@ -95,7 +95,7 @@ const killProcessOnPort = async (port) => {
         });
 
         console.log(`✅ ${killedCount}個のプロセスの終了を試みました`);
-        
+
         // 少し長めに待機してからポートが本当に解放されたか確認（2.5秒）
         setTimeout(async () => {
           const stillInUse = await isPortInUse(port);
@@ -120,7 +120,7 @@ const killProcessOnPort = async (port) => {
 
         const pids = stdout.trim().split('\n');
         let killedCount = 0;
-        
+
         pids.forEach(pid => {
           console.log(`🛑 ポート${port}を使用しているプロセス(PID: ${pid})を終了します`);
           try {
@@ -147,7 +147,7 @@ const killProcessOnPort = async (port) => {
         });
 
         console.log(`✅ ${killedCount}個のプロセスの終了を試みました`);
-        
+
         // ポートが解放されたか確認
         setTimeout(async () => {
           const stillInUse = await isPortInUse(port);
@@ -170,10 +170,10 @@ const killProcessOnPort = async (port) => {
  */
 const cleanupPorts = async (ports) => {
   console.log('🧹 開発環境の起動前にポートをクリーンアップしています...');
-  
+
   const results = [];
   const portEntries = Object.entries(ports);
-  
+
   // 各ポートを順番にチェック・クリーンアップ
   for (const [name, port] of portEntries) {
     if (await isPortInUse(port)) {
@@ -185,16 +185,16 @@ const cleanupPorts = async (ports) => {
       results.push(true);
     }
   }
-  
+
   // 最終確認
   const allCleaned = results.every(r => r === true);
-  
+
   if (!allCleaned) {
     console.warn('⚠️ 一部のポートがまだ使用中です。開発環境の起動に影響する可能性があります');
   } else {
     console.log('✅ すべてのポートがクリーンアップされました');
   }
-  
+
   return allCleaned;
 };
 

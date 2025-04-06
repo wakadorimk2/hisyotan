@@ -6,7 +6,7 @@
 // 日本語コンソール出力のために文字コードを設定
 if (process.platform === 'win32') {
   process.env.CHCP = '65001'; // UTF-8に設定
-  
+
   // コマンドプロンプトのコードページをUTF-8に設定
   try {
     // child_processをESM形式でインポート
@@ -40,10 +40,10 @@ const isDevCSP = process.env.ELECTRON_CSP_DEV === 'true';
 // セキュリティポリシーの設定
 const setContentSecurityPolicy = () => {
   // 開発モードと本番モードでCSPを分ける
-  const csp = isDev ? 
+  const csp = isDev ?
     "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:;" :
     "default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:;";
-  
+
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
     callback({
       responseHeaders: {
@@ -52,7 +52,7 @@ const setContentSecurityPolicy = () => {
       }
     });
   });
-  
+
   console.log(`🔒 Content-Security-Policyを設定しました (${isDev ? '開発モード' : '本番モード'})`);
 };
 
@@ -85,9 +85,9 @@ function setupDevCSP() {
     console.log('🔓 開発モード: CSP制限を一時的に緩和します');
     session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       delete details.responseHeaders['content-security-policy'];
-      callback({ 
-        cancel: false, 
-        responseHeaders: details.responseHeaders 
+      callback({
+        cancel: false,
+        responseHeaders: details.responseHeaders
       });
     });
   }
@@ -113,55 +113,55 @@ async function startBackendServer() {
     }
 
     console.log('🚀 バックエンドサーバーを起動します...');
-    
+
     // Pythonの実行パスを取得
-    const pythonPath = app.isPackaged 
+    const pythonPath = app.isPackaged
       ? path.join(process.resourcesPath, 'python', 'python.exe')
       : 'python';
-    
+
     // バックエンドのスクリプトパス
     const backendScript = fileURLToPath(new URL('../../../backend/main.py', import.meta.url));
-    
+
     // バックエンドサーバーを起動
     backendProcess = spawn(pythonPath, [backendScript], {
       stdio: 'pipe',
       detached: false,
       windowsHide: true
     });
-    
+
     // プロセスIDを記録
     backendPID = backendProcess.pid;
     console.log(`🆔 バックエンドプロセスID: ${backendPID}`);
-    
+
     // 標準出力のリスニング
     backendProcess.stdout.on('data', (data) => {
       const output = iconv.decode(data, 'utf-8').trim();
       console.log(`📝 バックエンド出力: ${output}`);
     });
-    
+
     // エラー出力のリスニング
     backendProcess.stderr.on('data', (data) => {
       const output = iconv.decode(data, 'utf-8').trim();
       console.error(`❌ バックエンドエラー: ${output}`);
     });
-    
+
     // プロセス終了時の処理
     backendProcess.on('close', (code) => {
       console.log(`🛑 バックエンドサーバーが終了しました (コード: ${code})`);
       backendProcess = null;
       backendPID = null;
     });
-    
+
     // バックエンドサーバーの起動を待機
     await new Promise((resolve) => setTimeout(resolve, 2000));
     console.log('✅ バックエンドサーバー起動待機完了');
-    
+
     // バックエンドの接続確認
     const isConnected = await checkBackendConnection();
     if (!isConnected) {
       throw new Error('バックエンドサーバーへの接続に失敗しました');
     }
-    
+
     return true;
   } catch (error) {
     console.error('❌ バックエンドサーバー起動エラー:', error);
@@ -177,18 +177,18 @@ async function startBackendServer() {
 async function checkBackendConnection() {
   try {
     console.log('バックエンド接続確認中...');
-    
+
     // タイムアウト付きの接続確認
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
+
     try {
       const response = await fetch('http://127.0.0.1:8000/', {
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('バックエンド接続成功:', data);
@@ -217,27 +217,27 @@ async function checkBackendConnection() {
 async function getBackendPID() {
   try {
     console.log('バックエンドプロセスのPIDを取得します...');
-    
+
     // タイムアウト付きの接続確認
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
+
     try {
       const response = await fetch('http://127.0.0.1:8000/api/pid', {
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('バックエンドPID取得成功:', data);
-        
+
         // PIDを保存
         if (data.pid) {
           backendPID = data.pid;
           console.log(`🆔 バックエンド実際のプロセスID: ${backendPID}`);
-          
+
           // メインプロセスにPIDを登録
           try {
             // ESM環境からElectronのIPC呼び出し
@@ -246,7 +246,7 @@ async function getBackendPID() {
             console.log(`🔄 PID登録結果: ${registered ? '成功' : '失敗'}`);
           } catch (ipcError) {
             console.error('IPC呼び出しエラー:', ipcError);
-            
+
             // 代替手段: fetchを使ってメインプロセスのAPIを呼び出す
             try {
               const port = process.env.ELECTRON_PORT || 3000;
@@ -256,7 +256,7 @@ async function getBackendPID() {
               console.error('代替手段でのPID登録失敗:', fetchError);
             }
           }
-          
+
           return backendPID;
         }
         return null;
@@ -281,7 +281,7 @@ async function getBackendPID() {
  */
 function setupIPC() {
   console.log('🔌 IPC通信の設定を開始します');
-  
+
   // バックエンドPIDの登録
   ipcMain.handle('register-backend-pid', async (event, pid) => {
     console.log(`🔄 バックエンドPID登録要求: ${pid}`);
@@ -294,20 +294,72 @@ function setupIPC() {
       return false;
     }
   });
-  
+
   // バックエンドPIDの取得
   ipcMain.handle('get-backend-pid', () => {
     console.log(`🔍 バックエンドPID取得要求: ${backendPID}`);
     return backendPID;
   });
-  
+
+  // ウィンドウを最前面に表示するハンドラ
+  ipcMain.handle('set-always-on-top', (event, value, level) => {
+    console.log(`🔝 alwaysOnTop設定要求: ${value}, レベル: ${level || 'デフォルト'}`);
+    try {
+      if (mainWindow) {
+        if (level) {
+          mainWindow.setAlwaysOnTop(value, level);
+        } else {
+          mainWindow.setAlwaysOnTop(value);
+        }
+        const isAlwaysOnTop = mainWindow.isAlwaysOnTop();
+        console.log(`✅ alwaysOnTop設定完了: ${isAlwaysOnTop}`);
+        return isAlwaysOnTop;
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ alwaysOnTop設定エラー:', error);
+      return false;
+    }
+  });
+
+  // ウィンドウの最前面表示状態を取得するハンドラ
+  ipcMain.handle('get-always-on-top', () => {
+    if (mainWindow) {
+      const isAlwaysOnTop = mainWindow.isAlwaysOnTop();
+      console.log(`🔍 alwaysOnTop状態取得: ${isAlwaysOnTop}`);
+      return isAlwaysOnTop;
+    }
+    return false;
+  });
+
+  // ウィンドウを最前面に強制的に表示するハンドラ
+  ipcMain.handle('force-front', () => {
+    console.log('🔝 ウィンドウを最前面に強制表示します');
+    try {
+      if (mainWindow) {
+        // 一度falseにしてから再度trueに設定
+        mainWindow.setAlwaysOnTop(false);
+        setTimeout(() => {
+          mainWindow.setAlwaysOnTop(true, 'screen-saver');
+          // フォーカスも設定
+          mainWindow.focus();
+        }, 100);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ 最前面強制表示エラー:', error);
+      return false;
+    }
+  });
+
   // アセットのパスを解決するハンドラ
   ipcMain.handle('resolve-asset-path', (event, relativePath) => {
     console.log(`🔍 アセットパス解決要求: ${relativePath}`);
     try {
       // パスの正規化: 先頭の'assets/'または'/assets/'を削除
       const normalizedPath = relativePath.replace(/^\/?(assets\/)/i, '');
-      
+
       // 開発モードと本番モードでのパス解決を分ける
       let assetPath;
       if (isDev) {
@@ -315,7 +367,7 @@ function setupIPC() {
       } else {
         assetPath = path.join(app.getAppPath(), 'frontend/public/assets', normalizedPath);
       }
-      
+
       console.log(`✅ 解決されたパス: ${assetPath}`);
       return assetPath;
     } catch (error) {
@@ -323,7 +375,7 @@ function setupIPC() {
       return relativePath; // エラー時は元のパスをそのまま返す
     }
   });
-  
+
   // アプリケーション終了ハンドラ
   ipcMain.handle('quit-app', () => {
     console.log('🚪 アプリケーション終了要求を受信しました');
@@ -335,7 +387,7 @@ function setupIPC() {
       return false;
     }
   });
-  
+
   // app:quit イベントリスナー（既存の互換性のため）
   ipcMain.on('app:quit', () => {
     console.log('🚪 app:quit イベントを受信しました');
@@ -345,7 +397,7 @@ function setupIPC() {
       console.error('❌ app:quit イベント処理エラー:', error);
     }
   });
-  
+
   // quit-app イベントリスナー（invoke以外の方法でも受け付けるため）
   ipcMain.on('quit-app', () => {
     console.log('🚪 quit-app イベントを受信しました');
@@ -355,7 +407,7 @@ function setupIPC() {
       console.error('❌ quit-app イベント処理エラー:', error);
     }
   });
-  
+
   console.log('✨ IPC通信の設定が完了しました');
 }
 
@@ -381,7 +433,7 @@ function registerGlobalShortcuts() {
  */
 function createWindow() {
   console.log('🪟 メインウィンドウを作成します');
-  
+
   // メインウィンドウの設定
   const window = new BrowserWindow({
     width: 300,
@@ -401,10 +453,22 @@ function createWindow() {
     alwaysOnTop: true,
     icon: path.join(__dirname, '../frontend/public/assets/icon.ico')
   });
-  
+
   // CSP設定を適用（ウィンドウ作成後に呼び出す）
   setContentSecurityPolicy();
-  
+
+  // フォーカスが失われたときに常に最前面に表示されるようにする
+  window.on('blur', () => {
+    console.log('🔍 ウィンドウがフォーカスを失いました。alwaysOnTopを再設定します');
+    // 一度falseにしてから再度trueに設定することで最前面表示を強制する
+    window.setAlwaysOnTop(false);
+    // 少し遅延を入れて設定する
+    setTimeout(() => {
+      window.setAlwaysOnTop(true, 'screen-saver'); // screen-saverは最も高い優先度
+      console.log('✅ alwaysOnTopを再設定しました (screen-saver)');
+    }, 100);
+  });
+
   // 開発モードでの設定
   if (isDev) {
     window.loadURL('http://localhost:5173');
@@ -412,7 +476,7 @@ function createWindow() {
   } else {
     window.loadFile(path.join(__dirname, '../dist/index.html'));
   }
-  
+
   return window;
 }
 
@@ -421,22 +485,27 @@ function createWindow() {
  */
 app.whenReady().then(async () => {
   console.log('Electronアプリケーションの初期化を開始しています...');
-  
+
   try {
     // 開発モードの場合、CSP制限を緩和
     if (isDev) {
       setupDevCSP();
     }
-    
+
     // CSP設定を先に適用
     setContentSecurityPolicy();
-    
+
     // メインウィンドウを作成
     mainWindow = createWindow();
-    
+
+    // 最前面表示を強制する（優先度を screen-saver に設定）
+    console.log('🔝 ウィンドウの最前面表示設定を適用します');
+    mainWindow.setAlwaysOnTop(true, 'screen-saver');
+    console.log('✅ 最前面表示を優先度: screen-saverで設定しました');
+
     // IPC通信を設定
     setupIPC();
-    
+
     // DOMContentLoadedイベントを待ってからUI初期化
     mainWindow.webContents.on('dom-ready', () => {
       console.log('🌸 DOMの読み込みが完了しました');
@@ -472,16 +541,16 @@ app.whenReady().then(async () => {
         });
       `);
     });
-    
+
     // バックエンドサーバーを起動
     await startBackendServer();
-    
+
     // 開発モードでの追加処理
     if (isDev) {
       console.log('開発モードで実行中...');
       // 必要に応じて開発モード固有の処理を追加
     }
-    
+
     // macOSでの対応
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) {
@@ -508,14 +577,14 @@ app.on('window-all-closed', () => {
  */
 app.on('before-quit', async () => {
   console.log('🛑 アプリケーション終了処理を開始します...');
-  
+
   if (backendProcess) {
     console.log('🔄 バックエンドサーバーを終了しています...');
     try {
       // まずは正常終了を試みる
       backendProcess.kill('SIGTERM');
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // プロセスがまだ生きている場合は強制終了
       if (backendProcess.exitCode === null) {
         console.log('⚠️ プロセスが終了しないため、強制終了します');
@@ -533,7 +602,7 @@ app.on('before-quit', async () => {
  */
 process.on('exit', () => {
   console.log('プロセス終了: アプリケーションのクリーンアップを行います');
-  
+
   // バックエンドサーバーを確実に終了
   if (backendProcess !== null) {
     console.log('プロセス終了時にバックエンドサーバーを強制終了します');
