@@ -2,6 +2,7 @@ import argparse
 import os
 import random
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -16,7 +17,13 @@ from torchvision import models, transforms  # type: ignore
 class ZombieDataset(Dataset):
     """ゾンビ分類用のデータセット"""
 
-    def __init__(self, root_dir, transform=None, train=True, valid_split=0.2):
+    def __init__(
+        self,
+        root_dir: Union[str, Path],
+        transform: Optional[Any] = None,
+        train: bool = True,
+        valid_split: float = 0.2,
+    ) -> None:
         """
         Args:
             root_dir: データセットのルートディレクトリ
@@ -34,7 +41,7 @@ class ZombieDataset(Dataset):
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
 
         # 画像パスとラベルのリストを作成
-        self.images = []
+        self.images: List[Tuple[Path, int]] = []
         for cls in self.classes:
             class_dir = self.root_dir / cls
             for img_path in class_dir.glob("*.png"):
@@ -50,10 +57,10 @@ class ZombieDataset(Dataset):
         else:
             self.images = self.images[split_idx:]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.images)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Tuple[Any, int]:
         img_path, label = self.images[idx]
         image = Image.open(img_path).convert("RGB")
 
@@ -63,7 +70,14 @@ class ZombieDataset(Dataset):
         return image, label
 
 
-def train_model(data_path, batch_size, epochs, lr, finetune, model_save_path):
+def train_model(
+    data_path: Union[str, Path],
+    batch_size: int,
+    epochs: int,
+    lr: float,
+    finetune: bool,
+    model_save_path: Union[str, Path],
+) -> Tuple[Dict[str, List[float]], Optional[Path]]:
     """モデルを訓練する関数
 
     Args:

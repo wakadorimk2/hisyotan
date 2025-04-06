@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import numpy as np
 import torch
 import torch.nn as nn
 from PIL import Image
@@ -167,7 +168,7 @@ class ZombieClassifier:
             print(f"予測中にエラーが発生しました: {e}")
             return "not_zombie", 0.0  # エラー時もデフォルト値を返す
 
-    def predict_numpy(self, img_array: Any) -> Tuple[str, float]:
+    def predict_numpy(self, img_array: np.ndarray) -> Tuple[str, float]:
         """NumPy配列からゾンビを予測（YOLOの切り出し画像用）
 
         Args:

@@ -80,7 +80,7 @@ class ZombieDetector:
         self.cpu_check_interval = 10  # CPU使用率チェックの間隔（秒）
         self.adaptive_interval = PERFORMANCE_SETTINGS["frame_interval"]
         self.resize_factor = PERFORMANCE_SETTINGS["resize_factor"]
-        self.skip_ratio = PERFORMANCE_SETTINGS["skip_ratio"]
+        self.skip_ratio: float = float(PERFORMANCE_SETTINGS["skip_ratio"])
         self.cpu_threshold = PERFORMANCE_SETTINGS["cpu_threshold"]
 
         # GPU設定
@@ -98,14 +98,14 @@ class ZombieDetector:
 
         # 検出履歴の初期化（パラメータ調整）
         self.detection_history: List[bool] = []
-        self.history_size = 3
-        self.required_consecutive_detections = 1  # 緩和：1フレームの検出でOKに変更
+        self.history_size: int = 3
+        self.required_consecutive_detections: int = 1  # 緩和：1フレームの検出でOKに変更
 
         # クールダウン時間の調整
         self.cooldown_timestamps: Dict[str, float] = {
-            "few": 0,  # 少数ゾンビ（1〜4体）
-            "warning": 0,  # 警戒レベル（5〜9体）
-            "many": 0,  # 多数ゾンビ（10体以上）
+            "few": 0.0,  # 少数ゾンビ（1〜4体）
+            "warning": 0.0,  # 警戒レベル（5〜9体）
+            "many": 0.0,  # 多数ゾンビ（10体以上）
         }
         self.cooldown_periods: Dict[str, int] = {
             "few": 5,  # 少数ゾンビ: 5秒
@@ -211,7 +211,7 @@ class ZombieDetector:
         callback: Optional[Callable[[int, Any], Any]] = None,
         few_zombies_callback: Optional[Callable[[int, Any], Any]] = None,
         warning_zombies_callback: Optional[Callable[[int, Any], Any]] = None,
-    ) -> asyncio.Task:
+    ) -> asyncio.Task[Any]:
         """
         ゾンビ検出監視を開始する
 

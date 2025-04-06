@@ -196,7 +196,7 @@ class ZombieClassifier:
             # 訓練フェーズ
             self.model.train()
             train_loss = 0
-            train_correct = 0
+            train_correct: float = 0
             train_total = 0
 
             for inputs, labels in self.train_loader:
@@ -224,7 +224,7 @@ class ZombieClassifier:
             # 検証フェーズ
             self.model.eval()
             valid_loss = 0
-            valid_correct = 0
+            valid_correct: float = 0
             valid_total = 0
 
             with torch.no_grad():

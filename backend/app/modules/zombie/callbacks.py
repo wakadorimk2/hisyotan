@@ -12,6 +12,7 @@ from typing import (
     Any,
     Coroutine,
     Dict,
+    List,
     Optional,
     TypeVar,
 )
@@ -28,16 +29,16 @@ settings = get_settings()
 T = TypeVar("T")
 
 # 最後のコールバック実行時刻
-_last_callback_times = {
+_last_callback_times: Dict[str, float] = {
     "zombie_alert": 0.0,
     "zombie_few_alert": 0.0,
     "zombie_warning": 0.0,
 }
 
 # デバウンス間隔（秒）
-DEFAULT_DEBOUNCE_TIME = 10.0  # デフォルト10秒
-ALERT_DEBOUNCE_TIME = 30.0  # アラートは30秒
-WARNING_DEBOUNCE_TIME = 20.0  # 警告は20秒
+DEFAULT_DEBOUNCE_TIME: float = 10.0  # デフォルト10秒
+ALERT_DEBOUNCE_TIME: float = 30.0  # アラートは30秒
+WARNING_DEBOUNCE_TIME: float = 20.0  # 警告は20秒
 
 
 def is_callback_throttled(callback_type: str) -> bool:
@@ -50,9 +51,9 @@ def is_callback_throttled(callback_type: str) -> bool:
     Returns:
         bool: デバウンス中の場合はTrue
     """
-    current_time = time.time()
-    last_time = _last_callback_times.get(callback_type, 0)
-    debounce_time = (
+    current_time: float = time.time()
+    last_time: float = _last_callback_times.get(callback_type, 0.0)
+    debounce_time: float = (
         ALERT_DEBOUNCE_TIME
         if callback_type == "zombie_alert"
         else WARNING_DEBOUNCE_TIME
@@ -88,8 +89,8 @@ def _zombie_alert_callback(
     from ..ws.manager import send_notification
 
     # ResNetの検出結果を取得
-    resnet_result = False
-    resnet_prob = 0.0
+    resnet_result: bool = False
+    resnet_prob: float = 0.0
 
     if additional_data and "resnet_result" in additional_data:
         resnet_result = additional_data.get("resnet_result", False)
@@ -114,7 +115,7 @@ def _zombie_alert_callback(
         return
 
     # 通知メッセージの作成
-    message_suffix = ""
+    message_suffix: str = ""
     if not resnet_result and resnet_prob < 0.3:
         message_suffix = "（誤検出の可能性あり）"
 
@@ -133,7 +134,7 @@ def _zombie_alert_callback(
         if resnet_result and resnet_prob > 0.7:
             # ResNetも高確率で検出（本当に危険）
             if count >= 15:
-                messages = [
+                messages: List[str] = [
                     "完全に囲まれてる！すぐに逃げて！",
                     "ゾンビの大群よ！早く安全な場所へ！",
                     "もう手遅れかも！このままじゃ危険！",
@@ -185,10 +186,10 @@ def _zombie_alert_callback(
                     "周囲にゾンビが増えてきたわ！",
                 ]
 
-        message = random.choice(messages)
+        message: str = random.choice(messages)
 
         # 音声プリセット選択
-        voice_preset = None
+        voice_preset: Optional[Dict[str, Any]] = None
         if not resnet_result and resnet_prob < 0.3:
             # 誤検出の可能性がある場合は「疑問」プリセット
             voice_preset = settings.VOICE_PRESETS.get(

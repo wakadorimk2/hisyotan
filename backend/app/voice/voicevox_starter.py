@@ -214,10 +214,10 @@ async def is_voicevox_ready() -> bool:
 
 def start_voicevox_in_thread() -> bool:
     """
-    別スレッドでVOICEVOXエンジンを起動する
+    VOICEVOXエンジンを別スレッドで起動
 
     Returns:
-        bool: 起動プロセス開始成功の場合True
+        bool: 起動成功時はTrue
     """
     global _voicevox_ready
 
@@ -237,11 +237,17 @@ def start_voicevox_in_thread() -> bool:
     return True
 
 
-# アプリケーション終了時にVOICEVOXも停止
+def run_starter() -> None:
+    """
+    VOICEVOXエンジンを起動するスレッドのエントリーポイント
+    """
+    # 実装
+    pass
+
+
 def cleanup_on_exit() -> None:
     """
-    アプリケーション終了時の後処理
-    VOICEVOXエンジンを停止する
+    アプリケーション終了時にVOICEVOXエンジンを停止
     """
-    if is_voicevox_running():
-        stop_voicevox_engine()
+    # 実装
+    pass

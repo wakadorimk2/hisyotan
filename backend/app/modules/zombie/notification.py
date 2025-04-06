@@ -8,13 +8,13 @@ logger = logging.getLogger(__name__)
 
 # グローバルロック - 通知処理全体を制御するためのロック
 notification_lock = threading.Lock()
-last_global_notification_time = 0
-GLOBAL_NOTIFICATION_INTERVAL = 5  # 5秒間は異なるルートからの通知も抑制
+last_global_notification_time: float = 0.0
+GLOBAL_NOTIFICATION_INTERVAL: int = 5  # 5秒間は異なるルートからの通知も抑制
 
 
 # 通知抑制フラグを管理するクラス
 class NotificationManager:
-    _instance = None
+    _instance: Optional["NotificationManager"] = None
 
     def __new__(cls) -> "NotificationManager":
         if cls._instance is None:
@@ -142,7 +142,7 @@ class NotificationManager:
             self.active_sources.add(source)
 
             # グローバル変数を更新 (float型に明示的に変換)
-            last_global_notification_time = float(current_time)
+            last_global_notification_time: float = float(current_time)
             self.notification_id += 1
             current_id = self.notification_id
 

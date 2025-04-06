@@ -11,7 +11,7 @@ import random
 import subprocess
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import requests
 
@@ -28,10 +28,10 @@ class VoicePlaybackState:
 
     def __init__(self):
         """初期化"""
-        self.last_voice_time = 0
+        self.last_voice_time: float = 0.0
         self.voice_lock = threading.Lock()
         self.audio_playing = False
-        self.last_message_cache = {}
+        self.last_message_cache: Dict[str, Tuple[str, float]] = {}
 
     def is_message_duplicate(
         self, message_type: str, message: str, cooldown: float = 3.0
@@ -319,7 +319,7 @@ class VoiceService:
 
             # 音声再生中フラグを設定
             _playback_state.register_audio_playback(
-                duration=len(text) * 0.15  # テキスト長から推定再生時間を計算
+                duration=float(len(text) * 0.15)  # テキスト長から推定再生時間を計算
             )
 
             # 音声を再生（非同期）

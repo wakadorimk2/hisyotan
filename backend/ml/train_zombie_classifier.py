@@ -2,6 +2,7 @@ import argparse
 import os
 import random
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,10 +14,10 @@ from torch.utils.data import DataLoader, Dataset
 from torchvision import models, transforms
 
 
-class ZombieDataset(Dataset):
+class ZombieDataset(Dataset[Tuple[Any, int]]):
     """ゾンビ分類用のデータセット"""
 
-    def __init__(self, root_dir, transform=None, train=True, valid_split=0.2):
+    def __init__(self, root_dir, transform=None, train=True, valid_split=0.2) -> None:
         """
         Args:
             root_dir: データセットのルートディレクトリ
@@ -34,7 +35,7 @@ class ZombieDataset(Dataset):
         self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
 
         # 画像パスとラベルのリストを作成
-        self.images = []
+        self.images: List[Tuple[Path, int]] = []
         for cls in self.classes:
             class_dir = self.root_dir / cls
             for img_path in class_dir.glob("*.png"):
@@ -50,10 +51,10 @@ class ZombieDataset(Dataset):
         else:
             self.images = self.images[split_idx:]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.images)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> Tuple[Any, int]:
         img_path, label = self.images[idx]
         image = Image.open(img_path).convert("RGB")
 
@@ -63,7 +64,9 @@ class ZombieDataset(Dataset):
         return image, label
 
 
-def train_model(data_path, batch_size, epochs, lr, finetune, model_save_path):
+def train_model(
+    data_path, batch_size, epochs, lr, finetune, model_save_path
+) -> Tuple[Dict[str, List[float]], str]:
     """モデルを訓練する関数
 
     Args:
@@ -153,13 +156,18 @@ def train_model(data_path, batch_size, epochs, lr, finetune, model_save_path):
     )
 
     # 学習履歴
-    history = {"train_loss": [], "train_acc": [], "valid_loss": [], "valid_acc": []}
+    history: Dict[str, List[float]] = {
+        "train_loss": [],
+        "train_acc": [],
+        "valid_loss": [],
+        "valid_acc": [],
+    }
     best_valid_acc = 0
     best_model_path = None
 
     # 予測ラベルと真のラベルを保存する配列
-    all_preds = []
-    all_labels = []
+    all_preds: List[int] = []
+    all_labels: List[int] = []
 
     # 学習ループ
     print(f"開始: {epochs}エポックの学習を開始します...")
@@ -167,7 +175,7 @@ def train_model(data_path, batch_size, epochs, lr, finetune, model_save_path):
         # 訓練フェーズ
         model.train()
         train_loss = 0
-        train_correct = 0
+        train_correct: float = 0
         train_total = 0
 
         for inputs, labels in train_loader:
@@ -195,7 +203,7 @@ def train_model(data_path, batch_size, epochs, lr, finetune, model_save_path):
         # 検証フェーズ
         model.eval()
         valid_loss = 0
-        valid_correct = 0
+        valid_correct: float = 0
         valid_total = 0
 
         # 最終エポックの場合、予測と真のラベルを保存

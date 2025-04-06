@@ -7,7 +7,7 @@
 import asyncio
 import logging
 import os
-from typing import Optional
+from typing import Any, List, Optional
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
@@ -21,13 +21,13 @@ class ZombieService:
     ゾンビ検出サービスクラス
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         ZombieServiceのコンストラクタ
         """
-        self.is_initialized = False
-        self.detector = None
-        self.monitoring_task = None
+        self.is_initialized: bool = False
+        self.detector: Optional[Any] = None
+        self.monitoring_task: Optional[asyncio.Task[Any]] = None
 
     async def initialize(self) -> bool:
         """
@@ -91,11 +91,13 @@ class ZombieService:
             # 対象クラスIDs
             # COCO データセットでは: 0=人物, 他に可能性があるクラス: 1=自転車, 2=自動車, 3=バイクなど
             # 複数クラスを検出するようにする（人物と類似クラス）
-            target_classes = [0]  # デフォルトは人物クラスのみ
+            target_classes: List[int] = [0]  # デフォルトは人物クラスのみ
 
             # 環境変数や設定から対象クラスを読み込む
             try:
-                target_classes_str = os.environ.get("ZOMBIE_TARGET_CLASSES", None)
+                target_classes_str: Optional[str] = os.environ.get(
+                    "ZOMBIE_TARGET_CLASSES", None
+                )
                 if target_classes_str:
                     # カンマ区切りの文字列からリストへ変換
                     target_classes = [
@@ -130,12 +132,12 @@ class ZombieService:
             logger.error(traceback.format_exc())
             return False
 
-    async def start_monitoring(self) -> Optional[asyncio.Task]:
+    async def start_monitoring(self) -> Optional[asyncio.Task[Any]]:
         """
         ゾンビ検出監視を開始する
 
         Returns:
-            Optional[asyncio.Task]: 監視タスク、失敗時はNone
+            Optional[asyncio.Task[Any]]: 監視タスク、失敗時はNone
         """
         # サービスが初期化されていなければ初期化
         if not self.is_initialized:

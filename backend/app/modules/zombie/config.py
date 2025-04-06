@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 # ロガー設定
 logger = logging.getLogger(__name__)
@@ -18,19 +18,19 @@ class ZombieConfig:
     機能のON/OFF状態や設定値を保持します
     """
 
-    _instance = None
+    _instance: Optional["ZombieConfig"] = None
 
-    def __new__(cls):
+    def __new__(cls) -> "ZombieConfig":
         """シングルトンパターンの実装"""
         if cls._instance is None:
             cls._instance = super(ZombieConfig, cls).__new__(cls)
             cls._instance._initialize()
         return cls._instance
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         """初期設定値の設定"""
         # 設定値の初期化
-        self._settings = {
+        self._settings: Dict[str, Any] = {
             # 機能の有効/無効設定
             "zombieDetection": True,  # ゾンビ検出機能
             "voiceNotification": True,  # 音声通知機能

@@ -224,7 +224,7 @@ def analyze_emotion(text: str) -> Tuple[str, float]:
 
 def analyze_urgency(text: str) -> Tuple[str, float]:
     """
-    テキストの緊急度を分析します
+    テキストの緊急度を分析して最も一致する緊急度とそのスコアを返します
 
     Args:
         text: 分析するテキスト

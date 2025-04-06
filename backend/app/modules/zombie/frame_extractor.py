@@ -6,7 +6,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 import cv2
 from tqdm import tqdm
@@ -47,7 +47,7 @@ class FrameExtractor:
             file_prefix: 出力ファイル名の接頭辞
             use_gpu: GPUを使用するかどうか
         """
-        self.input_path = Path(input_path)
+        self.input_path: Path = Path(input_path)
 
         # 入力ファイルの存在確認
         if not self.input_path.exists():
@@ -56,24 +56,24 @@ class FrameExtractor:
         # 出力ディレクトリの設定
         if output_dir is None:
             # 入力ファイル名から出力ディレクトリを生成
-            video_name = self.input_path.stem
-            self.output_dir = Path("data/datasets/frames") / video_name
+            video_name: str = self.input_path.stem
+            self.output_dir: Path = Path("data/datasets/frames") / video_name
         else:
-            self.output_dir = Path(output_dir)
+            self.output_dir: Path = Path(output_dir)
 
         # フレーム間隔とファイル名接頭辞
-        self.frame_interval = frame_interval
-        self.file_prefix = file_prefix
+        self.frame_interval: int = frame_interval
+        self.file_prefix: str = file_prefix
 
         # GPU使用の設定
-        self.use_gpu = use_gpu
-        self.has_cuda = False
+        self.use_gpu: bool = use_gpu
+        self.has_cuda: bool = False
 
         # CUDAが利用可能かチェック
         if self.use_gpu:
             if cv2.cuda.getCudaEnabledDeviceCount() > 0:
                 self.has_cuda = True
-                gpu_name = cv2.cuda.getDevice()
+                gpu_name: str = cv2.cuda.getDevice()
                 logger.info(f"✨ GPU処理が有効になりました！デバイス: {gpu_name} ✨")
             else:
                 logger.warning(
@@ -98,10 +98,10 @@ class FrameExtractor:
             return False
 
         # 動画の情報を取得
-        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        fps = cap.get(cv2.CAP_PROP_FPS)
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        total_frames: int = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps: float = cap.get(cv2.CAP_PROP_FPS)
+        width: int = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height: int = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         logger.info(f"動画情報: {width}x{height}, {fps}fps, 全{total_frames}フレーム")
         logger.info(
@@ -113,18 +113,18 @@ class FrameExtractor:
         self.create_output_directory()
 
         # 抽出するフレーム数の計算
-        frames_to_extract = total_frames // self.frame_interval
+        frames_to_extract: int = total_frames // self.frame_interval
 
         # フレーム抽出
-        frame_count = 0
-        saved_count = 0
+        frame_count: int = 0
+        saved_count: int = 0
 
         # GPUアップロードストリームの作成（GPUモード時）
         if self.has_cuda:
             gpu_stream = cv2.cuda.Stream()
 
         # プログレスバーの設定
-        gpu_text = "🚀 GPU" if self.has_cuda else "💻 CPU"
+        gpu_text: str = "🚀 GPU" if self.has_cuda else "💻 CPU"
         pbar = tqdm(
             total=frames_to_extract,
             desc=f"✨ ふにゃふにゃ抽出中 ({gpu_text}) ✨",
@@ -132,6 +132,8 @@ class FrameExtractor:
         )
 
         while True:
+            ret: bool
+            frame: Any
             ret, frame = cap.read()
 
             # 動画の終わりに達したらループを抜ける
@@ -157,8 +159,8 @@ class FrameExtractor:
                     result_frame = frame
 
                 # 保存するファイル名（4桁の連番）
-                file_name = f"{self.file_prefix}{saved_count + 1:04d}.jpg"
-                file_path = self.output_dir / file_name
+                file_name: str = f"{self.file_prefix}{saved_count + 1:04d}.jpg"
+                file_path: Path = self.output_dir / file_name
 
                 # フレームを保存
                 cv2.imwrite(str(file_path), result_frame)

@@ -7,14 +7,15 @@
 import logging
 import os
 from datetime import datetime
+from typing import Any, List, Optional
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
 
 # グローバル変数
-is_monitoring = False
-zombie_detector = None
-zombie_monitor_task = None
+is_monitoring: bool = False
+zombie_detector: Optional[Any] = None
+zombie_monitor_task: Optional[Any] = None
 
 
 # モニタリングの状態を取得
@@ -35,7 +36,7 @@ def is_monitoring_started() -> bool:
 
 
 # ゾンビ監視を開始
-async def start_zombie_monitoring() -> None:
+async def start_zombie_monitoring() -> Optional[Any]:
     """
     ゾンビ検出の監視を開始
 
@@ -55,26 +56,26 @@ async def start_zombie_monitoring() -> None:
         return None
 
     # 設定を取得
-    config = Settings()
-    LOGS_DIR = config.LOGS_DIR
-    DEBUG_MODE = config.DEBUG_MODE
+    config: Settings = Settings()
+    LOGS_DIR: str = config.LOGS_DIR
+    DEBUG_MODE: bool = config.DEBUG_MODE
 
     # ゾンビ検出器のインポート
     try:
         from .detector_core import ZombieDetector
 
         # モデルのパスを取得
-        model_name = "yolov8n.pt"  # デフォルトモデル
-        data_models_dir = os.path.join(
+        model_name: str = "yolov8n.pt"  # デフォルトモデル
+        data_models_dir: str = os.path.join(
             os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "models"
         )
-        model_path = os.path.join(data_models_dir, model_name)
+        model_path: str = os.path.join(data_models_dir, model_name)
 
         # モデルファイルの存在確認
         if not os.path.exists(model_path):
             logger.warning(f"モデルファイルが見つかりません: {model_path}")
             # バックアップパスを試す
-            backup_paths = [
+            backup_paths: List[str] = [
                 os.path.join(
                     os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
                     model_name,
@@ -141,7 +142,7 @@ async def start_zombie_monitoring() -> None:
 
 
 # ゾンビ検出のログを記録
-def log_zombie_detection(count: int):
+def log_zombie_detection(count: int) -> None:
     """
     ゾンビ検出数をログファイルに記録
 
@@ -152,19 +153,19 @@ def log_zombie_detection(count: int):
 
     try:
         # 設定を取得
-        config = Settings()
-        LOGS_DIR = config.LOGS_DIR
+        config: Settings = Settings()
+        LOGS_DIR: str = config.LOGS_DIR
 
         # ログディレクトリの確認
         os.makedirs(LOGS_DIR, exist_ok=True)
 
         # 日付ごとのログファイル名を生成
-        today = datetime.now().strftime("%Y-%m-%d")
-        log_file = os.path.join(LOGS_DIR, f"zombie_detection_{today}.log")
+        today: str = datetime.now().strftime("%Y-%m-%d")
+        log_file: str = os.path.join(LOGS_DIR, f"zombie_detection_{today}.log")
 
         # タイムスタンプと検出数を記録
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        log_entry = f"{timestamp} - ゾンビ検出数: {count}体\n"
+        timestamp: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_entry: str = f"{timestamp} - ゾンビ検出数: {count}体\n"
 
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(log_entry)

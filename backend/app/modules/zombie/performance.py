@@ -1,18 +1,18 @@
 import sys
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 # パフォーマンス設定のデフォルト値
-DEFAULT_FRAME_INTERVAL = 0.3  # 0.3秒間隔で画面取得
-DEFAULT_RESIZE_FACTOR = 0.65  # 画像を65%に縮小（以前は50%）
-DEFAULT_SKIP_RATIO = 1  # 毎回処理（スキップなし）
-DEFAULT_CPU_THRESHOLD = 80  # CPU使用率がこの値を超えると処理頻度を下げる
+DEFAULT_FRAME_INTERVAL: float = 0.3  # 0.3秒間隔で画面取得
+DEFAULT_RESIZE_FACTOR: float = 0.65  # 画像を65%に縮小（以前は50%）
+DEFAULT_SKIP_RATIO: int = 1  # 毎回処理（スキップなし）
+DEFAULT_CPU_THRESHOLD: int = 80  # CPU使用率がこの値を超えると処理頻度を下げる
 
 
 # コマンドライン引数から設定を取得
 def get_performance_settings() -> Dict[str, Union[float, int]]:
     # コマンドライン引数をパース
-    args = sys.argv
-    settings = {
+    args: List[str] = sys.argv
+    settings: Dict[str, Union[float, int]] = {
         "frame_interval": DEFAULT_FRAME_INTERVAL,
         "resize_factor": DEFAULT_RESIZE_FACTOR,
         "skip_ratio": DEFAULT_SKIP_RATIO,
@@ -70,4 +70,4 @@ def get_performance_settings() -> Dict[str, Union[float, int]]:
 
 
 # パフォーマンス設定を取得
-PERFORMANCE_SETTINGS = get_performance_settings()
+PERFORMANCE_SETTINGS: Dict[str, Union[float, int]] = get_performance_settings()
