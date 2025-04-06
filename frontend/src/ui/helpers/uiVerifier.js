@@ -1,7 +1,6 @@
 /**
  * DOM構造とスタイルを確認し、問題があれば修正する
  */
-import { clearText } from './speechRenderer.js';
 
 export function verifyAndFixUIStructure() {
   console.log('🔍 UI構造を検証・修復します');

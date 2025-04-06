@@ -13,7 +13,7 @@ import { logDebug, logError } from '@core/logger.js';
 // } from '@ui/uiHelper.js';
 import { initUIElements } from '@ui/helpers/uiBuilder.js';
 import { showBubble, hideBubble, setText, clearText } from '@ui/helpers/speechRenderer.js';
-import { setExpression, stopTalking } from '../expressionManager.js';
+import { stopTalking } from '../expressionManager.js';
 // import { 
 //   formatMessage, 
 //   forceShowBubble, 
@@ -30,7 +30,7 @@ import {
   // eslint-disable-next-line no-unused-vars
   checkVoicevoxConnection as checkVoicevoxConnectionAPI
 } from '@voice/speechVoice.js';
-import { speakText, stopSpeaking, isSpeaking } from '@voice/speechVoice.js';
+import { speakText, stopSpeaking } from '@voice/speechVoice.js';
 // import {
 //   showHordeModeToggle as showHordeModeToggleUI,
 //   getHordeModeState,
@@ -45,15 +45,6 @@ import { speakText, stopSpeaking, isSpeaking } from '@voice/speechVoice.js';
 function displayError(message) {
   logError(`エラー: ${message}`);
   showBubble('error', message);
-}
-
-/**
- * エラーを表示すべきかどうかを判断する (shouldShowErrorの代替関数)
- * @returns {boolean} エラーを表示すべきかどうか
- */
-function shouldDisplayError() {
-  // 常にエラーを表示する
-  return true;
 }
 
 /**
@@ -177,7 +168,6 @@ export class SpeechManager {
       // 自動非表示が有効で、かつ音声再生に成功した場合のみ吹き出しを隠す
       if (autoHide && audioSuccess) {
         // 少し遅延させて吹き出しを非表示にする
-        const self = this; // this参照を保持するための変数
         const hideTimeoutId = setTimeout(async () => {
           logDebug(`🧹 吹き出しを非表示にします（自動非表示タイマー: ${actualDelay}ms後）`);
           hideBubble();
