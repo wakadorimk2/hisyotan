@@ -20,12 +20,6 @@ import '@ui/styles/components/_assistant.css';
 // 肉球ボタン用スタイルを明示的にインポート
 import '@ui/styles/components/_paw-button.css';
 
-// グローバル要素の参照を保持
-let pawButton;
-let quitButton;
-let speechBubble;
-let speechText;
-let assistantImage;
 
 
 

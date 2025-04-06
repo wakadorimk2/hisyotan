@@ -20,9 +20,6 @@ console.log('🌸 renderer.js が読み込まれました');
 console.log('🔍 ビルドモード:', import.meta.env.MODE);
 console.log('📁 現在の実行パス:', import.meta.env.BASE_URL);
 
-// 初期化状態を追跡するフラグ
-let isAppInitialized = false;
-
 // グローバルアクセス用に設定
 window.assistantUI = assistantUI;
 window.settingsApi = apiClient;
@@ -33,9 +30,9 @@ try {
     console.error('❌ speechManagerのインポートに失敗しました');
   } else {
     window.speechManager = speechManager;
-    console.log('🎤 SpeechManager をグローバルに登録しました:', 
+    console.log('🎤 SpeechManager をグローバルに登録しました:',
       Object.keys(speechManager).join(', '));
-      
+
     // メソッドの存在確認
     if (typeof speechManager.speak === 'function') {
       console.log('✅ speechManager.speakメソッドが存在します');
@@ -67,12 +64,12 @@ if (!window.speechManager) {
 async function init() {
   try {
     console.log('🚀 レンダラープロセスを初期化します');
-    
+
     // アシスタントUIの初期化
     initAssistantUI();
-    
+
     // ここにアプリケーションの初期化コードを追加
-    
+
     console.log('✅ レンダラープロセスの初期化が完了しました');
   } catch (error) {
     console.error('⚠️ レンダラープロセスの初期化エラー:', error);
@@ -85,7 +82,7 @@ init();
 // DOM構築後の初期化
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🌟 DOMContentLoaded: UIの初期化を開始します');
-  
+
   // 少し遅延を入れてDOM要素が完全に読み込まれるのを確保
   setTimeout(async () => {
     await initializeApp();
@@ -101,29 +98,29 @@ document.addEventListener('DOMContentLoaded', () => {
 // デバッグ用：UI要素の存在確認
 function checkUIElements(includeStyles = false) {
   const elements = [
-    'paw-button', 'quit-button', 'speechBubble', 
+    'paw-button', 'quit-button', 'speechBubble',
     'speechText', 'assistantImage'
     // 'errorBubble' を削除（不要なため）
   ];
-  
+
   console.log('🔍 UI要素チェック結果:');
   elements.forEach(id => {
     const el = document.getElementById(id);
     console.log(`${id}: ${el ? '✅ 存在します' : '❌ 見つかりません'}`);
-    
+
     // スタイル情報も表示する場合
     if (includeStyles && el) {
       const computedStyle = window.getComputedStyle(el);
       console.log(`  - display: ${computedStyle.display}`);
       console.log(`  - visibility: ${computedStyle.visibility}`);
       console.log(`  - opacity: ${computedStyle.opacity}`);
-      
+
       if (id === 'assistantImage') {
         // 立ち絵の追加チェック
         console.log(`  - width: ${computedStyle.width}`);
         console.log(`  - height: ${computedStyle.height}`);
         console.log(`  - src: ${el.src}`);
-        
+
         // 立ち絵が表示されていない場合は修正
         if (computedStyle.display === 'none' || parseFloat(computedStyle.opacity) < 0.1) {
           console.log('立ち絵が表示されていません。表示設定を適用します。');
@@ -132,12 +129,12 @@ function checkUIElements(includeStyles = false) {
           el.style.visibility = 'visible';
         }
       }
-      
+
       // pawButtonの見た目を確認・修正
       if (id === 'paw-button') {
         console.log(`  - backgroundColor: ${computedStyle.backgroundColor}`);
         console.log(`  - backgroundImage: ${computedStyle.backgroundImage}`);
-        
+
         // 肉球ボタンの外観を強化（白い四角の問題を解決）
         if (computedStyle.backgroundImage === 'none' || computedStyle.backgroundColor === 'rgba(0, 0, 0, 0)') {
           console.log('肉球ボタンの見た目に問題があります。スタイルを強化します。');
@@ -157,14 +154,14 @@ if (window.electron && window.electron.ipcRenderer) {
   // SpeechManager操作を受け取るリスナー
   window.electron.ipcRenderer.on('speech-manager-operation', (data) => {
     console.log('🎯 SpeechManager操作イベントを受信:', data);
-    
+
     if (!window.speechManager) {
       console.error('speechManagerが利用できません');
       return;
     }
-    
+
     const { method, args } = data;
-    
+
     // メソッドが存在するか確認
     if (typeof window.speechManager[method] === 'function') {
       // メソッドを呼び出す

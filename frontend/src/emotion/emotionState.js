@@ -37,13 +37,13 @@ const initialEmotionState = {
     excitement: 0,   // 興奮度
     sleepiness: 0    // 眠気
   },
-  
+
   // 現在の主要な感情タイプ
   currentEmotion: EMOTION_TYPES.NORMAL,
-  
+
   // 最後に発動した感情イベント
   lastEmotionEvent: null,
-  
+
   // 感情変化タイムスタンプ
   lastChangeTime: Date.now()
 };
@@ -71,22 +71,22 @@ export function getEmotionState() {
 export function setEmotionValue(emotionType, value) {
   // 値の範囲を制限
   const clampedValue = Math.max(-100, Math.min(100, value));
-  
+
   // 前の値を保持
   const prevValue = emotionState.values[emotionType];
-  
+
   if (emotionState.values.hasOwnProperty(emotionType)) {
     // 値を更新
     emotionState.values[emotionType] = clampedValue;
-    
+
     // 更新時間を記録
     emotionState.lastChangeTime = Date.now();
-    
+
     // 変化量が一定以上なら主要感情を更新
     if (Math.abs(clampedValue - prevValue) >= 20) {
       updateCurrentEmotion();
     }
-    
+
     // 変更を通知
     notifyEmotionChange({
       type: 'valueChange',
@@ -95,12 +95,12 @@ export function setEmotionValue(emotionType, value) {
       newValue: clampedValue,
       state: getEmotionState()
     });
-    
+
     logDebug(`感情値を更新: ${emotionType} = ${clampedValue} (前: ${prevValue})`);
   } else {
     logDebug(`未知の感情タイプ: ${emotionType}`);
   }
-  
+
   return getEmotionState();
 }
 
@@ -112,15 +112,15 @@ export function setEmotionValue(emotionType, value) {
  */
 export function setEmotion(emotion, eventType = 'manual') {
   const prevEmotion = emotionState.currentEmotion;
-  
+
   // 感情を更新
   emotionState.currentEmotion = emotion;
   emotionState.lastEmotionEvent = eventType;
   emotionState.lastChangeTime = Date.now();
-  
+
   // 感情タイプに応じて基本感情値も調整
   adjustEmotionValues(emotion);
-  
+
   // 変更を通知
   notifyEmotionChange({
     type: 'emotionChange',
@@ -129,9 +129,9 @@ export function setEmotion(emotion, eventType = 'manual') {
     eventType,
     state: getEmotionState()
   });
-  
+
   logDebug(`感情タイプを設定: ${emotion} (前: ${prevEmotion}, イベント: ${eventType})`);
-  
+
   return getEmotionState();
 }
 
@@ -141,7 +141,7 @@ export function setEmotion(emotion, eventType = 'manual') {
  */
 function updateCurrentEmotion() {
   const { happiness, anxiety, excitement, sleepiness } = emotionState.values;
-  
+
   // 最も強い感情を特定
   if (sleepiness > 50 && sleepiness > anxiety && sleepiness > excitement) {
     emotionState.currentEmotion = EMOTION_TYPES.SLEEPY;
@@ -225,7 +225,7 @@ function adjustEmotionValues(emotion) {
  */
 export function onEmotionChange(listener) {
   emotionChangeListeners.add(listener);
-  
+
   // 登録解除用の関数を返す
   return () => {
     emotionChangeListeners.delete(listener);
@@ -253,20 +253,20 @@ function notifyEmotionChange(event) {
  */
 export function updateEmotionOverTime(deltaTime) {
   const decayFactor = 0.05 * (deltaTime / 1000); // 5%/秒の減衰
-  
+
   // 各感情値を少しずつ0に近づける
   emotionState.values.happiness *= (1 - decayFactor);
   emotionState.values.anxiety *= (1 - decayFactor);
   emotionState.values.excitement *= (1 - decayFactor);
   emotionState.values.sleepiness *= (1 - decayFactor);
-  
+
   // 値が十分小さくなったら0にする
   Object.keys(emotionState.values).forEach(key => {
     if (Math.abs(emotionState.values[key]) < 5) {
       emotionState.values[key] = 0;
     }
   });
-  
+
   // 値の変化に応じて現在の感情を更新
   updateCurrentEmotion();
 }
@@ -277,15 +277,15 @@ export function updateEmotionOverTime(deltaTime) {
  */
 export function resetEmotionState() {
   emotionState = { ...initialEmotionState };
-  
+
   // 変更を通知
   notifyEmotionChange({
     type: 'reset',
     state: getEmotionState()
   });
-  
+
   logDebug('感情状態をリセットしました');
-  
+
   return getEmotionState();
 }
 

@@ -21,11 +21,10 @@ if (process.platform === 'win32') {
   }
 }
 
-import { app, BrowserWindow, ipcMain, shell, session } from 'electron';
-import fs from 'fs';
+import { app, BrowserWindow, ipcMain, session } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { spawn, exec } from 'child_process';
+import { spawn } from 'child_process';
 import fetch from 'node-fetch';
 import iconv from 'iconv-lite';
 
@@ -71,12 +70,8 @@ if (preloadPathFromEnv) {
 // メインウィンドウ
 let mainWindow = null;
 
-// 感情管理
-let currentEmotion = 0; // -100〜100の範囲で感情を管理
-
 // バックエンドサーバー起動管理
 let backendProcess = null;
-let isBackendInitialized = false;
 let backendPID = null;
 
 // CSP設定を開発モードで無効化する処理（開発時のみ）
@@ -214,6 +209,9 @@ async function checkBackendConnection() {
 }
 
 // バックエンドプロセスのPIDを取得する関数
+// [将来使用予定] Electron終了時にバックエンドプロセス（Python）も終了させるためのPID取得関数
+// 未使用だが保持しておくこと（Ctrl+CでのプロセスKill対応を予定）
+// eslint-disable-next-line no-unused-vars
 async function getBackendPID() {
   try {
     console.log('バックエンドプロセスのPIDを取得します...');
@@ -409,23 +407,6 @@ function setupIPC() {
   });
 
   console.log('✨ IPC通信の設定が完了しました');
-}
-
-// 感情ラベルを取得
-function getEmotionLabel(value) {
-  if (value >= 80) return 'very_happy';
-  if (value >= 40) return 'happy';
-  if (value >= 15) return 'slightly_happy';
-  if (value <= -80) return 'very_angry';
-  if (value <= -40) return 'angry';
-  if (value <= -15) return 'slightly_angry';
-  return 'normal';
-}
-
-// グローバルショートカットの登録
-function registerGlobalShortcuts() {
-  // TODO: グローバルショートカットの登録処理を実装
-  console.log('グローバルショートカットの登録は未実装です');
 }
 
 /**
