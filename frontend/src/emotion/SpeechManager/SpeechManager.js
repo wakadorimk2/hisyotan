@@ -12,7 +12,7 @@ import { logDebug, logError } from '@core/logger.js';
 //   renderSettingUI 
 // } from '@ui/uiHelper.js';
 import { initUIElements } from '@ui/helpers/uiBuilder.js';
-import { showBubble, hideBubble, setText } from '@ui/helpers/speechRenderer.js';
+import { showBubble, hideBubble, setText, clearText } from '@ui/helpers/speechRenderer.js';
 import { setExpression, stopTalking } from '../expressionManager.js';
 // import { 
 //   formatMessage, 
@@ -30,7 +30,7 @@ import {
   // eslint-disable-next-line no-unused-vars
   checkVoicevoxConnection as checkVoicevoxConnectionAPI
 } from '@voice/speechVoice.js';
-import { speakText } from '@voice/speechVoice.js';
+import { speakText, stopSpeaking, isSpeaking } from '@voice/speechVoice.js';
 // import {
 //   showHordeModeToggle as showHordeModeToggleUI,
 //   getHordeModeState,
@@ -111,6 +111,15 @@ export class SpeechManager {
   }
 
   /**
+   * シンプルなテキストから音声合成と表示を行う（互換性のためspeakSimpleも残す）
+   * @param {string} text - 表示＆音声化する文字列
+   * @returns {Promise<boolean>} 処理が成功したかどうか
+   */
+  speak(text) {
+    return this.speakWithObject({ text });
+  }
+
+  /**
    * UI表示と音声再生を統合した発話メソッド
    * @param {Object} params - パラメータオブジェクト
    * @param {string} params.text - 表示＆音声化する文字列
@@ -134,7 +143,13 @@ export class SpeechManager {
 
       // 自動非表示が有効なら吹き出しを隠す
       if (autoHide) {
-        hideBubble();
+        // 少し遅延させて吹き出しを非表示にする
+        const hideTimeoutId = setTimeout(() => {
+          hideBubble();
+        }, 1000); // 1秒後に非表示
+
+        // タイムアウトをMapに保存（type をキーとして使用）
+        this.hideTimeoutMap.set(type, hideTimeoutId);
       }
 
       return true;
@@ -154,7 +169,7 @@ export class SpeechManager {
    * @param {string} presetSound - 先行再生するプリセット音声の名前（オプション）
    * @param {boolean} autoClose - 自動で閉じるかどうか（デフォルトはtrue）
    */
-  async speak(message, emotion = 'normal', displayTime = null, animation = null, eventType = 'default', presetSound = null, autoClose = true) {
+  async speakLegacy(message, emotion = 'normal', displayTime = null, animation = null, eventType = 'default', presetSound = null, autoClose = true) {
     try {
       // 基本的なセリフオブジェクトを作成（後方互換性のため）
       this.currentSpeech = {
@@ -238,11 +253,13 @@ export class SpeechManager {
    * @param {number} duration - 表示時間
    */
   sayMessage(message, emotion = 'normal', duration = 5000) {
-    // テキストを吹き出しに表示
-    displayTextInBubble(message);
-
-    // 音声合成リクエスト処理（オプションなし）
-    this.speak(message, emotion, duration, null, 'say_message');
+    // 新しいspeakWithObjectを使用して表示と発話を行う
+    return this.speakWithObject({
+      text: message,
+      emotion: emotion,
+      type: 'normal',
+      autoHide: true
+    });
   }
 
   /**
@@ -324,37 +341,39 @@ export class SpeechManager {
   }
 
   /**
-   * 現在の音声再生をすべて停止する
-   * @returns {boolean} 停止に成功したらtrue
+   * すべての発話を停止し、UIをクリアする
    */
   stopAllSpeech() {
     try {
-      logDebug('SpeechManager: すべての音声再生を停止します');
+      logDebug('すべての発話を停止します');
 
-      // 1. すべての非表示タイマーをクリア
-      if (this.hideTimeoutMap && this.hideTimeoutMap.size > 0) {
-        logDebug(`${this.hideTimeoutMap.size}個の非表示タイマーを一括クリアします`);
-        for (const [key, timerId] of this.hideTimeoutMap.entries()) {
-          clearTimeout(timerId);
-          logDebug(`タイマー ${key} をクリアしました`);
-        }
-        this.hideTimeoutMap.clear();
+      // 音声再生を停止
+      if (typeof stopSpeaking === 'function') {
+        stopSpeaking();
+      } else if (typeof stopPlaying === 'function') {
+        stopPlaying();
       }
 
-      // 2. 音声再生を停止
-      stopPlaying();
-
-      // 3. 口パクや表情を通常に戻す
+      // 口パクアニメーションを停止
       stopTalking();
-      setExpression('normal');
 
-      // 4. 現在のセリフ状態をリセット
-      this.currentSpeechEvent = null;
-      this.hasAlreadyForced = false;
+      // 吹き出しを非表示にする
+      hideBubble();
 
+      // 吹き出しのテキストをクリア
+      clearText();
+
+      // タイムアウトをクリア
+      for (const [key, timerId] of this.hideTimeoutMap.entries()) {
+        clearTimeout(timerId);
+        logDebug(`タイマー ${key} をクリアしました`);
+      }
+      this.hideTimeoutMap.clear();
+
+      logDebug('すべての発話を停止し、UIをクリアしました');
       return true;
     } catch (error) {
-      logError(`音声停止エラー: ${error.message}`);
+      logError(`停止処理エラー: ${error.message}`);
       return false;
     }
   }

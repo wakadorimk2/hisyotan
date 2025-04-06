@@ -252,6 +252,13 @@ export function stopCurrentPlayback() {
 }
 
 /**
+ * 現在再生中の音声を停止する (stopCurrentPlaybackのエイリアス)
+ */
+export function stopSpeaking() {
+    return stopCurrentPlayback();
+}
+
+/**
  * VOICEVOXサーバーとの接続を確認する
  * @returns {Promise<boolean>} 接続成功したかどうか
  */

@@ -20,7 +20,19 @@ export function setText(text) {
 
     console.log('[setText] 開始: ', text);
 
-    // テキスト要素の取得
+    // 他に同じIDの要素が存在していないかチェック
+    const allTextElements = document.querySelectorAll('#speechText');
+    if (allTextElements.length > 1) {
+        console.warn(`❗speechTextが複数存在しています (${allTextElements.length}個)。競合の可能性あり`);
+        allTextElements.forEach((el, idx) => {
+            if (idx > 0) {
+                console.log(`🗑️ 重複するspeechText (${idx + 1}/${allTextElements.length})を削除します`);
+                el.remove();
+            }
+        });
+    }
+
+    // テキスト要素の取得（重複削除後なので改めて取得）
     const textElement = document.getElementById('speechText');
     if (!textElement) {
         console.error('speechText要素が見つかりません');
@@ -28,6 +40,10 @@ export function setText(text) {
     }
 
     console.log(`📝 テキストを設定: "${text.substring(0, 20)}${text.length > 20 ? '...' : ''}"`);
+
+    // カレントテキストのバックアップ（デバッグ用）
+    const currentText = textElement.textContent;
+    console.log(`📋 設定前の現在値: "${currentText?.substring(0, 15) || '空'}"...`);
 
     // テキスト要素内を空にする前に、明示的にロックをかける
     textElement.dataset.locked = 'true';
@@ -114,6 +130,9 @@ export function setText(text) {
             }
         }
 
+        // 設定内容を確認（デバッグ用）
+        console.log(`✅ setText: テキストを正常に設定しました →`, textElement.textContent);
+
         // 一定時間後にロックを解除（十分に時間を空けて）
         setTimeout(() => {
             // ロックを解除する前に内容を確認
@@ -157,7 +176,19 @@ export function setText(text) {
 export function showBubble(type = 'default', text = 'こんにちは！何かお手伝いしましょうか？') {
     console.log(`🗨️ 吹き出しを表示: ${type} - "${text.substring(0, 15)}..."`);
 
-    // 吹き出し要素の取得
+    // 他に同じIDの要素が存在していないかチェック
+    const allBubbles = document.querySelectorAll('#speechBubble');
+    if (allBubbles.length > 1) {
+        console.warn(`❗speechBubbleが複数存在しています (${allBubbles.length}個)。競合の可能性あり`);
+        allBubbles.forEach((el, idx) => {
+            if (idx > 0) {
+                console.log(`🗑️ 重複するspeechBubble (${idx + 1}/${allBubbles.length})を削除します`);
+                el.remove();
+            }
+        });
+    }
+
+    // 吹き出し要素の取得（重複削除後なので改めて取得）
     const bubble = document.getElementById('speechBubble');
     if (!bubble) {
         console.error('speechBubble要素が見つかりません');
@@ -170,6 +201,9 @@ export function showBubble(type = 'default', text = 'こんにちは！何かお
         console.error('speechText要素が見つかりません');
         return;
     }
+
+    // 先にテキストを設定（順序重要: テキスト設定→吹き出し表示）
+    setText(text);
 
     // 吹き出しのスタイルを設定
     bubble.className = 'speech-bubble';
@@ -198,8 +232,15 @@ export function showBubble(type = 'default', text = 'こんにちは！何かお
     // 強制的に再描画を促す
     void bubble.offsetWidth;
 
-    // テキストを設定
-    setText(text);
+    // テキストが設定されているか確認（冗長でも念のため、最終確認）
+    setTimeout(() => {
+        if (!textElement.textContent || textElement.textContent.trim() === '') {
+            console.warn('⚠️ 吹き出し表示後もテキストが空です。再設定します。');
+            setText(text); // 念のため再設定
+        } else {
+            console.log('✅ 吹き出しとテキストが正常に表示されています');
+        }
+    }, 100);
 }
 
 /**
@@ -242,7 +283,16 @@ export function clearText() {
         return;
     }
 
-    console.log('🧹 テキストをクリアします');
+    // クリア前の内容をログ出力
+    console.log(`🧹 clearText実行: クリア前の内容→ "${textElement.textContent?.substring(0, 20) || '空'}"...`);
+
+    // ロックされている場合はクリアしない
+    if (textElement.dataset.locked === 'true') {
+        console.warn('⚠️ テキスト要素がロックされているため、クリアをスキップします');
+        const lockTime = textElement.dataset.setTime ? (Date.now() - parseInt(textElement.dataset.setTime)) / 1000 : 'unknown';
+        console.log(`🔒 ロック中: ${lockTime}秒前からロック中 (元のテキスト: ${textElement.dataset.originalText?.substring(0, 15) || '不明'}...)`);
+        return;
+    }
 
     // ロック状態を解除
     textElement.dataset.locked = 'false';
@@ -263,4 +313,6 @@ export function clearText() {
     min-height: 20px !important;
   `;
     textElement.appendChild(emptySpan);
+
+    console.log('✅ テキストを正常にクリアしました');
 } 

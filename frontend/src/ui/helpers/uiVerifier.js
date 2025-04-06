@@ -69,8 +69,27 @@ export function verifyAndFixUIStructure() {
       newText.id = 'speechText';
       newText.className = 'speech-text';
       newText.textContent = 'こんにちは！何かお手伝いしましょうか？';
+
+      // 明示的なスタイル適用
+      newText.style.cssText = `
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #4e3b2b !important;
+        width: 100% !important;
+        min-height: 50px !important;
+      `;
+
       speechBubble.appendChild(newText);
+      console.log('✅ 新しいテキスト要素を作成しました');
     } else if (!speechText.textContent || speechText.textContent.trim() === '') {
+      // ロックチェック前の状態を確認（デバッグ用）
+      console.log('🔍 空のテキスト要素を検出: データ属性=', {
+        locked: speechText.dataset.locked,
+        originalText: speechText.dataset.originalText,
+        setTime: speechText.dataset.setTime
+      });
+
       // ロックされている場合は必ずdataset.originalTextから復元を試みる
       if (speechText.dataset.locked === 'true') {
         console.log('🔒 テキスト要素はロックされています。dataset.originalTextから復元します。');
@@ -81,23 +100,61 @@ export function verifyAndFixUIStructure() {
           spanElement.textContent = speechText.dataset.originalText;
           spanElement.className = 'speech-text-content recovered-from-original';
           spanElement.style.cssText = `
-              color: #4e3b2b; 
-              display: inline-block;
-              visibility: visible;
-              opacity: 1;
-              width: 100%;
-              font-size: 1.05rem;
-              line-height: 1.6;
+              color: #4e3b2b !important; 
+              display: inline-block !important;
+              visibility: visible !important;
+              opacity: 1 !important;
+              width: 100% !important;
+              font-size: 1.05rem !important;
+              line-height: 1.6 !important;
             `;
-          clearText();
+
+          // 元のテキストを保持
+          const originalText = speechText.dataset.originalText;
+
+          // 安全にクリア（clearTextは呼ばない）
+          speechText.innerHTML = '';
+
+          // 要素追加
           speechText.appendChild(spanElement);
+
+          console.log(`✅ テキストを復元しました: "${originalText.substring(0, 15)}..."`);
         } else {
           console.warn('⚠️ ロックされていますが、originalTextが設定されていません');
         }
       } else {
         // ロックされていない場合のみデフォルトテキストを設定
         console.log('⚠️ テキスト要素が空です。テキストを設定します。');
-        speechText.textContent = 'こんにちは！何かお手伝いしましょうか？';
+
+        // メッセージをランダムに選択
+        const messages = [
+          'こんにちは！何かお手伝いしましょうか？',
+          'お疲れ様です！何かご質問はありますか？',
+          'いつでもお声がけくださいね！',
+        ];
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+        // spanを作成してスタイルを適用
+        const spanElement = document.createElement('span');
+        spanElement.textContent = randomMessage;
+        spanElement.className = 'speech-text-content verifier-added';
+        spanElement.style.cssText = `
+          color: #4e3b2b !important; 
+          display: inline-block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          width: 100% !important;
+          font-size: 1.05rem !important;
+          line-height: 1.6 !important;
+        `;
+
+        // 安全にクリア
+        speechText.innerHTML = '';
+
+        // 要素追加
+        speechText.appendChild(spanElement);
+
+        console.log(`✅ デフォルトテキストを設定しました: "${randomMessage}"`);
       }
     }
   }
@@ -147,6 +204,47 @@ export function cleanupDuplicateElements() {
     }
   }
 
+  // テキスト要素の重複チェック（テキスト内容を保持）
+  const speechTexts = document.querySelectorAll('#speechText');
+  let preservedText = ''; // 保持するテキスト内容
+
+  if (speechTexts.length > 1) {
+    console.log(`📝 重複するテキスト要素が ${speechTexts.length} 個見つかりました。内容を保持して古い要素を削除します。`);
+
+    // すべての要素からテキスト内容を集める（空でないものを優先）
+    for (let i = 0; i < speechTexts.length; i++) {
+      const currentText = speechTexts[i].textContent?.trim();
+      if (currentText && !preservedText) {
+        preservedText = currentText;
+        console.log(`💾 テキスト内容「${preservedText.substring(0, 15)}...」を保持します`);
+      }
+
+      // データ属性からオリジナルテキストも確認
+      if (speechTexts[i].dataset.originalText && !preservedText) {
+        preservedText = speechTexts[i].dataset.originalText;
+        console.log(`💾 データ属性から「${preservedText.substring(0, 15)}...」を復元します`);
+      }
+    }
+
+    // 最初の要素以外を削除（インデックス1以降）
+    for (let i = 1; i < speechTexts.length; i++) {
+      console.log(`🗑️ テキスト要素 ${i + 1}/${speechTexts.length} を削除します`);
+      speechTexts[i].remove();
+    }
+
+    // 保持したテキストを残った要素に設定（空でない場合のみ）
+    if (preservedText) {
+      const remainingTextElement = document.getElementById('speechText');
+      if (remainingTextElement) {
+        console.log(`🔄 保持したテキストを残った要素に設定します: ${preservedText.substring(0, 15)}...`);
+        remainingTextElement.textContent = preservedText;
+
+        // データ属性も設定
+        remainingTextElement.dataset.originalText = preservedText;
+      }
+    }
+  }
+
   // 立ち絵要素の重複チェック
   const assistantImages = document.querySelectorAll('#assistantImage');
   if (assistantImages.length > 1) {
@@ -156,18 +254,6 @@ export function cleanupDuplicateElements() {
     for (let i = 1; i < assistantImages.length; i++) {
       console.log(`🗑️ 立ち絵要素 ${i + 1}/${assistantImages.length} を削除します`);
       assistantImages[i].remove();
-    }
-  }
-
-  // テキスト要素の重複チェック
-  const speechTexts = document.querySelectorAll('#speechText');
-  if (speechTexts.length > 1) {
-    console.log(`📝 重複するテキスト要素が ${speechTexts.length} 個見つかりました。古い要素を削除します。`);
-
-    // 最初の要素以外を削除（インデックス1以降）
-    for (let i = 1; i < speechTexts.length; i++) {
-      console.log(`🗑️ テキスト要素 ${i + 1}/${speechTexts.length} を削除します`);
-      speechTexts[i].remove();
     }
   }
 
