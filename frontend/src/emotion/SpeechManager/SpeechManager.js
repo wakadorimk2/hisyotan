@@ -12,7 +12,7 @@ import { logDebug, logError } from '@core/logger.js';
 //   renderSettingUI 
 // } from '@ui/uiHelper.js';
 import { initUIElements } from '@ui/helpers/uiBuilder.js';
-import { showBubble } from '@ui/helpers/speechController.js';
+import { showBubble, hideBubble, setText } from '@ui/helpers/speechRenderer.js';
 import { setExpression, stopTalking } from '../expressionManager.js';
 // import { 
 //   formatMessage, 
@@ -30,6 +30,7 @@ import {
   // eslint-disable-next-line no-unused-vars
   checkVoicevoxConnection as checkVoicevoxConnectionAPI
 } from '@voice/speechVoice.js';
+import { speakText } from '@voice/speechVoice.js';
 // import {
 //   showHordeModeToggle as showHordeModeToggleUI,
 //   getHordeModeState,
@@ -110,82 +111,36 @@ export class SpeechManager {
   }
 
   /**
-   * 拡張された秘書たんセリフオブジェクト型を使用して発話させる
-   * @param {Object} speechObj - セリフオブジェクト
-   * @param {string} speechObj.id - セリフID
-   * @param {string} speechObj.type - セリフの種類（'normal'|'system'|'setting'）
-   * @param {string} speechObj.text - セリフテキスト
-   * @param {string} [speechObj.emotion] - 感情タイプ
-   * @param {number} [speechObj.duration] - 表示時間（ミリ秒）
-   * @param {Object} [speechObj.uiPayload] - UI表示用のペイロード（typeが'setting'の場合）
-   * @param {boolean} [speechObj.autoClose] - 自動で閉じるかどうか（デフォルトはtrue）
+   * UI表示と音声再生を統合した発話メソッド
+   * @param {Object} params - パラメータオブジェクト
+   * @param {string} params.text - 表示＆音声化する文字列
+   * @param {string} [params.emotion='neutral'] - VOICEVOX用の感情
+   * @param {string} [params.type='normal'] - 吹き出しの種類
+   * @param {boolean} [params.autoHide=true] - 再生後に自動で吹き出しを消すか
+   * @returns {Promise<boolean>} 処理が成功したかどうか
    */
-  speakWithObject(speechObj) {
+  async speakWithObject({ text, emotion = 'neutral', type = 'normal', autoHide = true }) {
     try {
-      if (!speechObj || !speechObj.text) {
-        logError('セリフオブジェクトまたはテキストが指定されていません');
-        return;
+      logDebug(`speakWithObject: "${text}" (感情: ${emotion}, タイプ: ${type}, 自動非表示: ${autoHide})`);
+
+      // テキストを設定
+      setText(text);
+
+      // 吹き出しを表示
+      showBubble(type, text);
+
+      // 音声再生
+      await speakText(text, emotion);
+
+      // 自動非表示が有効なら吹き出しを隠す
+      if (autoHide) {
+        hideBubble();
       }
 
-      // デフォルト値の設定
-      const type = speechObj.type || 'normal';
-      const emotion = speechObj.emotion || 'normal';
-      const duration = speechObj.duration || this.messageDisplayTime;
-      const eventType = speechObj.id || 'default';
-      const autoClose = speechObj.autoClose !== false; // 明示的にfalseでない限りtrue
-
-      // 現在のセリフを保存
-      this.currentSpeech = speechObj;
-
-      logDebug(`拡張セリフ表示: タイプ=${type}, ID=${eventType}, テキスト="${speechObj.text}", 自動閉じる=${autoClose}`);
-
-      // 設定UIタイプの場合は専用の処理
-      if (type === 'setting' && speechObj.uiPayload) {
-        showBubble(eventType);
-        const formattedMessage = formatMessage(speechObj.text);
-
-        // 通常のテキスト設定（uiPayloadとともに）
-        setText(formattedMessage);
-        console.log("[speechText] innerHTML =", speechText.innerHTML);
-        console.log("[speechText] child count =", speechText.childNodes.length);
-
-
-        // setText後のDOM状態をチェック
-        console.log('🔍 setText()後の吹き出し状態:', {
-          speechBubble: document.getElementById('speechBubble'),
-          speechText: document.getElementById('speechText'),
-          speechSettingUI: document.getElementById('speechSettingUI'),
-          bubbleHTML: document.getElementById('speechBubble')?.innerHTML || '存在しません'
-        });
-
-        // 設定UI要素をレンダリング
-        renderSettingUI(speechObj.uiPayload);
-
-        // renderSettingUI後の最終状態確認
-        console.log('🏁 renderSettingUI()後の最終状態:', {
-          speechBubble: document.getElementById('speechBubble'),
-          speechText: document.getElementById('speechText'),
-          speechSettingUI: document.getElementById('speechSettingUI'),
-          bubbleHTML: document.getElementById('speechBubble')?.innerHTML || '存在しません'
-        });
-
-        // 設定UIの場合やautoCloseがfalseの場合は自動非表示しない
-        return;
-      }
-
-      // 通常の発話処理
-      this.speak(
-        speechObj.text,
-        emotion,
-        duration,
-        null, // アニメーションはemotionから自動設定
-        eventType,
-        null,  // プリセット音声
-        autoClose // 自動クローズフラグを追加
-      );
-
-    } catch (err) {
-      logError(`拡張セリフ表示処理でエラー: ${err.message}`);
+      return true;
+    } catch (error) {
+      logError(`speakWithObject エラー: ${error.message}`);
+      return false;
     }
   }
 
