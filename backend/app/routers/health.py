@@ -4,7 +4,8 @@
 サーバーのヘルスチェックエンドポイントとテスト機能を提供
 """
 
-import asyncio
+from asyncio import get_event_loop
+from typing import Dict, Union
 
 from fastapi import APIRouter, Query
 
@@ -15,18 +16,18 @@ router = APIRouter()
 
 
 @router.get("/health")
-async def health_check() -> dict[str, str | float]:
+async def health_check() -> Dict[str, Union[str, float]]:
     """
     ヘルスチェックエンドポイント
     サーバーの稼働状態と現在の時刻を返します
     """
-    return {"status": "ok", "server_time": asyncio.get_event_loop().time()}
+    return {"status": "ok", "server_time": get_event_loop().time()}
 
 
 @router.post("/api/health/test")
 async def health_test_endpoint(
     value: int = Query(..., description="体力値（0-100）"),
-) -> dict[str, str | int]:
+) -> Dict[str, Union[str, int]]:
     """
     体力値テストエンドポイント
 

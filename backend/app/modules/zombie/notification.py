@@ -19,7 +19,7 @@ class NotificationManager:
     def __new__(cls) -> "NotificationManager":
         if cls._instance is None:
             cls._instance = super(NotificationManager, cls).__new__(cls)
-            cls._instance.__init__()
+            # 初期化は__init__で行う、直接呼び出さない
         return cls._instance
 
     def __init__(self) -> None:
@@ -142,7 +142,8 @@ class NotificationManager:
             self.active_sources.add(source)
 
             # グローバル変数を更新 (float型に明示的に変換)
-            last_global_notification_time: float = float(current_time)
+            global last_global_notification_time
+            last_global_notification_time = float(current_time)
             self.notification_id += 1
             current_id = self.notification_id
 

@@ -315,9 +315,17 @@ class ZombieDetector:
                         await asyncio.sleep(self.adaptive_interval)
                         continue
 
+                    # YOLOの結果を辞書形式に変換
+                    processed_results = {
+                        "detection_count": zombie_count,
+                        "timestamp": current_time,
+                        "boxes": results,
+                        "resnet_result": {"is_zombie_scene": False, "probability": 0.0},
+                    }
+
                     # 検出結果を処理
                     await self._process_detection_results(
-                        results,
+                        processed_results,
                         screenshot,
                         zombie_callback,
                         few_zombies_callback,

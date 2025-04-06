@@ -55,8 +55,8 @@ async def change_voice_speaker(
         )
 
 
-@router.post("/api/voice/synthesize")
-async def synthesize_voice(request: VoiceSynthesisRequest) -> Response | JSONResponse:
+@router.post("/api/voice/synthesize", response_model=None)
+async def synthesize_voice(request: VoiceSynthesisRequest):
     """
     テキストを音声に変換して返すエンドポイント（ファイル保存・再生なし）
     VOICEVOXを使用して音声合成を行い、WAVデータを直接返す
@@ -127,8 +127,8 @@ async def check_voicevox_connection() -> dict:
 
 # 既存の再生込みのエンドポイント（互換性のために残すが、
 # 新しいsynthesizeエンドポイントにリダイレクト）
-@router.post("/api/voice/synthesize-play")
-async def synthesize_and_play_voice(request: Request) -> Response | JSONResponse:
+@router.post("/api/voice/synthesize-play", response_model=None)
+async def synthesize_and_play_voice(request: Request):
     """
     テキストを音声に変換して返すエンドポイント（互換性のために残す）
     実際の処理は /api/voice/synthesize にリダイレクト
@@ -174,8 +174,8 @@ async def synthesize_and_play_voice(request: Request) -> Response | JSONResponse
         )
 
 
-@router.post("/api/voice/analyze")
-async def analyze_voice(request: Request) -> dict | JSONResponse:
+@router.post("/api/voice/analyze", response_model=None)
+async def analyze_voice(request: Request):
     """
     テキストの感情を分析し、適切な音声パラメータを返すエンドポイント
 
