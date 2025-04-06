@@ -11,16 +11,33 @@ let audioContext = null;
 // 音声再生中フラグ
 let isPlaying = false;
 
-// 音声キャッシュ
+// 音声キャッシュ（AudioBufferをキャッシュするように変更）
 const audioCache = new Map();
 const CACHE_MAX_SIZE = 20; // キャッシュの最大エントリ数
 
 /**
+ * AudioContextの初期化
+ * @returns {AudioContext} 初期化されたAudioContext
+ */
+function getAudioContext() {
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            logDebug('AudioContextを初期化しました');
+        } catch (err) {
+            logError(`AudioContext初期化エラー: ${err.message}`);
+            return null;
+        }
+    }
+    return audioContext;
+}
+
+/**
  * キャッシュにエントリを追加する
  * @param {string} cacheKey - キャッシュキー
- * @param {ArrayBuffer} audioData - 音声データ
+ * @param {AudioBuffer} audioBuffer - デコード済み音声データ
  */
-function addToCache(cacheKey, audioData) {
+function addToCache(cacheKey, audioBuffer) {
     // キャッシュが最大サイズに達している場合、最も古いエントリを削除
     if (audioCache.size >= CACHE_MAX_SIZE) {
         const oldestKey = audioCache.keys().next().value;
@@ -29,8 +46,8 @@ function addToCache(cacheKey, audioData) {
     }
 
     // キャッシュに追加
-    audioCache.set(cacheKey, audioData);
-    logDebug(`音声データをキャッシュに追加: ${cacheKey}`);
+    audioCache.set(cacheKey, audioBuffer);
+    logDebug(`デコード済み音声データをキャッシュに追加: ${cacheKey}`);
 }
 
 /**
@@ -45,43 +62,32 @@ function generateCacheKey(text, emotion, speakerId) {
 }
 
 /**
- * 音声データを再生する関数
- * @param {ArrayBuffer} audioData - 再生する音声データ（WAVフォーマット）
+ * AudioBufferを再生する関数
+ * @param {AudioBuffer} audioBuffer - 再生する音声データ（デコード済みAudioBuffer）
  * @returns {Promise<boolean>} 再生が完了したらtrueを返す
  */
-async function playAudioData(audioData) {
+async function playAudioBuffer(audioBuffer) {
     try {
+        const context = getAudioContext();
+        if (!context) return false;
+
         // 再生中の場合は前の再生を停止
         if (isPlaying) {
             logDebug('前の音声再生を停止します');
             stopCurrentPlayback();
         }
 
-        // AudioContextの初期化
-        if (!audioContext) {
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                logDebug('AudioContextを初期化しました');
-            } catch (err) {
-                logError(`AudioContext初期化エラー: ${err.message}`);
-                return false;
-            }
-        }
-
-        // 音声データをデコード
-        const audioBuffer = await audioContext.decodeAudioData(audioData);
-
         // 音源ノードを作成
-        const sourceNode = audioContext.createBufferSource();
+        const sourceNode = context.createBufferSource();
         sourceNode.buffer = audioBuffer;
 
         // 音量ノードを追加
-        const gainNode = audioContext.createGain();
+        const gainNode = context.createGain();
         gainNode.gain.value = 1.0; // 最大音量
 
         // ノードを接続
         sourceNode.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        gainNode.connect(context.destination);
 
         // 再生中フラグをセット
         isPlaying = true;
@@ -115,6 +121,25 @@ async function playAudioData(audioData) {
 }
 
 /**
+ * ArrayBufferをデコードしてAudioBufferを取得する
+ * @param {ArrayBuffer} audioData - デコード前の音声データ
+ * @returns {Promise<AudioBuffer>} デコード済みのAudioBuffer
+ */
+async function decodeAudioData(audioData) {
+    try {
+        const context = getAudioContext();
+        if (!context) throw new Error('AudioContextが初期化できません');
+
+        // ArrayBufferをクローンして使用する（detached状態を防ぐため）
+        const clonedBuffer = audioData.slice(0);
+        return await context.decodeAudioData(clonedBuffer);
+    } catch (error) {
+        logError(`音声デコードエラー: ${error.message}`);
+        throw error;
+    }
+}
+
+/**
  * テキストを音声合成して再生する
  * @param {string} text - 合成するテキスト
  * @param {string} emotion - 感情
@@ -130,9 +155,9 @@ export async function speakText(text, emotion = 'normal', speakerId = 8, signal 
 
         // キャッシュをチェック
         if (useCache && audioCache.has(cacheKey)) {
-            logDebug(`キャッシュから音声データを使用: ${cacheKey}`);
-            // キャッシュから音声データを取得して再生
-            await playAudioData(audioCache.get(cacheKey));
+            logDebug(`キャッシュからAudioBufferを使用: ${cacheKey}`);
+            // キャッシュからAudioBufferを取得して再生
+            await playAudioBuffer(audioCache.get(cacheKey));
             return true;
         }
 
@@ -199,13 +224,16 @@ export async function speakText(text, emotion = 'normal', speakerId = 8, signal 
         // WAVデータを取得（バイナリデータとして）
         const audioData = await response.arrayBuffer();
 
+        // 音声データをデコード
+        const audioBuffer = await decodeAudioData(audioData);
+
         // キャッシュに追加
         if (useCache) {
-            addToCache(cacheKey, audioData);
+            addToCache(cacheKey, audioBuffer);
         }
 
-        // フロントエンド側で音声再生
-        await playAudioData(audioData);
+        // 音声再生
+        await playAudioBuffer(audioBuffer);
 
         return true;
 
