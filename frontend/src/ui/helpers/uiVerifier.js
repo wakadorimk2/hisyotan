@@ -100,6 +100,30 @@ export function verifyAndFixUIStructure() {
       }
     }
     
+    // 終了ボタンの確認と修復
+    const quitButton = document.getElementById('quit-button');
+    if (quitButton) {
+      // テキスト内容を確認
+      if (!quitButton.textContent || quitButton.textContent.trim() === '') {
+        console.log('⚠️ 終了ボタンのテキストが空です。修正します。');
+        quitButton.textContent = '❌';
+      }
+      
+      // スタイル適用確認
+      const computedStyle = getComputedStyle(quitButton);
+      if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden' || parseFloat(computedStyle.opacity) < 0.1) {
+        console.log('⚠️ 終了ボタンが非表示状態です。修正します。');
+        
+        // インラインスタイルで修正
+        quitButton.style.cssText = `
+          display: flex !important;
+          visibility: visible !important;
+          opacity: 0.8 !important;
+          -webkit-app-region: no-drag;
+        `;
+      }
+    }
+    
     console.log('✅ UI構造の検証・修復が完了しました');
   }
   
