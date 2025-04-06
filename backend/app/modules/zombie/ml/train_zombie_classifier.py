@@ -8,9 +8,9 @@ import seaborn as sns
 import torch
 import torch.nn as nn
 from PIL import Image
-from sklearn.metrics import classification_report, confusion_matrix
-from torch.utils.data import DataLoader, Dataset
-from torchvision import models, transforms
+from sklearn.metrics import classification_report, confusion_matrix  # type: ignore
+from torch.utils.data import DataLoader, Dataset  # type: ignore
+from torchvision import models, transforms  # type: ignore
 
 
 class ZombieDataset(Dataset):

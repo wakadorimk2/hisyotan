@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import torch
 import torch.nn as nn
 from PIL import Image
-from torchvision import models, transforms
+from torchvision import models, transforms  # type: ignore
 
 
 class ZombieClassifier:

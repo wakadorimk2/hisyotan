@@ -28,10 +28,11 @@ if str(BACKEND_DIR) not in sys.path:
 
 import psutil
 import uvicorn
-from app.core import create_application
-from app.core.logger import setup_logger
-from app.events.startup_handler import on_startup
 from fastapi import Body, FastAPI
+
+from backend.app.core import create_application
+from backend.app.core.logger import setup_logger
+from backend.app.events.startup_handler import on_startup
 
 # 標準出力・標準エラー出力のエンコーディングを明示的に設定
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")

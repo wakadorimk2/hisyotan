@@ -16,13 +16,13 @@ GLOBAL_NOTIFICATION_INTERVAL = 5  # 5秒間は異なるルートからの通知�
 class NotificationManager:
     _instance = None
 
-    def __new__(cls):
+    def __new__(cls) -> "NotificationManager":
         if cls._instance is None:
             cls._instance = super(NotificationManager, cls).__new__(cls)
             cls._instance.__init__()
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         # 初期化済みなら何もしない（シングルトンパターン）
         if hasattr(self, "notification_active"):
             return
@@ -141,7 +141,8 @@ class NotificationManager:
             # アクティブなソースに追加
             self.active_sources.add(source)
 
-            last_global_notification_time = current_time
+            # グローバル変数を更新 (float型に明示的に変換)
+            last_global_notification_time = float(current_time)
             self.notification_id += 1
             current_id = self.notification_id
 

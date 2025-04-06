@@ -6,13 +6,13 @@
 
 import logging
 import re
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 # ロガー設定
 logger = logging.getLogger(__name__)
 
 # 感情カテゴリとそのデフォルトパラメータ
-DEFAULT_EMOTION_PARAMS = {
+DEFAULT_EMOTION_PARAMS: Dict[str, Dict[str, float]] = {
     "にこにこ": {
         "pitch_scale": 0.06,
         "speed_scale": 1.05,
@@ -53,7 +53,7 @@ DEFAULT_EMOTION_PARAMS = {
 
 # 感情ルールの定義
 # 各感情に対する正規表現パターンとスコア
-EMOTION_PATTERNS = {
+EMOTION_PATTERNS: Dict[str, List[Tuple[str, float]]] = {
     "にこにこ": [
         (r"おめでと", 1.0),
         (r"すごい[!！]", 1.0),
@@ -104,7 +104,7 @@ EMOTION_PATTERNS = {
 }
 
 # 文末スタイルの判定パターン
-SENTENCE_END_PATTERNS = {
+SENTENCE_END_PATTERNS: Dict[str, List[Tuple[str, float]]] = {
     "疑問": [(r"\?|？$", 0.9), (r"(ですか|かな|かしら|の\?|ましょうか)$", 0.8)],
     "命令": [
         (r"(てください|なさい|ください|すべき)[!！]*$", 0.9),
@@ -114,7 +114,7 @@ SENTENCE_END_PATTERNS = {
 }
 
 # 緊急度判定のパターン
-URGENCY_PATTERNS = {
+URGENCY_PATTERNS: Dict[str, List[Tuple[str, float]]] = {
     "緊急": [
         (r"すぐに|急いで|緊急|危険|[!！]{3,}", 0.9),
         (r"ゾンビ.*5体以上", 1.0),
@@ -140,7 +140,7 @@ def analyze_text(text: str) -> Dict[str, Any]:
         音声パラメータ情報を含む辞書
     """
     # ステップ1: 感情分析
-    emotion, emotion_score = analyze_emotion(text)
+    emotion, _ = analyze_emotion(text)
 
     # ステップ2: 緊急度分析
     urgency, urgency_score = analyze_urgency(text)
@@ -189,8 +189,22 @@ def analyze_text(text: str) -> Dict[str, Any]:
 
 
 def analyze_emotion(text: str) -> Tuple[str, float]:
-    """テキストから感情を分析して最も一致する感情とそのスコアを返します"""
-    scores = {"にこにこ": 0, "警戒・心配": 0, "びっくり": 0, "やさしい": 0, "眠そう": 0}
+    """
+    テキストから感情を分析して最も一致する感情とそのスコアを返します
+
+    Args:
+        text: 分析するテキスト
+
+    Returns:
+        Tuple[str, float]: (感情カテゴリ, 感情スコア)
+    """
+    scores = {
+        "にこにこ": 0.0,
+        "警戒・心配": 0.0,
+        "びっくり": 0.0,
+        "やさしい": 0.0,
+        "眠そう": 0.0,
+    }
 
     # 各感情パターンについてマッチングを行う
     for emotion, patterns in EMOTION_PATTERNS.items():
@@ -198,19 +212,27 @@ def analyze_emotion(text: str) -> Tuple[str, float]:
             if re.search(pattern, text, re.IGNORECASE):
                 scores[emotion] += weight
 
-    # 最も高いスコアの感情を選択
+    # スコアが閾値を超えていない場合はnormalを返す
+    score_threshold = 0.5
     max_emotion = max(scores.items(), key=lambda x: x[1])
 
-    # スコアが低すぎる場合はデフォルトの感情を返す
-    if max_emotion[1] <= 0.3:
-        return "normal", 0.5
+    if max_emotion[1] < score_threshold:
+        return "normal", 0.0
 
-    return max_emotion[0], min(1.0, max_emotion[1])
+    return max_emotion[0], max_emotion[1]
 
 
 def analyze_urgency(text: str) -> Tuple[str, float]:
-    """テキストから緊急度を分析して緊急度とそのスコアを返します"""
-    scores = {"緊急": 0, "警告": 0, "通常": 0}
+    """
+    テキストの緊急度を分析します
+
+    Args:
+        text: 分析するテキスト
+
+    Returns:
+        Tuple[str, float]: (緊急度カテゴリ, 緊急度スコア)
+    """
+    scores = {"緊急": 0.0, "警告": 0.0, "通常": 0.0}
 
     # 各緊急度パターンについてマッチングを行う
     for urgency, patterns in URGENCY_PATTERNS.items():
@@ -218,19 +240,26 @@ def analyze_urgency(text: str) -> Tuple[str, float]:
             if re.search(pattern, text, re.IGNORECASE):
                 scores[urgency] += weight
 
-    # 最も高いスコアの緊急度を選択
+    # 最大スコアの緊急度を返す
     max_urgency = max(scores.items(), key=lambda x: x[1])
 
-    # スコアが低すぎる場合はデフォルトの緊急度を返す
-    if max_urgency[1] <= 0.3:
-        return "通常", 0.5
+    if max_urgency[1] < 0.1:
+        return "通常", 0.0
 
-    return max_urgency[0], min(1.0, max_urgency[1])
+    return max_urgency[0], max_urgency[1]
 
 
 def analyze_sentence_end(text: str) -> Tuple[str, float]:
-    """テキストから文末スタイルを分析して文末スタイルとそのスコアを返します"""
-    scores = {"疑問": 0, "命令": 0, "感嘆": 0}
+    """
+    文末スタイルを分析します
+
+    Args:
+        text: 分析するテキスト
+
+    Returns:
+        Tuple[str, float]: (文末スタイル, スタイルスコア)
+    """
+    scores = {"疑問": 0.0, "命令": 0.0, "感嘆": 0.0}
 
     # 各文末スタイルパターンについてマッチングを行う
     for style, patterns in SENTENCE_END_PATTERNS.items():
@@ -238,66 +267,74 @@ def analyze_sentence_end(text: str) -> Tuple[str, float]:
             if re.search(pattern, text, re.IGNORECASE):
                 scores[style] += weight
 
-    # 最も高いスコアの文末スタイルを選択
+    # 最大スコアの文末スタイルを返す
     max_style = max(scores.items(), key=lambda x: x[1])
 
-    # スコアが低すぎる場合はデフォルトを返す
-    if max_style[1] <= 0.3:
-        return "通常", 0.5
+    if max_style[1] < 0.1:
+        return "", 0.0
 
-    return max_style[0], min(1.0, max_style[1])
+    return max_style[0], max_style[1]
 
 
 def generate_explanation(text: str, emotion: str, urgency: str, end_style: str) -> str:
-    """分析結果から説明文を生成します"""
-    explanations = {
-        "にこにこ": "ポジティブで明るい内容に合わせて、高めのピッチと軽快な速度設定",
-        "警戒・心配": "軽度の警告内容に合わせて、"
-        "若干低めのピッチと控えめなイントネーション",
-        "びっくり": "緊急性の高い警告内容に合わせて、"
-        "高めのピッチ・速度と強いイントネーション",
-        "やさしい": "優しい励ましの内容に合わせて、"
-        "落ち着いた低めのピッチと穏やかな速度",
-        "眠そう": "眠気を表現する内容に合わせて、低めのピッチとゆっくりとした速度",
-        "normal": "標準的な内容に合わせたデフォルト設定",
-    }
+    """
+    感情分析結果の説明文を生成します
 
-    urgency_explanations = {
-        "緊急": "緊急性が高いため速度と強調を増加",
-        "警告": "注意喚起が必要なため適度に強調",
-        "通常": "",
-    }
+    Args:
+        text: 分析したテキスト
+        emotion: 検出された感情
+        urgency: 検出された緊急度
+        end_style: 検出された文末スタイル
 
-    end_style_explanations = {
-        "疑問": "疑問文のためピッチとイントネーションを調整",
-        "命令": "指示内容のため速度とイントネーションを強調",
-        "感嘆": "感情表現を強調するためイントネーションを増加",
-        "通常": "",
-    }
+    Returns:
+        str: 説明文
+    """
+    # 感情の日本語表現
+    emotion_jp = {
+        "にこにこ": "嬉しそう",
+        "警戒・心配": "心配そう",
+        "びっくり": "驚いた様子",
+        "やさしい": "優しい口調",
+        "眠そう": "眠そう",
+        "normal": "通常",
+    }.get(emotion, "通常")
 
-    # 基本説明
-    explanation = explanations.get(emotion, "標準的な設定")
+    # 緊急度の日本語表現
+    urgency_jp = {
+        "緊急": "とても緊急",
+        "警告": "警戒が必要",
+        "通常": "通常の会話",
+    }.get(urgency, "通常の会話")
 
-    # 緊急度が「通常」でない場合、説明を追加
-    if urgency != "通常" and urgency_explanations[urgency]:
-        explanation += "。" + urgency_explanations[urgency]
+    # 文末スタイルの日本語表現
+    end_style_jp = {
+        "疑問": "疑問形",
+        "命令": "命令形",
+        "感嘆": "感嘆形",
+        "": "通常",
+    }.get(end_style, "通常")
 
-    # 文末スタイルが「通常」でない場合、説明を追加
-    if end_style != "通常" and end_style_explanations[end_style]:
-        explanation += "。" + end_style_explanations[end_style]
+    # 説明文の生成
+    explanation = f"{emotion_jp}な感情で{urgency_jp}"
+    if end_style:
+        explanation += f"、{end_style_jp}の文末"
 
     return explanation
 
 
-# テスト用関数
 def test_analyze_text(text: str) -> None:
-    """テキスト分析のテスト実行"""
+    """
+    テキスト感情分析のテスト関数
+
+    Args:
+        text: 分析するテキスト
+    """
     result = analyze_text(text)
-    print(f"テキスト: {text}")
+    print(f"入力テキスト: {text}")
     print(f"感情: {result['emotion']}")
-    print(f"パラメータ: {result['parameters']}")
     print(f"説明: {result['explanation']}")
-    print("-" * 50)
+    print(f"パラメータ: {result['parameters']}")
+    print("---")
 
 
 if __name__ == "__main__":

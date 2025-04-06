@@ -68,7 +68,7 @@ async def debug_zombie_detection(
 
         # detector_coreモジュールをインポート
         try:
-            from app.modules.zombie.detector_core import ZombieDetector
+            from backend.app.modules.zombie.detector_core import ZombieDetector
 
             logger.info("ZombieDetectorクラスを正常にインポートしました")
         except ImportError as e:

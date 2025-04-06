@@ -4,13 +4,24 @@ import os
 import time
 import traceback  # スタックトレース取得用
 from pathlib import Path
-from typing import Any, Callable, List, Optional
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import cv2
 import mss
+import mss.base
 import numpy as np
 import psutil  # CPU使用率の取得
 import torch
+from numpy.typing import NDArray
 from ultralytics import YOLO
 
 # 内部モジュールのインポート
@@ -31,19 +42,22 @@ DEBUG_DIR = os.path.join(DATA_DIR, "debug")
 MAX_DETECTIONS_PER_DAY = 100  # 1日あたりの最大保存数
 MAX_DETECTION_DIR_SIZE_MB = 500  # 検出ディレクトリの最大サイズ（MB）
 
+# 型定義のヘルパー
+T = TypeVar("T")
+
 
 class ZombieDetector:
     """ゾンビ検出クラス"""
 
     def __init__(
         self,
-        model_path: str = None,
+        model_path: Optional[Union[str, Path]] = None,
         confidence: float = 0.45,
         debug_mode: bool = False,
         target_classes: Optional[List[int]] = None,
         resnet_enabled: bool = True,
         use_gpu: bool = True,
-    ):
+    ) -> None:
         """
         ZombieDetectorクラスのコンストラクタ
 
@@ -83,17 +97,17 @@ class ZombieDetector:
         )  # デフォルトは人物クラスのみ
 
         # 検出履歴の初期化（パラメータ調整）
-        self.detection_history = []
+        self.detection_history: List[bool] = []
         self.history_size = 3
         self.required_consecutive_detections = 1  # 緩和：1フレームの検出でOKに変更
 
         # クールダウン時間の調整
-        self.cooldown_timestamps = {
+        self.cooldown_timestamps: Dict[str, float] = {
             "few": 0,  # 少数ゾンビ（1〜4体）
             "warning": 0,  # 警戒レベル（5〜9体）
             "many": 0,  # 多数ゾンビ（10体以上）
         }
-        self.cooldown_periods = {
+        self.cooldown_periods: Dict[str, int] = {
             "few": 5,  # 少数ゾンビ: 5秒
             "warning": 8,  # 警戒レベル: 8秒
             "many": 10,  # 多数ゾンビ: 10秒
@@ -110,8 +124,13 @@ class ZombieDetector:
             f"resnet_enabled={self.resnet_enabled}"
         )
 
-    async def load_model(self):
-        """YOLOモデルの非同期ロード"""
+    async def load_model(self) -> bool:
+        """
+        YOLOモデルの非同期ロード
+
+        Returns:
+            bool: モデルのロードが成功したかどうか
+        """
         try:
             # モデルのロードは重い処理なので非同期で行う
             loop = asyncio.get_event_loop()
@@ -171,7 +190,7 @@ class ZombieDetector:
 
                     # 最小限のダミー実装を提供
                     class DummyClassifier:
-                        def predict_image(self, img_path):
+                        def predict_image(self, img_path: str) -> Tuple[str, float]:
                             logger.warning("ダミー分類器が使用されています！")
                             return "not_zombie", 0.0
 
@@ -205,49 +224,51 @@ class ZombieDetector:
             asyncio.Task: 監視タスク
         """
         if self.is_monitoring:
-            logger.warning("すでに監視中です")
-            return self.monitor_task
+            logger.warning("すでに監視中です。既存のタスクを返します。")
+            # すでに監視中の場合は、新しいタスクは作成しない
+            # ここでは仮の空タスクを返す（実際には使用中のタスクを管理する必要がある）
+            return asyncio.create_task(asyncio.sleep(0))
 
-        # モデルがロードされていなければロード
+        # モデルがロードされていなければロードする
         if self.model is None:
             success = await self.load_model()
             if not success:
-                raise Exception("モデルのロードに失敗しました")
+                logger.error("モデルのロードに失敗したため、監視を開始できません。")
+                # エラー時も空タスクを返す
+                return asyncio.create_task(asyncio.sleep(0))
 
-        # 監視タスクを開始
         self.is_monitoring = True
-        self.monitor_task = asyncio.create_task(
-            self._monitor_loop(callback, few_zombies_callback, warning_zombies_callback)
+        logger.info("ゾンビ検出監視を開始します...")
+
+        # 非同期の監視ループを開始
+        return asyncio.create_task(
+            self._monitor_loop(
+                zombie_callback=callback,
+                few_zombies_callback=few_zombies_callback,
+                warning_zombies_callback=warning_zombies_callback,
+            )
         )
-        logger.info("ゾンビ検出監視を開始しました")
 
-        return self.monitor_task
-
-    async def stop_monitoring(self):
+    async def stop_monitoring(self) -> None:
         """ゾンビ検出監視を停止する"""
-        if not self.is_monitoring or self.monitor_task is None:
-            logger.warning("監視中ではありません")
+        if not self.is_monitoring:
+            logger.warning("監視は実行されていません。")
             return
 
+        logger.info("ゾンビ検出監視を停止します...")
         self.is_monitoring = False
-        if not self.monitor_task.done():
-            self.monitor_task.cancel()
-            try:
-                await self.monitor_task
-            except asyncio.CancelledError:
-                pass
 
-        self.monitor_task = None
-        logger.info("ゾンビ検出監視を停止しました")
+        # 安全のため少し待機して、監視ループが確実に停止するようにする
+        await asyncio.sleep(0.5)
 
     async def _monitor_loop(
         self,
         zombie_callback: Optional[Callable[[int, Any], Any]] = None,
         few_zombies_callback: Optional[Callable[[int, Any], Any]] = None,
         warning_zombies_callback: Optional[Callable[[int, Any], Any]] = None,
-    ):
+    ) -> None:
         """
-        監視ループの実装
+        ゾンビ検出の非同期監視ループ
 
         Args:
             zombie_callback: 多数ゾンビ検出時のコールバック関数
@@ -316,7 +337,7 @@ class ZombieDetector:
 
         logger.info("監視ループを終了しました")
 
-    def _adjust_performance_settings(self):
+    def _adjust_performance_settings(self) -> None:
         """
         CPU使用率に基づいてパフォーマンス設定を調整する
         """
@@ -351,49 +372,49 @@ class ZombieDetector:
             self.resize_factor = PERFORMANCE_SETTINGS["resize_factor"]
             self.skip_ratio = PERFORMANCE_SETTINGS["skip_ratio"]
 
-    async def _capture_screen(self, sct, monitor):
+    async def _capture_screen(
+        self, sct: mss.mss, monitor: Dict[str, int]
+    ) -> Optional[NDArray[np.uint8]]:
         """
-        画面キャプチャを実行する
+        画面キャプチャを行う
 
         Args:
             sct: mssのスクリーンキャプチャオブジェクト
-            monitor: キャプチャ対象のモニター情報
+            monitor: キャプチャする画面領域の情報
 
         Returns:
-            np.ndarray: キャプチャした画像（OpenCV形式）
+            Optional[NDArray[np.uint8]]: キャプチャした画像（OpenCV形式）またはNone
         """
         try:
-            # スクリーンショットを取得
+            # スクリーンキャプチャを実行
             sct_img = sct.grab(monitor)
 
-            # PIL形式からOpenCV形式に変換
-            screenshot = np.array(sct_img)
+            # mssの出力をnumpy配列に変換
+            img = np.array(sct_img)
 
-            # RGBAからRGBに変換（4チャンネルから3チャンネルへ）
-            if screenshot.shape[2] == 4:
-                screenshot = cv2.cvtColor(screenshot, cv2.COLOR_RGBA2RGB)
+            # BGRAからBGRに変換 (OpenCV形式)
+            img_bgr = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
-            # リサイズが必要な場合
+            # リサイズが必要なら実行
             if self.resize_factor < 1.0:
-                height, width = screenshot.shape[:2]
-                new_width = int(width * self.resize_factor)
-                new_height = int(height * self.resize_factor)
-                screenshot = cv2.resize(screenshot, (new_width, new_height))
+                width = int(img_bgr.shape[1] * self.resize_factor)
+                height = int(img_bgr.shape[0] * self.resize_factor)
+                img_bgr = cv2.resize(img_bgr, (width, height))
 
-            return screenshot
+            return img_bgr
         except Exception as e:
-            logger.error(f"画面キャプチャ中にエラー発生: {e}")
+            logger.error(f"画面キャプチャ中にエラーが発生: {e}")
             return None
 
-    async def _detect_zombies(self, screenshot):
+    async def _detect_zombies(self, screenshot: NDArray[np.uint8]) -> Tuple[Any, int]:
         """
         スクリーンショットからゾンビを検出する
 
         Args:
-            screenshot: スクリーンショット画像
+            screenshot: 検出対象の画像（OpenCV形式）
 
         Returns:
-            dict: 検出結果
+            Tuple[Any, int]: (YOLOの検出結果, 検出したゾンビの数)
         """
         try:
             # time変数の名前衝突を回避するために別名でインポート
@@ -548,7 +569,7 @@ class ZombieDetector:
                                     "boxes": boxes,
                                     "resnet_result": resnet_result,
                                     "process_time_ms": process_time,
-                                }
+                                }, detection_count
                     except Exception as e:
                         print(f"[BACKEND] ResNet分類 - メモリ内処理失敗: {e}")
                         # エラーが発生した場合は従来のファイルベース処理にフォールバック
@@ -668,32 +689,32 @@ class ZombieDetector:
                 "boxes": boxes,
                 "resnet_result": resnet_result,
                 "process_time_ms": process_time,
-            }
+            }, detection_count
 
         except Exception as e:
             print(f"[BACKEND] ゾンビ検出中にエラー: {e}")
             traceback.print_exc()  # フルスタックトレースを出力
             logger.error(f"ゾンビ検出中にエラーが発生: {e}")
             logger.error(traceback.format_exc())
-            return None
+            return None, 0
 
     async def _process_detection_results(
         self,
-        results,
-        screenshot,
-        zombie_callback,
-        few_zombies_callback,
-        warning_zombies_callback,
-    ):
+        results: Any,
+        screenshot: NDArray[np.uint8],
+        zombie_callback: Optional[Callable[[int, Any], Any]],
+        few_zombies_callback: Optional[Callable[[int, Any], Any]],
+        warning_zombies_callback: Optional[Callable[[int, Any], Any]],
+    ) -> None:
         """
-        検出結果の処理とコールバック実行
+        検出結果を処理し、必要に応じてコールバックを呼び出す
 
         Args:
-            results: 検出結果
-            screenshot: 原画像
-            zombie_callback: 多数ゾンビ検出時のコールバック
-            few_zombies_callback: 少数ゾンビ検出時のコールバック
-            warning_zombies_callback: 警戒レベルゾンビ検出時のコールバック
+            results: YOLOの検出結果
+            screenshot: 検出元の画像
+            zombie_callback: 多数ゾンビ検出時のコールバック関数
+            few_zombies_callback: 少数ゾンビ検出時のコールバック関数
+            warning_zombies_callback: 警戒レベルゾンビ検出時のコールバック関数
         """
         if results is None:
             return
@@ -859,16 +880,20 @@ class ZombieDetector:
             traceback.print_exc()  # フルスタックトレースを出力
 
     async def _call_callback(
-        self, callback, zombie_count, screenshot, additional_data=None
-    ):
+        self,
+        callback: Optional[Callable[[int, Any], Any]],
+        zombie_count: int,
+        screenshot: NDArray[np.uint8],
+        additional_data: Any = None,
+    ) -> None:
         """
-        コールバック関数の呼び出し
+        非同期でコールバック関数を呼び出す
 
         Args:
             callback: 呼び出すコールバック関数
-            zombie_count: ゾンビの検出数
-            screenshot: スクリーンショット
-            additional_data: 追加データ（ResNet結果など）
+            zombie_count: 検出したゾンビの数
+            screenshot: 検出元の画像
+            additional_data: コールバックに渡す追加データ
         """
         try:
             # コールバックのシグネチャに応じて引数を調整
@@ -923,13 +948,18 @@ class ZombieDetector:
         except Exception as e:
             logger.error(f"コールバック呼び出し中にエラーが発生: {e}")
 
-    def _save_detection_image(self, screenshot, boxes):
+    def _save_detection_image(
+        self, screenshot: NDArray[np.uint8], boxes: List[List[float]]
+    ) -> str:
         """
         検出結果の画像を保存する
 
         Args:
-            screenshot: スクリーンショット画像
-            boxes: 検出されたバウンディングボックスの情報
+            screenshot: 元の画像
+            boxes: 検出されたバウンディングボックスのリスト
+
+        Returns:
+            str: 保存したファイルのパス
         """
         try:
             from datetime import datetime
@@ -975,6 +1005,9 @@ class ZombieDetector:
 
             logger.debug(f"検出画像を保存しました: {debug_path}")
 
+            return debug_path
+
         except Exception as e:
             logger.error(f"検出画像の保存中にエラーが発生: {e}")
             # エラーが起きても処理を続行
+            return ""

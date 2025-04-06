@@ -1,4 +1,5 @@
 import sys
+from typing import Dict, Union
 
 # パフォーマンス設定のデフォルト値
 DEFAULT_FRAME_INTERVAL = 0.3  # 0.3秒間隔で画面取得
@@ -8,7 +9,7 @@ DEFAULT_CPU_THRESHOLD = 80  # CPU使用率がこの値を超えると処理頻�
 
 
 # コマンドライン引数から設定を取得
-def get_performance_settings():
+def get_performance_settings() -> Dict[str, Union[float, int]]:
     # コマンドライン引数をパース
     args = sys.argv
     settings = {

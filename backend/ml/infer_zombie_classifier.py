@@ -5,6 +5,7 @@ ResNet18ベースのゾンビ分類器の推論スクリプト
 import os
 import sys
 from pathlib import Path
+from typing import Any, List, Optional, Tuple, Union
 
 import torch
 from PIL import Image
@@ -14,10 +15,17 @@ from torchvision import transforms
 class ZombieClassifier:
     """ゾンビ分類器クラス"""
 
-    def __init__(self, model_path=None):
+    def __init__(
+        self,
+        model_path: Optional[Union[str, Path]] = None,
+        data_path: Optional[Union[str, Path]] = None,
+        device: Optional[torch.device] = None,
+    ) -> None:
         """
         Args:
             model_path: モデルファイルのパス
+            data_path: データディレクトリのパス
+            device: 使用するデバイス（CPUまたはGPU）
         """
         # モデルファイルのパスを設定
         if model_path is None:
@@ -31,13 +39,19 @@ class ZombieClassifier:
         self.model_path = model_path
         print(f"モデルパス: {self.model_path} (存在: {self.model_path.exists()})")
 
+        # データパスを保存
+        self.data_path = data_path
+
         # GPUが利用可能かチェック
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if device is None:
+            self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            self.device = device
         print(f"使用デバイス: {self.device}")
 
         # モデルの読み込み
         self.model = None
-        self.classes = None
+        self.classes: Optional[List[str]] = None
         self.load_model()
 
         # 推論用の変換
@@ -49,8 +63,13 @@ class ZombieClassifier:
             ]
         )
 
-    def load_model(self):
-        """モデルを読み込む"""
+    def load_model(self) -> bool:
+        """
+        モデルを読み込む
+
+        Returns:
+            bool: モデルの読み込みが成功したかどうか
+        """
         if not self.model_path.exists():
             print(f"エラー: モデルファイル {self.model_path} が見つかりません。")
             return False
@@ -68,6 +87,11 @@ class ZombieClassifier:
 
             model = models.resnet18(weights="IMAGENET1K_V1")
             num_ftrs = model.fc.in_features
+
+            # None チェックを追加（通常ここにはクラスが必ず存在するはず）
+            if self.classes is None:
+                self.classes = ["not_zombie", "zombie"]
+
             model.fc = nn.Linear(num_ftrs, len(self.classes))
 
             # モデルの重みを読み込み
@@ -83,7 +107,9 @@ class ZombieClassifier:
             print(f"モデルの読み込み中にエラーが発生しました: {e}")
             return False
 
-    def predict_image(self, img_path):
+    def predict_image(
+        self, img_path: Union[str, Path]
+    ) -> Tuple[Optional[str], Optional[float]]:
         """画像ファイルからゾンビを予測
 
         Args:
@@ -118,7 +144,7 @@ class ZombieClassifier:
             print(f"予測中にエラーが発生しました: {e}")
             return None, None
 
-    def predict_bytes(self, img_bytes):
+    def predict_bytes(self, img_bytes: bytes) -> Tuple[Optional[str], Optional[float]]:
         """バイトデータからゾンビを予測
 
         Args:
@@ -155,7 +181,7 @@ class ZombieClassifier:
             print(f"予測中にエラーが発生しました: {e}")
             return None, None
 
-    def predict_numpy(self, img_array):
+    def predict_numpy(self, img_array: Any) -> Tuple[Optional[str], Optional[float]]:
         """NumPy配列からゾンビを予測（YOLOの切り出し画像用）
 
         Args:
@@ -191,7 +217,7 @@ class ZombieClassifier:
             return None, None
 
 
-def main():
+def main() -> None:
     """メイン関数"""
     # 分類器のインスタンス化
     classifier = ZombieClassifier()

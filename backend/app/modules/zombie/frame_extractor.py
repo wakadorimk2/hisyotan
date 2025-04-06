@@ -15,7 +15,7 @@ from tqdm import tqdm
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
-from app.modules.zombie.logger_setup import setup_file_logging
+from backend.app.modules.zombie.logger_setup import setup_file_logging
 
 # ロガーの設定
 logging.basicConfig(
