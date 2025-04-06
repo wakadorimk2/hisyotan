@@ -45,7 +45,7 @@ async def stop_zombie_monitoring() -> None:
     ゾンビ検出の監視を停止
     """
     try:
-        from ..zombie.service import get_zombie_service
+        from ..modules.zombie.service import get_zombie_service
 
         # ゾンビサービスが利用可能なら監視を停止
         try:

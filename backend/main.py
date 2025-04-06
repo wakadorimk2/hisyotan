@@ -6,8 +6,6 @@
 
 import argparse
 import asyncio
-
-# 標準出力・標準エラー出力のエンコーディングを明示的に設定
 import io
 import os
 import signal
@@ -18,6 +16,16 @@ import types
 from pathlib import Path
 from typing import Optional
 
+# プロジェクトのルートディレクトリを取得
+ROOT_DIR = Path(__file__).parent.parent.absolute()
+BACKEND_DIR = Path(__file__).parent.absolute()
+
+# Pythonのパスに追加
+if str(ROOT_DIR) not in sys.path:
+    sys.path.append(str(ROOT_DIR))
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.append(str(BACKEND_DIR))
+
 import psutil
 import uvicorn
 from app.core import create_application
@@ -25,13 +33,9 @@ from app.core.logger import setup_logger
 from app.events.startup_handler import on_startup
 from fastapi import Body, FastAPI
 
+# 標準出力・標準エラー出力のエンコーディングを明示的に設定
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
-
-# ベースディレクトリの設定
-BASE_DIR = Path(__file__).parent.absolute()
-if str(BASE_DIR) not in sys.path:
-    sys.path.append(str(BASE_DIR))
 
 # カスタムロガー設定
 logger = setup_logger(__name__)

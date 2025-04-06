@@ -4,11 +4,12 @@ ResNet18ベースのゾンビ分類器の推論スクリプト
 
 import sys
 from pathlib import Path
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
+import torch.nn as nn
 from PIL import Image
-from torchvision import transforms
+from torchvision import models, transforms
 
 
 class ZombieClassifier:
@@ -29,7 +30,10 @@ class ZombieClassifier:
         # モデルファイルのパスを設定
         if model_path is None:
             # デフォルトのモデルパス
-            model_path = Path("backend/trained_models/zombie_classifier.pth")
+            current_file = Path(__file__)
+            backend_dir = current_file.parent.parent.parent.parent.parent
+            model_path = backend_dir / "trained_models" / "zombie_classifier.pth"
+            print(f"モデルパスを設定: {model_path}")
         else:
             model_path = Path(model_path)
 
@@ -44,8 +48,8 @@ class ZombieClassifier:
         print(f"使用デバイス: {self.device}")
 
         # モデルの読み込み
-        self.model = None
-        self.classes = None
+        self.model: Optional[nn.Module] = None
+        self.classes: List[str] = ["not_zombie", "zombie"]
         self.load_model()
 
         # 推論用の変換
@@ -57,7 +61,7 @@ class ZombieClassifier:
             ]
         )
 
-    def load_model(self):
+    def load_model(self) -> bool:
         """モデルを読み込む"""
         if not self.model_path.exists():
             print(f"エラー: モデルファイル {self.model_path} が見つかりません。")
@@ -65,15 +69,14 @@ class ZombieClassifier:
 
         try:
             # モデルの読み込み
-            checkpoint = torch.load(self.model_path, map_location=self.device)
+            checkpoint: Dict[str, Any] = torch.load(
+                self.model_path, map_location=self.device
+            )
 
             # クラス情報の取得
             self.classes = checkpoint.get("classes", ["not_zombie", "zombie"])
 
             # ResNet18モデルの構築
-            import torch.nn as nn
-            from torchvision import models
-
             model = models.resnet18(weights="IMAGENET1K_V1")
             num_ftrs = model.fc.in_features
             model.fc = nn.Linear(num_ftrs, len(self.classes))
@@ -108,7 +111,8 @@ class ZombieClassifier:
         try:
             # 画像の読み込みと前処理
             img = Image.open(img_path).convert("RGB")
-            img_tensor = self.transform(img).unsqueeze(0).to(self.device)
+            img_tensor = self.transform(img)
+            img_tensor = img_tensor.unsqueeze(0).to(self.device)
 
             # 予測
             with torch.no_grad():
