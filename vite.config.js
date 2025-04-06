@@ -46,6 +46,7 @@ export default defineConfig({
       '@core': resolve(__dirname, 'frontend/src/core'),
       '@ui': resolve(__dirname, 'frontend/src/ui'),
       '@emotion': resolve(__dirname, 'frontend/src/emotion'),
+      '@voice': resolve(__dirname, 'frontend/src/voice'),
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.css']
   },

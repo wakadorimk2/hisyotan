@@ -20,7 +20,7 @@ import {
   stopNervousShake
 } from '@emotion/expressionManager.js';
 import { playPresetSound } from '@emotion/audioReactor.js';
-import { requestVoiceSynthesis, stopCurrentPlayback } from './voicevoxClient.js';
+import { speakText, stopCurrentPlayback } from '@voice/speechVoice.js';
 import { showBubble, hideBubble, setText } from '@ui/helpers/speechController.js';
 
 /**
@@ -202,8 +202,8 @@ export async function speak(
     // 設定から話者IDを取得
     const speakerId = config?.voicevox?.speaker_id || 8;
 
-    // 音声合成リクエスト
-    success = await requestVoiceSynthesis(message, emotion, speakerId);
+    // 音声合成リクエスト（新しいモジュールの関数を使用）
+    success = await speakText(message, emotion, speakerId);
 
     if (success) {
       // 音声再生開始

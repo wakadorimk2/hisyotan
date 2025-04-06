@@ -25,11 +25,11 @@ import {
   isPlaying,
   stopPlaying
 } from './speakCore.js';
+// VOICEVOXクライアントを新しいモジュールに変更
 import {
   // eslint-disable-next-line no-unused-vars
-  requestVoiceSynthesis,
   checkVoicevoxConnection as checkVoicevoxConnectionAPI
-} from './voicevoxClient.js';
+} from '@voice/speechVoice.js';
 // import {
 //   showHordeModeToggle as showHordeModeToggleUI,
 //   getHordeModeState,
@@ -249,35 +249,29 @@ export class SpeechManager {
    */
   async checkVoicevoxConnection() {
     try {
-      const connected = await checkVoicevoxConnectionAPI();
+      // 新しい関数を使用
+      const isConnected = await checkVoicevoxConnectionAPI();
 
-      if (connected) {
-        // 接続成功時はリトライカウントをリセット
+      if (isConnected) {
+        logDebug("VOICEVOXサーバーと接続済み");
         this.voicevoxRetryCount = 0;
         this.voicevoxConnectionErrorShown = false;
         return true;
       } else {
-        // 接続失敗だがリトライ可能
-        throw new Error('VOICEVOX接続失敗: エンジンが起動していません');
+        // 接続失敗時の処理
+        this.voicevoxRetryCount++;
+        logDebug(`VOICEVOXサーバーとの接続失敗 (試行回数: ${this.voicevoxRetryCount})`);
+
+        // 最大試行回数を超えたときのみエラー表示
+        if (this.voicevoxRetryCount >= this.MAX_VOICEVOX_RETRIES && !this.voicevoxConnectionErrorShown) {
+          this.voicevoxConnectionErrorShown = true;
+          displayError("音声合成エンジン(VOICEVOX)に接続できません");
+        }
+
+        return false;
       }
     } catch (error) {
-      logDebug(`VOICEVOX接続エラー: ${error.message}`);
-
-      // リトライ処理
-      this.voicevoxRetryCount++;
-      if (this.voicevoxRetryCount <= this.MAX_VOICEVOX_RETRIES) {
-        logDebug(`VOICEVOX接続リトライ予定 (${this.voicevoxRetryCount}/${this.MAX_VOICEVOX_RETRIES}): ${this.VOICEVOX_RETRY_INTERVAL}ms後`);
-
-        // 数秒後に再試行
-        setTimeout(() => {
-          this.checkVoicevoxConnection().catch(err => logDebug(`再試行時のエラー: ${err.message}`));
-        }, this.VOICEVOX_RETRY_INTERVAL);
-      } else if (shouldDisplayError() && !this.voicevoxConnectionErrorShown) {
-        // 最大再試行回数を超えた場合のみエラー表示（猶予期間後）
-        showBubble('error', 'VOICEVOXに接続できません。VOICEVOXが起動しているか確認してください。');
-        this.voicevoxConnectionErrorShown = true;
-      }
-
+      logError(`VOICEVOX接続チェックエラー: ${error.message}`);
       return false;
     }
   }
