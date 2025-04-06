@@ -4,11 +4,14 @@
 音声合成に関するリクエストのデータモデルを定義
 """
 
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
+
 
 class VoiceSynthesisRequest(BaseModel):
     """音声合成リクエストのデータモデル"""
+
     text: str
     speaker_id: int = 1
     speed: float = 1.0

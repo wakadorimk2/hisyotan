@@ -6,19 +6,18 @@
 このスクリプトはゾンビ検出機能をデバッグするためのものです。
 """
 
-import os
-import sys
-import time
 import argparse
 import asyncio
 import logging
+import os
+import sys
 from pathlib import Path
 
 # ロギング設定
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
@@ -26,20 +25,33 @@ logger = logging.getLogger(__name__)
 current_dir = Path(__file__).parent.parent
 sys.path.append(str(current_dir))
 
+
 def setup_parser():
     """コマンドライン引数のパーサーを設定"""
-    parser = argparse.ArgumentParser(description='ゾンビ検出デバッグツール')
-    parser.add_argument('--threshold', '-t', type=float, default=0.3,
-                      help='検出信頼度の閾値 (デフォルト: 0.3)')
-    parser.add_argument('--verbose', '-v', action='store_true',
-                      help='詳細ログを有効化')
-    parser.add_argument('--model-path', '-m', type=str,
-                      help='YOLOモデルファイルへのパス (デフォルトはYOLOv8n)')
-    parser.add_argument('--no-gpu', action='store_true',
-                      help='GPU使用を無効化してCPUのみで実行')
+    parser = argparse.ArgumentParser(description="ゾンビ検出デバッグツール")
+    parser.add_argument(
+        "--threshold",
+        "-t",
+        type=float,
+        default=0.3,
+        help="検出信頼度の閾値 (デフォルト: 0.3)",
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="詳細ログを有効化")
+    parser.add_argument(
+        "--model-path",
+        "-m",
+        type=str,
+        help="YOLOモデルファイルへのパス (デフォルトはYOLOv8n)",
+    )
+    parser.add_argument(
+        "--no-gpu", action="store_true", help="GPU使用を無効化してCPUのみで実行"
+    )
     return parser
 
-async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, use_gpu=True):
+
+async def debug_zombie_detection(
+    threshold=0.3, verbose=False, model_path=None, use_gpu=True
+):
     """ゾンビ検出のデバッグ実行"""
     try:
         # 環境変数の設定
@@ -48,22 +60,27 @@ async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, 
         if verbose:
             os.environ["ZOMBIE_DETECTION_VERBOSE"] = "1"
             logger.setLevel(logging.DEBUG)
-        
-        logger.info(f"🔍 ゾンビ検出のデバッグを開始します (閾値: {threshold}, 詳細モード: {verbose})")
-        
+
+        logger.info(
+            f"🔍 ゾンビ検出のデバッグを開始します (閾値: {threshold}, 詳細モード: {verbose})"
+        )
+
         # detector_coreモジュールをインポート
         try:
             from app.modules.zombie.detector_core import ZombieDetector
+
             logger.info("ZombieDetectorクラスを正常にインポートしました")
         except ImportError as e:
             logger.error(f"ZombieDetectorのインポートエラー: {e}")
             import traceback
+
             traceback.print_exc()
             return
-        
+
         # GPU状態の確認
         try:
             import torch
+
             if use_gpu and torch.cuda.is_available():
                 logger.info(f"GPU検出: {torch.cuda.get_device_name(0)}")
             else:
@@ -76,9 +93,11 @@ async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, 
                     logger.info("GPU検出: できませんでした")
                     use_gpu = False
         except ImportError:
-            logger.warning("PyTorch (torch) をインポートできませんでした。CPUのみを使用します。")
+            logger.warning(
+                "PyTorch (torch) をインポートできませんでした。CPUのみを使用します。"
+            )
             use_gpu = False
-        
+
         # モデルのロード処理を修正
         try:
             # YOLOv8nのデフォルトモデルを使用する場合
@@ -86,30 +105,44 @@ async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, 
                 # モデルパスを取得
                 try:
                     from ultralytics import YOLO
-                    logger.info(f"YOLOをインポートしました")
-                    
+
+                    logger.info("YOLOをインポートしました")
+
                     # 標準のYOLOv8nを使用
-                    model_path = os.path.join(os.path.dirname(__file__), "trained_models", "yolov8n.pt")
+                    model_path = os.path.join(
+                        os.path.dirname(__file__), "trained_models", "yolov8n.pt"
+                    )
                     logger.info(f"デフォルトのYOLOv8nモデルを使用します: {model_path}")
                 except ImportError as e:
                     logger.error(f"YOLOのインポートエラー: {e}")
             else:
                 logger.info(f"指定されたモデルを使用します: {model_path}")
-            
+
             # モデルパスの存在確認
             if not os.path.exists(model_path):
                 logger.warning(f"指定されたモデルファイルが存在しません: {model_path}")
                 # バックアップとして標準のYOLOv8nパスを試す
-                model_path = os.path.join(os.path.dirname(__file__), "trained_models", "yolov8n.pt")
+                model_path = os.path.join(
+                    os.path.dirname(__file__), "trained_models", "yolov8n.pt"
+                )
                 if not os.path.exists(model_path):
                     logger.warning(f"バックアップモデルも存在しません: {model_path}")
-                    model_path = "yolov8n.pt"  # 最終手段としてライブラリ内蔵のモデルを使用
+                    model_path = (
+                        "yolov8n.pt"  # 最終手段としてライブラリ内蔵のモデルを使用
+                    )
                 logger.warning(f"代替モデルを使用します: {model_path}")
-            
+
             # 検出器インスタンスを作成
-            detector = ZombieDetector(model_path=model_path, confidence=threshold, debug_mode=True, use_gpu=use_gpu)
-            logger.info(f"ZombieDetectorインスタンスを作成しました: モデル={model_path}, 閾値={threshold}, GPU={use_gpu}")
-            
+            detector = ZombieDetector(
+                model_path=model_path,
+                confidence=threshold,
+                debug_mode=True,
+                use_gpu=use_gpu,
+            )
+            logger.info(
+                f"ZombieDetectorインスタンスを作成しました: モデル={model_path}, 閾値={threshold}, GPU={use_gpu}"
+            )
+
             # モデルをロード
             logger.info("モデルのロードを開始します...")
             try:
@@ -121,65 +154,71 @@ async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, 
             except Exception as e:
                 logger.error(f"モデルロード中に例外が発生: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-            
+
             # テスト用コールバック
             async def test_callback(count, screenshot, additional_data=None):
                 logger.info(f"🧟 ゾンビ検出コールバック: {count}体検出")
                 if additional_data:
                     logger.info(f"追加データ: {additional_data}")
                 return True
-            
+
             # 監視開始
             try:
                 logger.info("監視タスクを開始します...")
                 monitor_task = await detector.start_monitoring(
                     callback=test_callback,
                     few_zombies_callback=test_callback,
-                    warning_zombies_callback=test_callback
+                    warning_zombies_callback=test_callback,
                 )
                 logger.info("監視タスクの開始に成功しました")
             except Exception as e:
                 logger.error(f"監視タスクの開始に失敗: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-            
+
             # 30秒間実行（時間短縮）
             logger.info("🕒 テスト実行中... 30秒間監視します")
             await asyncio.sleep(30)
-            
+
             # 監視停止
             logger.info("🛑 テストを終了します")
             await detector.stop_monitoring()
-            
+
         except Exception as e:
             logger.error(f"ZombieDetector初期化中にエラーが発生: {e}")
             import traceback
+
             traceback.print_exc()
-            
+
     except Exception as e:
         logger.error(f"デバッグ実行中にエラーが発生: {e}")
         import traceback
+
         traceback.print_exc()
+
 
 async def main():
     """メイン関数"""
     parser = setup_parser()
     args = parser.parse_args()
-    
-    logger.info(f"🚀 デバッグスクリプトを開始します")
+
+    logger.info("🚀 デバッグスクリプトを開始します")
     logger.info(f"設定: 閾値={args.threshold}, 詳細モード={args.verbose}")
-    
+
     await debug_zombie_detection(
-        threshold=args.threshold, 
+        threshold=args.threshold,
         verbose=args.verbose,
         model_path=args.model_path,
-        use_gpu=not args.no_gpu
+        use_gpu=not args.no_gpu,
     )
-    
-    logger.info(f"✅ デバッグスクリプトを終了します")
+
+    logger.info("✅ デバッグスクリプトを終了します")
+
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

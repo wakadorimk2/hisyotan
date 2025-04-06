@@ -4,24 +4,26 @@
 FastAPIアプリケーションの初期化とミドルウェア、静的ファイル設定を管理
 """
 
-import os
 import logging
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from starlette.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import JSONResponse
 
 # 設定のインポート
-from ..config import STATIC_DIR, TEMP_DIR, DEBUG_MODE, IMAGES_DIR
+from ..config import IMAGES_DIR, STATIC_DIR, TEMP_DIR
 
 # ロガー設定
 logger = logging.getLogger(__name__)
 
+
 def create_application() -> FastAPI:
     """
     FastAPIアプリケーションを作成して設定する
-    
+
     Returns:
         FastAPI: 初期化されたアプリケーションインスタンス
     """
@@ -46,7 +48,7 @@ def create_application() -> FastAPI:
     async def http_exception_handler(request, exc):
         return JSONResponse(
             status_code=exc.status_code,
-            content={"status": "error", "message": str(exc.detail)}
+            content={"status": "error", "message": str(exc.detail)},
         )
 
     # 静的ファイルの提供
@@ -54,26 +56,28 @@ def create_application() -> FastAPI:
         # 静的ファイルディレクトリの作成確認
         os.makedirs(STATIC_DIR, exist_ok=True)
         os.makedirs(TEMP_DIR, exist_ok=True)
-        
+
         # 静的ファイルのマウント
         app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
         app.mount("/temp", StaticFiles(directory=TEMP_DIR), name="temp")
         app.mount("/assets", StaticFiles(directory=IMAGES_DIR), name="assets")
-        
-        logger.info(f"静的ファイルディレクトリを設定: {STATIC_DIR}, {TEMP_DIR}, {IMAGES_DIR}")
+
+        logger.info(
+            f"静的ファイルディレクトリを設定: {STATIC_DIR}, {TEMP_DIR}, {IMAGES_DIR}"
+        )
     except Exception as e:
         logger.error(f"静的ファイルディレクトリの設定に失敗: {str(e)}")
 
     # ルーターの登録
-    from ..routers import root, health, message, websocket, events, voice
-    
+    from ..routers import events, health, message, root, voice, websocket
+
     app.include_router(root.router)
     app.include_router(health.router)
     app.include_router(message.router)
     app.include_router(events.router)
     app.include_router(voice.router)
-    
+
     # WebSocketエンドポイント
     app.include_router(websocket.router)
-    
-    return app 
+
+    return app

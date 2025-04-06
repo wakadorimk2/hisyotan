@@ -3,8 +3,9 @@ import sys
 # パフォーマンス設定のデフォルト値
 DEFAULT_FRAME_INTERVAL = 0.3  # 0.3秒間隔で画面取得
 DEFAULT_RESIZE_FACTOR = 0.65  # 画像を65%に縮小（以前は50%）
-DEFAULT_SKIP_RATIO = 1        # 毎回処理（スキップなし）
-DEFAULT_CPU_THRESHOLD = 80    # CPU使用率がこの値を超えると処理頻度を下げる
+DEFAULT_SKIP_RATIO = 1  # 毎回処理（スキップなし）
+DEFAULT_CPU_THRESHOLD = 80  # CPU使用率がこの値を超えると処理頻度を下げる
+
 
 # コマンドライン引数から設定を取得
 def get_performance_settings():
@@ -14,9 +15,9 @@ def get_performance_settings():
         "frame_interval": DEFAULT_FRAME_INTERVAL,
         "resize_factor": DEFAULT_RESIZE_FACTOR,
         "skip_ratio": DEFAULT_SKIP_RATIO,
-        "cpu_threshold": DEFAULT_CPU_THRESHOLD
+        "cpu_threshold": DEFAULT_CPU_THRESHOLD,
     }
-    
+
     # 引数からパフォーマンス設定を読み取る
     for i, arg in enumerate(args):
         if arg == "--frame-interval" and i + 1 < len(args):
@@ -57,14 +58,15 @@ def get_performance_settings():
             settings["resize_factor"] = 0.75
             settings["skip_ratio"] = 1
             settings["cpu_threshold"] = 90
-    
+
     # 値の範囲を制限
     settings["frame_interval"] = max(0.1, min(10.0, settings["frame_interval"]))
     settings["resize_factor"] = max(0.2, min(1.0, settings["resize_factor"]))
     settings["skip_ratio"] = max(1, min(5, settings["skip_ratio"]))
     settings["cpu_threshold"] = max(50, min(95, settings["cpu_threshold"]))
-    
+
     return settings
+
 
 # パフォーマンス設定を取得
 PERFORMANCE_SETTINGS = get_performance_settings()
