@@ -69,11 +69,14 @@ class ConnectionManager:
         接続中の全クライアントにメッセージをブロードキャストする
         """
         print(
-            f"[BACKEND] WebSocketブロードキャスト開始: {message.get('type', 'unknown')} - 接続数: {len(self.active_connections)}"
+            f"[BACKEND] WebSocketブロードキャスト開始: "
+            f"{message.get('type', 'unknown')} - "
+            f"接続数: {len(self.active_connections)}"
         )
         if len(self.active_connections) == 0:
             print(
-                f"[BACKEND] WebSocket接続がありません！ブロードキャストをスキップ: {message.get('type', 'unknown')}"
+                f"[BACKEND] WebSocket接続がありません！"
+                f"ブロードキャストをスキップ: {message.get('type', 'unknown')}"
             )
             logger.warning(
                 f"WebSocket接続がありません。ブロードキャストをスキップ: {message}"

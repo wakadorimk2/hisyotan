@@ -79,7 +79,9 @@ class NotificationManager:
                 < GLOBAL_NOTIFICATION_INTERVAL
             ):
                 logger.debug(
-                    f"通知マネージャ: グローバル通知間隔が短すぎる ({current_time - self.last_notification_time:.1f}秒 < {GLOBAL_NOTIFICATION_INTERVAL}秒)"
+                    f"通知マネージャ: グローバル通知間隔が短すぎる "
+                    f"({current_time - self.last_notification_time:.1f}秒 < "
+                    f"{GLOBAL_NOTIFICATION_INTERVAL}秒)"
                 )
                 return False, 0
 
@@ -93,7 +95,8 @@ class NotificationManager:
                 since_last: float = current_time - self.last_source_time[source]
                 if since_last < self.min_source_interval:
                     logger.debug(
-                        f"通知マネージャ: 同一ソース'{source}'からの通知間隔が短すぎる ({since_last:.1f}秒 < {self.min_source_interval}秒)"
+                        f"通知マネージャ: 同一ソース'{source}'からの通知間隔が短すぎる "
+                        f"({since_last:.1f}秒 < {self.min_source_interval}秒)"
                     )
                     return False, 0
 
@@ -104,7 +107,8 @@ class NotificationManager:
                 if elapsed < self.estimated_audio_duration:
                     remaining = self.estimated_audio_duration - elapsed
                     logger.debug(
-                        f"通知マネージャ: 音声再生中のため拒否 (残り約{remaining:.1f}秒)"
+                        f"通知マネージャ: 音声再生中のため拒否 "
+                        f"(残り約{remaining:.1f}秒)"
                     )
                     return False, 0
                 else:
@@ -120,7 +124,8 @@ class NotificationManager:
                 if time_since_last < type_cooldown:
                     remaining = type_cooldown - time_since_last
                     logger.debug(
-                        f"通知マネージャ: 同一タイプ '{detection_type}' の通知クールダウン中 (残り{remaining:.1f}秒)"
+                        f"通知マネージャ: 同一タイプ '{detection_type}' の通知クールダウン中 "
+                        f"(残り{remaining:.1f}秒)"
                     )
                     return False, 0
 
@@ -141,7 +146,9 @@ class NotificationManager:
             current_id = self.notification_id
 
             logger.info(
-                f"通知マネージャ: 通知ID={current_id}の権限を取得 (ゾンビ数={zombie_count}, 発信元={source}, タイプ={detection_type or '未指定'})"
+                f"通知マネージャ: 通知ID={current_id}の権限を取得 "
+                f"(ゾンビ数={zombie_count}, 発信元={source}, "
+                f"タイプ={detection_type or '未指定'})"
             )
             return True, current_id
 
@@ -158,7 +165,8 @@ class NotificationManager:
                     self.active_sources.remove(source)
 
                 logger.info(
-                    f"通知マネージャ: 通知ID={notification_id}の権限を解放 (発信元={source})"
+                    f"通知マネージャ: 通知ID={notification_id}の権限を解放 "
+                    f"(発信元={source})"
                 )
                 return True
             return False

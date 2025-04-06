@@ -123,7 +123,8 @@ async def check_voicevox_connection():
         return {"connected": False, "error": str(e)}
 
 
-# 既存の再生込みのエンドポイント（互換性のために残すが、新しいsynthesizeエンドポイントにリダイレクト）
+# 既存の再生込みのエンドポイント（互換性のために残すが、
+# 新しいsynthesizeエンドポイントにリダイレクト）
 @router.post("/api/voice/synthesize-play")
 async def synthesize_and_play_voice(request: Request):
     """
@@ -219,7 +220,8 @@ async def speak_text(request: VoiceSynthesisRequest):
         speaker_id: 話者ID (オプション)
     """
     logger.info(
-        f"speak エンドポイントが呼び出されました（synthesize に転送）: {request.text[:20] if request.text else ''}..."
+        f"speak エンドポイントが呼び出されました（synthesize に転送）: "
+        f"{request.text[:20] if request.text else ''}..."
     )
     return await synthesize_voice(request)
 
@@ -240,7 +242,8 @@ async def react_to_zombie_endpoint(
     """
     try:
         logger.info(
-            f"ゾンビ検出リクエスト: count={count}, distance={distance:.1f}, force={force}"
+            f"ゾンビ検出リクエスト: count={count}, "
+            f"distance={distance:.1f}, force={force}"
         )
 
         # ゾンビ検出時の音声と表情変化を生成
@@ -287,7 +290,8 @@ async def speak_with_preset_endpoint(request: Request):
             )
 
         logger.info(
-            f"プリセット音声合成リクエスト: text={text[:20]}..., preset={preset_name}, speaker={speaker_id}"
+            f"プリセット音声合成リクエスト: text={text[:20]}..., "
+            f"preset={preset_name}, speaker={speaker_id}"
         )
 
         # リクエストオブジェクトを作成して合成エンドポイントにリダイレクト

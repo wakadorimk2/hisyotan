@@ -74,7 +74,8 @@ class ZombieClassifier:
         backend_dir = current_file.parent.parent  # backendディレクトリ
         self.model_path = backend_dir / "models"
         print(
-            f"モデルディレクトリパス: {self.model_path} (存在: {self.model_path.exists()})"
+            f"モデルディレクトリパス: {self.model_path} "
+            f"(存在: {self.model_path.exists()})"
         )
 
         # モデルファイルの存在確認
@@ -123,7 +124,8 @@ class ZombieClassifier:
 
         if not self.data_path.exists():
             raise FileNotFoundError(
-                f"データパス {self.data_path} が見つかりません。パスを確認してください。"
+                f"データパス {self.data_path} が見つかりません。"
+                "パスを確認してください。"
             )
 
         # サブディレクトリの確認
@@ -414,12 +416,14 @@ class ZombieClassifier:
                 # モデルの読み込み
                 model_path = self.model_path / "zombie_classifier.pth"
                 print(
-                    f"[メモリ処理] モデルパス: {model_path} (存在: {model_path.exists()})"
+                    f"[メモリ処理] モデルパス: {model_path} "
+                    f"(存在: {model_path.exists()})"
                 )
 
                 if not model_path.exists():
                     print(
-                        f"[メモリ処理] エラー: モデルファイルが見つかりません: {model_path}"
+                        f"[メモリ処理] エラー: モデルファイルが見つかりません: "
+                        f"{model_path}"
                     )
                     print(f"現在の作業ディレクトリ: {os.getcwd()}")
                     print(f"フルパス: {os.path.abspath(str(model_path))}")
@@ -457,7 +461,8 @@ class ZombieClassifier:
             from PIL import Image
 
             print(
-                f"[メモリ処理] バイトデータから画像を読み込み中 (データサイズ: {len(img_bytes)} bytes)"
+                f"[メモリ処理] バイトデータから画像を読み込み中 "
+                f"(データサイズ: {len(img_bytes)} bytes)"
             )
             img = Image.open(BytesIO(img_bytes)).convert("RGB")
 
@@ -475,7 +480,8 @@ class ZombieClassifier:
             confidence_value = confidence[0].item()
 
             print(
-                f"[メモリ処理] 予測結果: {predicted_class}, 確度: {confidence_value:.4f}"
+                f"[メモリ処理] 予測結果: {predicted_class}, "
+                f"確度: {confidence_value:.4f}"
             )
             return predicted_class, confidence_value
 

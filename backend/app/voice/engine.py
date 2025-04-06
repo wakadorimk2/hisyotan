@@ -16,11 +16,11 @@ from typing import Any, Dict, Optional, Tuple
 
 import requests
 
-# ロガーの設定
-logger = logging.getLogger(__name__)
-
 # 感情分析モジュールをインポート
 from .emotion_analyzer import analyze_text
+
+# ロガーの設定
+logger = logging.getLogger(__name__)
 
 # 音声再生の最終時刻を記録する変数
 last_voice_time = 0
@@ -191,39 +191,15 @@ async def synthesize_direct(
     from ..config import get_settings
 
     try:
-        # 設定の取得
+        # 設定を取得（VOICEVOX_HOSTを直接使用するため）
         settings = get_settings()
-
-        # 感情に応じた音声プリセット
-        voice_preset = None
-        if emotion in settings.VOICE_PRESETS:
-            voice_preset = settings.VOICE_PRESETS[emotion]
-
-        # 実際のスピードとピッチの設定値（プリセットまたはパラメータから）
-        speed_scale = (
-            speed
-            if speed is not None
-            else (voice_preset.get("speed", 1.0) if voice_preset else 1.0)
-        )
-        pitch_scale = (
-            pitch
-            if pitch is not None
-            else (voice_preset.get("pitch", 0.0) if voice_preset else 0.0)
-        )
-        intonation_scale = (
-            intonation
-            if intonation is not None
-            else (voice_preset.get("intonation", 1.0) if voice_preset else 1.0)
-        )
-        volume_scale = volume if volume is not None else 0.5  # デフォルト音量50%
 
         logger.info(
             f"音声合成開始 (direct): text={text[:20]}..., "
             f"speaker={speaker_id}, emotion={emotion}"
         )
         logger.debug(
-            f"音声パラメータ: speed={speed_scale}, "
-            f"pitch={pitch_scale}, intonation={intonation_scale}"
+            f"音声パラメータ: speed={speed}, pitch={pitch}, intonation={intonation}"
         )
 
         # 音声合成クエリの作成リクエスト
@@ -244,10 +220,10 @@ async def synthesize_direct(
         voice_params = query_response.json()
 
         # パラメータを設定
-        voice_params["speedScale"] = speed_scale
-        voice_params["pitchScale"] = pitch_scale
-        voice_params["intonationScale"] = intonation_scale
-        voice_params["volumeScale"] = volume_scale
+        voice_params["speedScale"] = speed
+        voice_params["pitchScale"] = pitch
+        voice_params["intonationScale"] = intonation
+        voice_params["volumeScale"] = volume
 
         # 音声合成の実行
         logger.debug(f"VOICEVOX 音声合成実行: {settings.VOICEVOX_HOST}/synthesis")
@@ -377,7 +353,7 @@ def speak(
     try:
         from ..config import get_settings
 
-        # 設定を取得
+        # 設定を取得（VOICEVOX_HOSTを直接使用するため）
         settings = get_settings()
 
         logger.info(f"音声合成: text={text[:30]}..., speaker={speaker_id}")

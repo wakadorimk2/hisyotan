@@ -77,7 +77,8 @@ class FrameExtractor:
                 logger.info(f"✨ GPU処理が有効になりました！デバイス: {gpu_name} ✨")
             else:
                 logger.warning(
-                    "😢 GPUが見つからないか、OpenCVがCUDAサポート付きでビルドされていません"
+                    "😢 GPUが見つからないか、"
+                    "OpenCVがCUDAサポート付きでビルドされていません"
                 )
                 logger.warning("💻 CPUモードで処理を続行します")
 
@@ -104,7 +105,8 @@ class FrameExtractor:
 
         logger.info(f"動画情報: {width}x{height}, {fps}fps, 全{total_frames}フレーム")
         logger.info(
-            f"抽出間隔: {self.frame_interval}フレームごと（約 {self.frame_interval / fps:.2f}秒に1枚）"
+            f"抽出間隔: {self.frame_interval}フレームごと"
+            f"（約 {self.frame_interval / fps:.2f}秒に1枚）"
         )
 
         # 出力ディレクトリの作成

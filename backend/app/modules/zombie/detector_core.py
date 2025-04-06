@@ -60,7 +60,6 @@ class ZombieDetector:
         self.confidence = confidence
         self.debug_mode = debug_mode
         self.model = None
-        self.monitor_task = None
         self.is_monitoring = False
         self.frame_count = 0
         self.last_cpu_check_time = 0
@@ -336,7 +335,9 @@ class ZombieDetector:
                 )
                 self.skip_ratio = min(PERFORMANCE_SETTINGS["skip_ratio"] + 1, 5)
                 logger.info(
-                    f"高CPU負荷 ({cpu_percent:.1f}%)のため設定調整: interval={self.adaptive_interval:.1f}s, resize={self.resize_factor:.2f}"
+                    f"高CPU負荷 ({cpu_percent:.1f}%)のため設定調整: "
+                    f"interval={self.adaptive_interval:.1f}s, "
+                    f"resize={self.resize_factor:.2f}"
                 )
             else:
                 # 通常負荷時は標準設定に戻す
@@ -431,7 +432,8 @@ class ZombieDetector:
                         effective_threshold = float(threshold_env)
                         if verbose_mode:
                             print(
-                                f"[BACKEND] 環境変数から検出閾値を設定: {effective_threshold}"
+                                f"[BACKEND] 環境変数から検出閾値を設定: "
+                                f"{effective_threshold}"
                             )
                 except (ValueError, TypeError) as e:
                     print(f"[BACKEND] 閾値設定エラー: {e}")
@@ -488,7 +490,9 @@ class ZombieDetector:
 
                             if verbose_mode:
                                 print(
-                                    f"[BACKEND] 検出: クラス={cls_id}, 信頼度={conf:.4f}, 座標=({x1},{y1})-({x2},{y2})"
+                                    f"[BACKEND] 検出: クラス={cls_id}, "
+                                    f"信頼度={conf:.4f}, "
+                                    f"座標=({x1},{y1})-({x2},{y2})"
                                 )
 
             # 終了時刻を記録
@@ -498,7 +502,8 @@ class ZombieDetector:
             # 詳細ログ出力
             if verbose_mode:
                 print(
-                    f"[BACKEND] YOLO検出完了: {detection_count}体 (処理時間: {process_time:.1f}ms)"
+                    f"[BACKEND] YOLO検出完了: {detection_count}体 "
+                    f"(処理時間: {process_time:.1f}ms)"
                 )
 
             # ResNet分類器による判定（有効な場合のみ）
@@ -532,7 +537,8 @@ class ZombieDetector:
                                 }
                                 if verbose_mode:
                                     print(
-                                        f"[BACKEND] ResNet分類 - メモリ内処理成功: {result_class}, {prob}"
+                                        f"[BACKEND] ResNet分類 - メモリ内処理成功: "
+                                        f"{result_class}, {prob}"
                                     )
 
                                 # メモリ処理が成功したら以降のファイル処理はスキップ

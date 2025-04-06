@@ -79,12 +79,8 @@ def _zombie_alert_callback(
     """
     import asyncio
 
-    from ..config.settings import Settings
     from ..voice.engine import safe_play_voice
     from ..ws.manager import send_notification
-
-    # 設定を取得
-    settings = Settings()
 
     # ResNetの検出結果を取得
     resnet_result = False
@@ -232,12 +228,8 @@ async def zombie_few_alert(
         play_audio: 音声を再生するかどうか
         force: 強制的に実行するかどうか
     """
-    from ..config.settings import Settings
     from ..voice.engine import react_to_zombie
     from ..ws.manager import send_notification
-
-    # 設定を取得
-    settings = Settings()
 
     # ResNetの検出結果を取得
     resnet_result = False
@@ -248,10 +240,12 @@ async def zombie_few_alert(
         resnet_prob = additional_data.get("resnet_probability", 0.0)
 
     logger.info(
-        f"🟠 少数のゾンビを検出: {count}体, ResNet結果: {resnet_result}({resnet_prob:.2f})"
+        f"🟠 少数のゾンビを検出: {count}体, "
+        f"ResNet結果: {resnet_result}({resnet_prob:.2f})"
     )
     print(
-        f"[BACKEND] 少数のゾンビを検出: {count}体, ResNet結果: {resnet_result}({resnet_prob:.2f})"
+        f"[BACKEND] 少数のゾンビを検出: {count}体, "
+        f"ResNet結果: {resnet_result}({resnet_prob:.2f})"
     )
 
     # デバウンスチェック（強制フラグがない場合）
@@ -340,12 +334,8 @@ async def zombie_warning(
     """
     import random
 
-    from ..config.settings import Settings
     from ..voice.engine import react_to_zombie, safe_play_voice
     from ..ws.manager import manager, send_notification
-
-    # 設定を取得
-    settings = Settings()
 
     # ResNetの検出結果を取得
     resnet_result = False
@@ -356,10 +346,12 @@ async def zombie_warning(
         resnet_prob = additional_data.get("resnet_probability", 0.0)
 
     logger.warning(
-        f"🟠 警戒レベルのゾンビを検出: {count}体, ResNet結果: {resnet_result}({resnet_prob:.2f})"
+        f"🟠 警戒レベルのゾンビを検出: {count}体, "
+        f"ResNet結果: {resnet_result}({resnet_prob:.2f})"
     )
     print(
-        f"[BACKEND] 警戒レベルのゾンビを検出: {count}体, ResNet結果: {resnet_result}({resnet_prob:.2f})"
+        f"[BACKEND] 警戒レベルのゾンビを検出: {count}体, "
+        f"ResNet結果: {resnet_result}({resnet_prob:.2f})"
     )
 
     # デバウンスチェック（強制フラグがない場合）

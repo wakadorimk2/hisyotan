@@ -96,7 +96,8 @@ class EventDispatcher:
 
             except Exception as e:
                 logger.error(
-                    f"イベント {event_type.__name__} のコールバック実行中にエラーが発生: {e}"
+                    f"イベント {event_type.__name__} のコールバック実行中に"
+                    f"エラーが発生: {e}"
                 )
 
     def dispatch_sync(self, event: BaseEvent) -> None:
@@ -128,7 +129,8 @@ class EventDispatcher:
 
             except Exception as e:
                 logger.error(
-                    f"イベント {event_type.__name__} の同期コールバック実行中にエラーが発生: {e}"
+                    f"イベント {event_type.__name__} の同期コールバック実行中に"
+                    f"エラーが発生: {e}"
                 )
 
 

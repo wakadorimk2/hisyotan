@@ -105,17 +105,16 @@ async def debug_zombie_detection(
             if model_path is None:
                 # モデルパスを取得
                 try:
-                    from ultralytics import YOLO
-
-                    logger.info("YOLOをインポートしました")
+                    # YOLOをインポートしてモデルパスを設定
+                    logger.info("YOLOモデルパスを設定します")
 
                     # 標準のYOLOv8nを使用
                     model_path = os.path.join(
                         os.path.dirname(__file__), "trained_models", "yolov8n.pt"
                     )
                     logger.info(f"デフォルトのYOLOv8nモデルを使用します: {model_path}")
-                except ImportError as e:
-                    logger.error(f"YOLOのインポートエラー: {e}")
+                except Exception as e:
+                    logger.error(f"モデルパス設定エラー: {e}")
             else:
                 logger.info(f"指定されたモデルを使用します: {model_path}")
 
@@ -170,7 +169,7 @@ async def debug_zombie_detection(
             # 監視開始
             try:
                 logger.info("監視タスクを開始します...")
-                monitor_task = await detector.start_monitoring(
+                await detector.start_monitoring(
                     callback=test_callback,
                     few_zombies_callback=test_callback,
                     warning_zombies_callback=test_callback,
