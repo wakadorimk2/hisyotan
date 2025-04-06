@@ -70,10 +70,11 @@ export function setText(text) {
       font-size: 1.05rem !important;
       line-height: 1.6 !important;
       position: relative !important;
-      z-index: 5 !important;
+      z-index: 2147483647 !important;
       margin: 0 !important;
       padding: 0 !important;
       text-shadow: 0 0 1px rgba(255,255,255,0.7) !important; /* テキスト視認性向上 */
+      background-color: transparent !important;
     `;
         textElement.appendChild(spanElement);
 
@@ -88,7 +89,8 @@ export function setText(text) {
       box-sizing: border-box !important;
       min-height: 50px !important;
       position: relative !important;
-      z-index: 5 !important;
+      z-index: 2147483647 !important;
+      background-color: transparent !important;
     `;
 
     } catch (error) {
@@ -117,10 +119,11 @@ export function setText(text) {
           font-size: 1.05rem !important;
           line-height: 1.6 !important;
           position: relative !important;
-          z-index: 5 !important;
+          z-index: 2147483647 !important;
           margin: 0 !important;
           padding: 0 !important;
           text-shadow: 0 0 1px rgba(255,255,255,0.7) !important;
+          background-color: transparent !important;
         `;
                 textElement.innerHTML = '';
                 textElement.appendChild(spanElement);
@@ -151,10 +154,11 @@ export function setText(text) {
             font-size: 1.05rem !important;
             line-height: 1.6 !important;
             position: relative !important;
-            z-index: 5 !important;
+            z-index: 2147483647 !important;
             margin: 0 !important;
             padding: 0 !important;
             text-shadow: 0 0 1px rgba(255,255,255,0.7) !important;
+            background-color: transparent !important;
           `;
                     textElement.innerHTML = '';
                     textElement.appendChild(spanElement);
@@ -202,6 +206,21 @@ export function showBubble(type = 'default', text = 'こんにちは！何かお
         return;
     }
 
+    // 必ず親子関係を確認し修正
+    if (!bubble.contains(textElement)) {
+        console.log('⚠️ speechTextがspeechBubbleの子要素ではありません。追加します。');
+
+        // 既存の親がある場合は切り離す
+        if (textElement.parentElement) {
+            console.log('🔄 既存の親からspeechTextを切り離します');
+            textElement.parentElement.removeChild(textElement);
+        }
+
+        // speechBubbleに追加
+        bubble.appendChild(textElement);
+        console.log('✅ speechTextをspeechBubbleに追加しました');
+    }
+
     // 先にテキストを設定（順序重要: テキスト設定→吹き出し表示）
     setText(text);
 
@@ -215,22 +234,18 @@ export function showBubble(type = 'default', text = 'こんにちは！何かお
     display: flex !important; 
     visibility: visible !important; 
     opacity: 1 !important;
-    z-index: 9999 !important;
+    z-index: 2147483647 !important;
+    position: fixed !important;
+    top: 15% !important;
+    right: 50px !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 20px !important;
+    padding: 15px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
   `;
 
-    // タイプに応じたクラスを追加
-    if (type === 'warning') {
-        bubble.classList.add('warning');
-    } else if (type === 'error') {
-        bubble.classList.add('error');
-    } else if (type === 'success') {
-        bubble.classList.add('success');
-    } else if (type === 'zombie_warning') {
-        bubble.classList.add('zombie-warning');
-    }
-
     // 強制的に再描画を促す
-    void bubble.offsetWidth;
+    void bubble.offsetHeight;
 
     // テキストが設定されているか確認（冗長でも念のため、最終確認）
     setTimeout(() => {
@@ -239,6 +254,16 @@ export function showBubble(type = 'default', text = 'こんにちは！何かお
             setText(text); // 念のため再設定
         } else {
             console.log('✅ 吹き出しとテキストが正常に表示されています');
+            // 確認のために、テキストのスタイルとDOM構造を詳細にログ出力
+            console.log('📊 テキスト要素の状態:', {
+                'テキスト内容': textElement.textContent,
+                'visibility': textElement.style.visibility,
+                'opacity': textElement.style.opacity,
+                'display': textElement.style.display,
+                'z-index': textElement.style.zIndex,
+                '子要素数': textElement.childElementCount,
+                '親要素': textElement.parentElement?.id || '不明'
+            });
         }
     }, 100);
 }

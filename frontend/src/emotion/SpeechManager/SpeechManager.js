@@ -86,6 +86,13 @@ export class SpeechManager {
     // 現在表示中のセリフデータ
     this.currentSpeech = null;
 
+    // メソッドのバインド
+    this.safeClearText = this.safeClearText.bind(this);
+    this.speakWithObject = this.speakWithObject.bind(this);
+    this.speak = this.speak.bind(this);
+    this.speakLegacy = this.speakLegacy.bind(this);
+    this.stopAllSpeech = this.stopAllSpeech.bind(this);
+
     // 🌟 初期化処理
     this.init();
 
@@ -170,12 +177,18 @@ export class SpeechManager {
       // 自動非表示が有効で、かつ音声再生に成功した場合のみ吹き出しを隠す
       if (autoHide && audioSuccess) {
         // 少し遅延させて吹き出しを非表示にする
+        const self = this; // this参照を保持するための変数
         const hideTimeoutId = setTimeout(async () => {
           logDebug(`🧹 吹き出しを非表示にします（自動非表示タイマー: ${actualDelay}ms後）`);
           hideBubble();
 
-          // 安全なテキストクリア関数を使用
-          await this.safeClearText(2000);
+          // 直接clearTextを呼び出す（self.safeClearTextの代わりに）
+          try {
+            clearText();
+            logDebug('✅ テキストをクリアしました');
+          } catch (error) {
+            logError(`テキストクリアエラー: ${error.message}`);
+          }
 
         }, actualDelay); // 適応的な遅延時間を使用
 
@@ -401,7 +414,7 @@ export class SpeechManager {
       hideBubble();
 
       // 吹き出しのテキストをクリア（安全に）
-      await SpeechManager.safeClearText();
+      await this.safeClearText();
 
       // タイムアウトをクリア
       for (const [key, timerId] of this.hideTimeoutMap.entries()) {
