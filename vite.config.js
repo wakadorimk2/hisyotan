@@ -15,7 +15,7 @@ export default defineConfig({
       }
     }
   },
-  
+
   // Electron統合のためのサーバー設定
   server: {
     port: 5173,
@@ -24,7 +24,7 @@ export default defineConfig({
       overlay: false, // HMRオーバーレイを無効化（Electronウィンドウで表示崩れを防ぐ）
     }
   },
-  
+
   // エイリアスの設定（相対パスを@付きのパスで置き換え可能に）
   resolve: {
     alias: {
@@ -34,7 +34,7 @@ export default defineConfig({
     },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.css']
   },
-  
+
   // Electronでの使用に適した設定
   build: {
     outDir: 'dist', // ルートからの相対パスになるよう調整

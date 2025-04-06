@@ -8,7 +8,6 @@ const { spawn } = require('child_process');
 const treeKill = require('tree-kill');
 const http = require('http');
 const waitOn = require('wait-on');
-const path = require('path');
 
 // 文字化け対策としてエンコーディング設定を行う関数
 const setupConsoleEncoding = () => {
@@ -46,6 +45,7 @@ const checkHttpEndpoint = (url, timeout = 3000) => {
             resolve(true);
           } catch (e) {
             console.log(`✅ エンドポイント応答確認（JSONではない）: ${url}`);
+            console.log(e);
             resolve(true);
           }
         });
@@ -54,12 +54,12 @@ const checkHttpEndpoint = (url, timeout = 3000) => {
         resolve(false);
       }
     });
-    
+
     req.on('error', (err) => {
       console.log(`⏳ エンドポイント接続エラー: ${err.message}`);
       resolve(false);
     });
-    
+
     req.setTimeout(timeout, () => {
       req.abort();
       console.log(`⏳ エンドポイント接続タイムアウト: ${url}`);
@@ -77,7 +77,7 @@ const checkHttpEndpoint = (url, timeout = 3000) => {
  */
 const waitForEndpoint = async (url, maxRetries = 30, retryInterval = 1000) => {
   console.log(`⏳ エンドポイントの起動を待機しています: ${url}`);
-  
+
   // まず、サーバーが応答するのを待つ
   try {
     await waitOn({
@@ -91,14 +91,14 @@ const waitForEndpoint = async (url, maxRetries = 30, retryInterval = 1000) => {
     console.error(`⚠️ エンドポイント待機中にエラーが発生しました: ${err.message}`);
     return false;
   }
-  
+
   // 実際にエンドポイントにアクセスして正常応答を確認
   let retries = 0;
   let success = false;
-  
+
   while (!success && retries < maxRetries) {
     success = await checkHttpEndpoint(url, 3000);
-    
+
     if (!success && retries < maxRetries - 1) {
       retries++;
       console.log(`⏳ エンドポイント確認リトライ中... ${retries}/${maxRetries}`);
@@ -108,7 +108,7 @@ const waitForEndpoint = async (url, maxRetries = 30, retryInterval = 1000) => {
       break;
     }
   }
-  
+
   if (success) {
     console.log(`✅ エンドポイントの準備ができました: ${url}`);
     return true;
@@ -124,7 +124,7 @@ const waitForEndpoint = async (url, maxRetries = 30, retryInterval = 1000) => {
  */
 const killAllProcesses = (processes) => {
   console.log('🌸 全プロセスを終了しています...');
-  
+
   Object.entries(processes).forEach(([name, proc]) => {
     if (proc && proc.pid) {
       console.log(`✨ ${name} プロセス (PID: ${proc.pid}) を終了します`);

@@ -10,7 +10,7 @@ console.log(`🔧 実行環境: ${process.env.NODE_ENV || 'production'}`);
 console.log(`📁 現在の作業ディレクトリ: ${process.cwd?.() ?? '.'}`);
 
 // ESモジュール互換の__dirname定義（より安全に）
-const __dirname = process.env.NODE_ENV === 'development' 
+const __dirname = process.env.NODE_ENV === 'development'
   ? path.resolve(process.cwd?.() ?? '.')
   : path.dirname(process.execPath || '.');
 
@@ -53,13 +53,13 @@ contextBridge.exposeInMainWorld('electron', {
   showYesNoDialog: (message) => ipcRenderer.invoke('show-yes-no-dialog', message),
   showTextInputDialog: (message, defaultValue) => ipcRenderer.invoke('show-text-input-dialog', message, defaultValue),
   playSound: (name) => ipcRenderer.invoke('play-sound', name),
-  
+
   // 必要なIPC通信メソッドを追加
   getAssetPath: (relativePath) => ipcRenderer.invoke('resolve-asset-path', relativePath),
-  
+
   // API接続先の設定（環境変数から取得、デフォルトは127.0.0.1）
   apiHost: process.env.API_HOST || '127.0.0.1',
-  
+
   // バックエンドPIDの登録処理を追加
   registerBackendPID: async (pid) => {
     try {
@@ -72,7 +72,7 @@ contextBridge.exposeInMainWorld('electron', {
       return false;
     }
   },
-  
+
   // バックエンド接続確認の改善
   checkBackendConnection: async () => {
     try {
@@ -87,14 +87,14 @@ contextBridge.exposeInMainWorld('electron', {
       return false;
     }
   },
-  
+
   // 他のIPC通信関数をここに追加していく
   speakText: (text, emotion) => ipcRenderer.invoke('speak-text', text, emotion),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
   quitApp: () => ipcRenderer.invoke('quit-app'),
   showRandomMessage: () => ipcRenderer.invoke('show-random-message'),
-  
+
   // クリックスルーとアニメーション準備のイベントハンドラを追加
   onClickThroughChanged: (callback) => ipcRenderer.on('click-through-changed', callback),
   onPrepareShowAnimation: (callback) => ipcRenderer.on('prepare-show-animation', callback)

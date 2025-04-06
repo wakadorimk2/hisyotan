@@ -17,7 +17,11 @@
     "dev:debug": "cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5173/ ELECTRON_CSP_DEV=true electron . --debug",
     "dev:log": "cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5173/ electron . > debug-log.txt 2>&1",
     "copy-preload": "node copy-preload.mjs",
-    "postinstall": "node node_modules/electron/install.js"
+    "postinstall": "node node_modules/electron/install.js",
+    "lint": "eslint . --ext .js,.mjs",
+    "lint:fix": "eslint . --ext .js,.mjs --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check"
   },
   "author": "",
   "license": "MIT",
@@ -35,6 +39,11 @@
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "electron-builder": "^24.9.1",
+    "eslint": "^9.24.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "^3.5.3",
     "tree-kill": "^1.2.2",
     "vite": "^6.2.4",
     "wait-on": "^8.0.3"
