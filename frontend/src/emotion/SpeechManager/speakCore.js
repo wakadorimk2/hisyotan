@@ -174,11 +174,11 @@ export async function speak(
     // メッセージを整形して吹き出しに表示
     const formattedMessage = message;
 
-    // 吹き出しを表示
-    showBubble(eventType);
-
     // テキストを設定（setText関数を使用）
     setText(formattedMessage);
+
+    // 吹き出しを表示（textForceSet=falseでテキスト二重設定を防止）
+    showBubble(eventType, formattedMessage, false);
 
     // 音声合成処理
     let success = false;

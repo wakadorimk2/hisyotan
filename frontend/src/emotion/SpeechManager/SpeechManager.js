@@ -161,8 +161,8 @@ export class SpeechManager {
       // テキストを設定
       setText(text);
 
-      // 吹き出しを表示
-      showBubble(type, text);
+      // 吹き出しを表示（textForceSet=falseを指定して、setText()の2重実行を防止）
+      showBubble(type, text, false);
 
       // 音声再生（エラーを補足して失敗判定できるようにする）
       let audioSuccess = true;

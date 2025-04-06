@@ -176,8 +176,9 @@ export function setText(text) {
  * 吹き出しを表示する
  * @param {string} type - 吹き出しタイプ（default、warning、error、success、zombie_warningなど）
  * @param {string} text - 表示テキスト
+ * @param {boolean} textForceSet - trueの場合、setText()を実行する。falseの場合は呼び出し元ですでにsetText()が実行されていると想定（デフォルト：true）
  */
-export function showBubble(type = 'default', text = 'こんにちは！何かお手伝いしましょうか？') {
+export function showBubble(type = 'default', text = 'こんにちは！何かお手伝いしましょうか？', textForceSet = true) {
     console.log(`🗨️ 吹き出しを表示: ${type} - "${text.substring(0, 15)}..."`);
 
     // 他に同じIDの要素が存在していないかチェック
@@ -221,8 +222,11 @@ export function showBubble(type = 'default', text = 'こんにちは！何かお
         console.log('✅ speechTextをspeechBubbleに追加しました');
     }
 
-    // 先にテキストを設定（順序重要: テキスト設定→吹き出し表示）
-    setText(text);
+    // textForceSet が true の場合にのみ setText を実行
+    if (textForceSet) {
+        // 先にテキストを設定（順序重要: テキスト設定→吹き出し表示）
+        setText(text);
+    }
 
     // 吹き出しのスタイルを設定
     bubble.className = 'speech-bubble';
