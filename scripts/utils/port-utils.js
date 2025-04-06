@@ -76,7 +76,7 @@ const killProcessOnPort = async (port) => {
                 console.log(`⚠️ treeKillでの終了に失敗、taskkillで強制終了します (PID: ${pid})`);
                 try {
                   // Windows環境では強制終了するためにtaskkillを使用
-                  exec(`taskkill /F /PID ${pid}`, (taskErr, stdout, stderr) => {
+                  exec(`taskkill /F /PID ${pid}`, (taskErr) => {
                     if (taskErr) {
                       console.error(`💦 プロセス強制終了に失敗 (PID: ${pid}):`, taskErr);
                     } else {

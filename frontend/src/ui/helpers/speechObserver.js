@@ -18,7 +18,7 @@ export function observeSpeechTextAutoRecovery() {
     logError('[Observer] 吹き出し要素が見つかりません。監視をスキップします');
     return;
   }
-  
+
   // 既存のObserverを切断
   if (window._speechTextObserver) {
     window._speechTextObserver.disconnect();
@@ -26,25 +26,25 @@ export function observeSpeechTextAutoRecovery() {
     window._speechTextObserverAttached = false;
     logZombieWarning('[Observer] 既存のObserverを切断しました');
   }
-  
+
   // 監視開始の詳細な時系列ログを追加
   const now = new Date();
   const timeStamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
-  
+
   logZombieWarning(`[${timeStamp}] [Observer] 吹き出し監視開始: speechText=${!!speechText}, speechBubble=${!!speechBubble}, classes=${speechBubble.className}`);
 
-  window._speechTextObserver = new MutationObserver((mutations) => {
+  window._speechTextObserver = new MutationObserver(() => {
     // 変更検出時のタイムスタンプを生成
     const now = new Date();
     const timeStamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}.${now.getMilliseconds().toString().padStart(3, '0')}`;
-    
+
     // 🔒 speechBubble.jsの復元中フラグをチェック
     // window.isRecoveringはspeechBubble.jsで定義されたグローバル変数
     if (typeof window.isRecovering === 'boolean' && window.isRecovering === true) {
       logZombieWarning(`[${timeStamp}] [Observer] 🔒 他のモジュールが保護モード中のため変更を無視します`);
       return;
     }
-    
+
     // 監視対象の要素が存在するか再確認
     if (!document.body.contains(speechText) || !document.body.contains(speechBubble)) {
       logError('[Observer] 監視対象の要素がDOMから削除されました。監視を終了します');
@@ -63,14 +63,14 @@ export function observeSpeechTextAutoRecovery() {
     const opacity = parseFloat(computed.opacity);
 
     // テキストが空または吹き出しが非表示の場合に自動復旧
-    if ((text === '' && speechBubble.classList.contains('show')) || 
-        (visible !== 'visible' && speechBubble.classList.contains('show')) ||
-        (displayed !== 'flex' && speechBubble.classList.contains('show')) ||
-        (opacity < 0.5 && speechBubble.classList.contains('show'))) {
-      
+    if ((text === '' && speechBubble.classList.contains('show')) ||
+      (visible !== 'visible' && speechBubble.classList.contains('show')) ||
+      (displayed !== 'flex' && speechBubble.classList.contains('show')) ||
+      (opacity < 0.5 && speechBubble.classList.contains('show'))) {
+
       logZombieWarning(`[${timeStamp}] [Observer] 吹き出しの異常を検出: テキスト空または非表示です。復旧を試みます`);
       logZombieWarning(`[${timeStamp}] [Observer] 状態: テキスト="${text}", display=${displayed}, visibility=${visible}, opacity=${opacity}, classList=${speechBubble.className}`);
-      
+
       // ロックされている場合は処理をスキップ
       if (speechText.dataset.locked === 'true') {
         const lockTime = parseInt(speechText.dataset.setTime || '0', 10);
@@ -81,7 +81,7 @@ export function observeSpeechTextAutoRecovery() {
           return;
         }
       }
-      
+
       // テキストが空だけどinnerHTMLが存在する場合は復旧スキップ
       if (
         text === '' &&
@@ -98,15 +98,15 @@ export function observeSpeechTextAutoRecovery() {
             return;
           }
         }
-        
+
         // 🔒 speechBubble.jsの復元中フラグをセット
         if (typeof window.isRecovering !== 'undefined') {
           window.isRecovering = true;
         }
-        
+
         // バックアップテキストがあればそれを使用
         const recoveryText = backupText || '「ごめん、もう一度言うねっ」';
-        
+
         // spanによる復旧に切り替える
         const newSpan = document.createElement('span');
         newSpan.className = 'speech-text-content recovered-by-observer';
@@ -125,13 +125,13 @@ export function observeSpeechTextAutoRecovery() {
           padding: 0 !important;
           text-shadow: 0 0 1px rgba(255,255,255,0.7) !important;
         `;
-        
+
         // 内容をクリアして新しいspanを追加
         // ロックされている場合は元の内容を保護
         if (speechText.dataset.locked === 'true') {
           // ロックされている場合、クリアをスキップしてdataset.originalTextから復元を試みる
           logZombieWarning(`[${timeStamp}] [Observer] 🛡️ speechTextはロック中、observerによる消去をスキップします`);
-          
+
           // すでにspanがあるか確認し、なければdataset.originalTextから復元
           if (!speechText.querySelector('.speech-text-content') && speechText.dataset.originalText) {
             const lockedSpan = document.createElement('span');
@@ -151,7 +151,7 @@ export function observeSpeechTextAutoRecovery() {
               padding: 0 !important;
               text-shadow: 0 0 1px rgba(255,255,255,0.7) !important;
             `;
-            
+
             speechText.innerHTML = ''; // 既存の内容を一旦クリア
             speechText.appendChild(lockedSpan);
             logZombieWarning(`[${timeStamp}] [Observer] 🔄 ロック中のテキストをoriginalTextから復元: "${speechText.dataset.originalText.substring(0, 20)}${speechText.dataset.originalText.length > 20 ? '...' : ''}"`);
@@ -160,14 +160,14 @@ export function observeSpeechTextAutoRecovery() {
           // ロックされていない場合は通常の復旧処理
           speechText.innerHTML = '';
           speechText.appendChild(newSpan);
-          
+
           // データ属性を更新
           speechText.dataset.recoveredByObserver = 'true';
           speechText.dataset.recoveryTime = Date.now().toString();
-          
+
           logZombieWarning(`[${timeStamp}] [Observer] spanによるテキスト復元: "${recoveryText.substring(0, 20)}${recoveryText.length > 20 ? '...' : ''}"`);
         }
-        
+
         // ⏱️ 一定時間後に保護を解除
         if (typeof window.isRecovering !== 'undefined') {
           setTimeout(() => {
@@ -176,7 +176,7 @@ export function observeSpeechTextAutoRecovery() {
           }, 500);
         }
       }
-      
+
       // 吹き出しのスタイルを強制的に修正
       speechBubble.className = 'speech-bubble show fixed-position';
       speechBubble.style.cssText = `
@@ -198,11 +198,11 @@ export function observeSpeechTextAutoRecovery() {
         background: rgba(255, 255, 255, 0.9) !important;
         padding: 14px 18px !important;
       `;
-      
+
       // speechTextがspeechBubbleの子要素でない場合は追加
       if (!speechBubble.contains(speechText)) {
         logZombieWarning(`[${timeStamp}] [Observer] ⚠️ speechTextがspeechBubbleの子要素ではありません。追加します。`);
-        
+
         // 念のため既存の親から切り離す
         if (speechText.parentElement) {
           try {
@@ -211,7 +211,7 @@ export function observeSpeechTextAutoRecovery() {
             logError(`[Observer] 親要素からspeechTextを切り離す際にエラー: ${e.message}`);
           }
         }
-        
+
         // speechBubbleに追加
         try {
           speechBubble.appendChild(speechText);
@@ -220,10 +220,10 @@ export function observeSpeechTextAutoRecovery() {
           logError(`[Observer] speechTextをspeechBubbleに追加する際にエラー: ${e.message}`);
         }
       }
-      
+
       // 構造をログ出力
       logZombieWarning(`[${timeStamp}] [Observer] 💬 DOM構造確認: speechTextIsChildOfBubble=${speechBubble.contains(speechText)}, speechBubbleChildCount=${speechBubble.childElementCount}`);
-      
+
       logZombieWarning(`[${timeStamp}] [Observer] 吹き出し強制復旧実行完了`);
     }
   });
@@ -235,7 +235,7 @@ export function observeSpeechTextAutoRecovery() {
     subtree: true,   // 子孫ノードの変更も監視
     characterDataOldValue: true
   });
-  
+
   // 吹き出し自体の表示状態を監視
   window._speechTextObserver.observe(speechBubble, {
     attributes: true,
@@ -244,7 +244,7 @@ export function observeSpeechTextAutoRecovery() {
   });
 
   logDebug('[Observer] 吹き出し要素の監視を開始しました');
-  
+
   // 監視開始の印
   window._speechTextObserverAttached = true;
 }

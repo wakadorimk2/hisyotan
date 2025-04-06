@@ -5,7 +5,6 @@
  * Ctrl+Cで全プロセスを安全に終了します ✨
  */
 
-const path = require('path');
 const { setupConsoleEncoding, setupProcessHandlers } = require('../utils/process-utils');
 const { cleanupPorts } = require('../utils/port-utils');
 const startBackend = require('./start-backend');
@@ -29,17 +28,17 @@ const processes = {
 const startProcesses = async () => {
   try {
     console.log('🎀 統合開発環境を起動しています...');
-    
+
     // コンソールエンコーディング設定
     setupConsoleEncoding();
-    
+
     // 起動前にポートをクリーンアップ
     await cleanupPorts(PORTS);
-    
+
     // バックエンド起動
     const backendResult = await startBackend({ port: PORTS.backend });
     processes.backend = backendResult.process;
-    
+
     if (!backendResult.ready) {
       console.warn('⚠️ バックエンドサーバーの準備ができませんでしたが、処理を続行します');
     }
@@ -50,20 +49,20 @@ const startProcesses = async () => {
       env: { VITE_DEV_SERVER_URL: `http://localhost:${PORTS.frontend}/` }
     });
     processes.frontend = frontendResult.process;
-    
+
     if (!frontendResult.ready) {
       console.warn('⚠️ フロントエンドサーバーの準備ができませんでしたが、処理を続行します');
     }
-    
+
     // Electron起動
     const electronResult = await startElectron({
       frontendPort: PORTS.frontend,
       env: { VITE_DEV_SERVER_URL: `http://localhost:${PORTS.frontend}/` }
     });
     processes.electron = electronResult.process;
-    
+
     console.log('🎀 統合開発環境を起動しました！Ctrl+Cで全プロセスを終了できます');
-    
+
     // Electronの終了を待機
     return new Promise((resolve) => {
       processes.electron.on('close', (code) => {

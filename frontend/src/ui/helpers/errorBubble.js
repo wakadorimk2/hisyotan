@@ -1,7 +1,7 @@
 // errorBubble.js
 // エラー表示機能を担当するモジュール
 
-import { logDebug, logError } from '@core/logger.js';
+import { logDebug } from '@core/logger.js';
 import { showBubble } from '@ui/uiHelper.js';
 
 // 起動猶予期間の設定
@@ -48,12 +48,12 @@ export function showError(message, force = false) {
   // エラーメッセージと表示時間を記録
   lastShownErrorMessage = message;
   lastErrorTime = now;
-  
+
   logDebug(`エラー表示関数が呼び出されました: ${message}`);
-  
+
   // showBubbleを使用してエラーメッセージを表示
   showBubble('error', message);
-  
+
   logDebug(`エラー表示を開始: ${message}`);
 }
 

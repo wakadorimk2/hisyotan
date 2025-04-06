@@ -5,7 +5,6 @@
  */
 
 const { spawn } = require('child_process');
-const path = require('path');
 const { waitForEndpoint } = require('../utils/process-utils');
 
 /**
@@ -16,9 +15,9 @@ const { waitForEndpoint } = require('../utils/process-utils');
  */
 const startBackend = async (config) => {
   const { port } = config;
-  
+
   console.log(`🐈 Pythonバックエンドを起動しています... (ポート: ${port})`);
-  
+
   // バックエンド起動
   const backendProcess = spawn('python', [
     '-m', 'uvicorn', 'backend.main:app', '--port', port
@@ -30,7 +29,7 @@ const startBackend = async (config) => {
   backendProcess.on('close', (code) => {
     console.log(`💫 バックエンドプロセスが終了しました (コード: ${code})`);
   });
-  
+
   // エラーハンドリング
   backendProcess.on('error', (err) => {
     console.error(`💦 バックエンドプロセスの起動中にエラーが発生しました:`, err);
@@ -39,7 +38,7 @@ const startBackend = async (config) => {
   // バックエンドが応答するまで待機
   const backendUrl = `http://localhost:${port}/`;
   const backendReady = await waitForEndpoint(backendUrl);
-  
+
   return {
     process: backendProcess,
     ready: backendReady
@@ -49,7 +48,7 @@ const startBackend = async (config) => {
 // 単体実行の場合のエントリーポイント
 if (require.main === module) {
   const port = process.env.BACKEND_PORT || 8000;
-  
+
   startBackend({ port })
     .then(({ process, ready }) => {
       if (ready) {

@@ -2,7 +2,6 @@
 // マウスイベントのハンドリング
 
 import { logDebug } from '@core/logger.js';
-import { showRandomLine } from '@emotion/emotionHandler.js';
 import { showSettingsInBubble } from '@renderer/assistantUI.js';
 
 // マウス操作検出のための変数
@@ -14,19 +13,19 @@ let mouseActive = false;
  */
 export function setupMouseEventHandling() {
   logDebug('マウスイベント処理をセットアップしています');
-  
+
   // ドラッグ処理の設定
   const assistantContainer = document.querySelector('.assistant-container');
   if (assistantContainer) {
     setupDraggable(assistantContainer);
   }
-  
+
   // 肉球アイコンのイベント設定
   setupPawEvents();
-  
+
   // 閉じるボタンのイベント設定
   setupCloseButton();
-  
+
   setupGeneralMouseTracking();
 }
 
@@ -39,28 +38,28 @@ function setupPawEvents() {
     logDebug('肉球ボタンが見つかりません');
     return;
   }
-  
+
   let isDragging = false;
   let startPos = { x: 0, y: 0 };
-  
+
   // クリック処理（ランダムセリフを再生）
   pawButton.addEventListener('click', (e) => {
     // ドラッグ操作ではない場合のみセリフ再生
     if (!isDragging) {
       logDebug('肉球がクリックされました - ランダムセリフを再生します');
-      
+
       // クールタイムチェック（連打防止）
       const now = Date.now();
       const lastClick = pawButton._lastClickTime || 0;
       const cooldown = 1000; // 1秒間のクールタイム
-      
+
       if (now - lastClick < cooldown) {
         logDebug('クールタイム中のためスキップします');
         return;
       }
-      
+
       pawButton._lastClickTime = now;
-      
+
       // speechManagerの存在確認
       if (window.speechManager) {
         // グローバルスコープから取得したSpeechManagerでランダムセリフを再生
@@ -75,7 +74,7 @@ function setupPawEvents() {
             { text: "えらいえらい…よしよしっ", emotion: "happy" },
             { text: "もし疲れたら、ぎゅってするからね🐾", emotion: "soft" }
           ];
-          
+
           const phrase = phrases[Math.floor(Math.random() * phrases.length)];
           window.speechManager.speak(phrase.text, phrase.emotion, 5000, null, 'random_speak');
           logDebug(`セリフ再生: "${phrase.text}"`);
@@ -92,19 +91,19 @@ function setupPawEvents() {
     // バブリングを停止
     e.stopPropagation();
   });
-  
+
   // ドラッグ開始処理
   pawButton.addEventListener('mousedown', (e) => {
     // 左クリックの場合のみドラッグ処理を行う
     if (e.button === 0) {
       isDragging = false;
       startPos = { x: e.clientX, y: e.clientY };
-      
+
       // mousedownのバブリングを停止
       e.stopPropagation();
     }
   });
-  
+
   // マウス移動時の処理
   document.addEventListener('mousemove', (e) => {
     // 左ボタンが押されている場合のみドラッグ判定
@@ -112,7 +111,7 @@ function setupPawEvents() {
       // 少し動いたらドラッグと判定
       const diffX = Math.abs(e.clientX - startPos.x);
       const diffY = Math.abs(e.clientY - startPos.y);
-      
+
       // 5px以上動いたらドラッグと判定
       if (diffX > 5 || diffY > 5) {
         isDragging = true;
@@ -123,18 +122,18 @@ function setupPawEvents() {
       }
     }
   });
-  
+
   // マウスアップ時の処理
   document.addEventListener('mouseup', () => {
     isDragging = false;
     startPos = { x: 0, y: 0 };
   });
-  
+
   // 右クリックで設定吹き出しを表示
   pawButton.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     logDebug('肉球が右クリックされました - 設定吹き出しを表示します');
-    
+
     // SpeechManagerの設定UIを表示
     if (window.speechManager && window.speechManager.speakWithObject) {
       try {
@@ -180,7 +179,7 @@ function setupPawEvents() {
             ]
           }
         };
-        
+
         // 設定UIを表示
         window.speechManager.speakWithObject(settingSpeech);
       } catch (error) {
@@ -204,7 +203,7 @@ function setupCloseButton() {
     logDebug('閉じるボタンが見つかりません');
     return;
   }
-  
+
   closeButton.addEventListener('click', () => {
     logDebug('閉じるボタンがクリックされました - アプリを終了します');
     // Electron IPCを使用して完全終了を要求
@@ -221,16 +220,16 @@ function setupCloseButton() {
 function setupDraggable(element) {
   let isDragging = false;
   let startPos = { x: 0, y: 0 };
-  let startOffset = { x: 0, y: 0 };
-  
+  // let startOffset = { x: 0, y: 0 };
+
   // ドラッグ開始処理
   element.addEventListener('mousedown', (e) => {
     // 右クリックの場合はドラッグ処理をスキップ
     if (e.button === 2) return;
-    
+
     isDragging = false;
     startPos = { x: e.clientX, y: e.clientY };
-    
+
     // 現在のコンテナの位置を取得
     const computedStyle = window.getComputedStyle(element);
     startOffset = {
@@ -238,27 +237,27 @@ function setupDraggable(element) {
       y: parseInt(computedStyle.paddingTop || '0')
     };
   });
-  
+
   // ドラッグ中の処理
   document.addEventListener('mousemove', (e) => {
     if (e.buttons !== 1 || startPos.x === 0) return;
-    
+
     const diffX = Math.abs(e.clientX - startPos.x);
     const diffY = Math.abs(e.clientY - startPos.y);
-    
+
     // 5px以上動いたらドラッグと判定
     if (diffX > 5 || diffY > 5) {
       isDragging = true;
       // ドラッグ中のスタイル適用
       element.classList.add('dragging');
-      
+
       // Electronにウィンドウドラッグの開始を通知
       if (window.electron && window.electron.ipcRenderer) {
         window.electron.ipcRenderer.send('start-window-drag');
       }
     }
   });
-  
+
   // ドラッグ終了処理
   document.addEventListener('mouseup', () => {
     if (isDragging) {
@@ -274,12 +273,12 @@ function setupDraggable(element) {
  */
 function setupGeneralMouseTracking() {
   // マウスの動きを検出
-  document.addEventListener('mousemove', function() {
+  document.addEventListener('mousemove', function () {
     handleMouseActivity();
   });
 
   // マウスクリック時も同様に処理
-  document.addEventListener('mousedown', function() {
+  document.addEventListener('mousedown', function () {
     handleMouseActivity();
   });
 }
@@ -292,16 +291,16 @@ function handleMouseActivity() {
   if (window.currentSettings && window.currentSettings.autoHide === false) {
     return;
   }
-  
+
   // マウスが動いたらbodyにmouse-activeクラスを追加
   document.body.classList.add('mouse-active');
   mouseActive = true;
-  
+
   // 既存のタイマーをクリア
   clearTimeout(mouseTimer);
-  
+
   // 3秒間動きがなければmouse-activeクラスを削除
-  mouseTimer = setTimeout(function() {
+  mouseTimer = setTimeout(function () {
     document.body.classList.remove('mouse-active');
     mouseActive = false;
   }, 3000);
@@ -319,7 +318,7 @@ export function isMouseActive() {
 export function enableMouseEventsWithDebounce() {
   const debounceTime = 200;
   let debounceTimer;
-  
+
   return () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
@@ -333,7 +332,7 @@ export function enableMouseEventsWithDebounce() {
 export function disableMouseEventsWithDebounce() {
   const debounceTime = 300;
   let debounceTimer;
-  
+
   return () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
