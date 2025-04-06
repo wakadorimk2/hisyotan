@@ -2,6 +2,7 @@
 // 吹き出し要素の監視と復旧機能を担当するモジュール
 
 import { logDebug, logError, logZombieWarning } from '@core/logger.js';
+import { clearText } from './speechRenderer.js';
 
 // グローバルでMutationObserverを追跡するための変数
 window._speechTextObserver = null;
@@ -152,13 +153,13 @@ export function observeSpeechTextAutoRecovery() {
               text-shadow: 0 0 1px rgba(255,255,255,0.7) !important;
             `;
 
-            speechText.innerHTML = ''; // 既存の内容を一旦クリア
+            clearText(); // 既存の内容をクリア
             speechText.appendChild(lockedSpan);
             logZombieWarning(`[${timeStamp}] [Observer] 🔄 ロック中のテキストをoriginalTextから復元: "${speechText.dataset.originalText.substring(0, 20)}${speechText.dataset.originalText.length > 20 ? '...' : ''}"`);
           }
         } else {
           // ロックされていない場合は通常の復旧処理
-          speechText.innerHTML = '';
+          clearText(); // innerHTML = '' の代わりに clearText() を使用
           speechText.appendChild(newSpan);
 
           // データ属性を更新
