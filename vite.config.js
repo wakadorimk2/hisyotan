@@ -5,6 +5,12 @@ import { resolve } from 'path';
 export default defineConfig({
   root: 'frontend', // 開発サーバーのルートディレクトリを変更
   base: './', // 相対パスでビルドするために必要
+  preload: {
+    entry: 'frontend/src/main/preload/preload.js',
+  },
+  main: {
+    entry: 'frontend/src/main/index.mjs',
+  },
   css: {
     devSourcemap: true,
     // CSSモジュールのロード問題を解決するための設定
