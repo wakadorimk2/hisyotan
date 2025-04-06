@@ -219,10 +219,15 @@ async def synthesize_direct(
         voice_params = query_response.json()
 
         # パラメータを設定
-        voice_params["speedScale"] = speed
-        voice_params["pitchScale"] = pitch
-        voice_params["intonationScale"] = intonation
-        voice_params["volumeScale"] = volume
+        # Noneでないものだけ上書きする（VOICEVOX仕様対応）
+        if speed is not None:
+            voice_params["speedScale"] = speed
+        if pitch is not None:
+            voice_params["pitchScale"] = pitch
+        if intonation is not None:
+            voice_params["intonationScale"] = intonation
+        if volume is not None:
+            voice_params["volumeScale"] = volume
 
         # 音声合成の実行
         logger.debug(f"VOICEVOX 音声合成実行: {settings.VOICEVOX_HOST}/synthesis")
@@ -395,8 +400,9 @@ def speak(
         audio_query = response.json()
         response = requests.post(
             f"{settings.VOICEVOX_HOST}/synthesis",
-            json=audio_query,
+            headers={"Content-Type": "application/json"},
             params={"speaker": speaker_id},
+            data=json.dumps(audio_query),
             timeout=10,
         )
         response.raise_for_status()

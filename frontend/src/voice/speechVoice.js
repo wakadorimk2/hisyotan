@@ -218,6 +218,14 @@ export async function speakText(text, emotion = 'normal', speakerId = 8, signal 
             const errorText = await response.text();
             logError(`バックエンドAPI呼び出し失敗: ${response.status} ${response.statusText}`);
             logError(`エラー詳細: ${errorText}`);
+
+            // 422エラーの場合はより詳細なエラーメッセージを出力
+            if (response.status === 422) {
+                logError(`VOICEVOX合成エラー: リクエストデータの問題。VOICEVOXエンジンの問題を確認してください。`);
+                // 開発者向けデバッグログ
+                console.debug('送信したリクエスト:', JSON.stringify(requestBody, null, 2));
+            }
+
             throw new Error(`バックエンドAPI呼び出し失敗: ${response.status} ${response.statusText}`);
         }
 
