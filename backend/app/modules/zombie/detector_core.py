@@ -105,7 +105,10 @@ class ZombieDetector:
         os.makedirs(DEBUG_DIR, exist_ok=True)
 
         logger.info(
-            f"ZombieDetector初期化完了: confidence={self.confidence}, debug_mode={self.debug_mode}, frame_interval={self.adaptive_interval}秒, resize_factor={self.resize_factor}, skip_ratio={self.skip_ratio}, resnet_enabled={self.resnet_enabled}"
+            f"ZombieDetector初期化完了: confidence={self.confidence}, "
+            f"debug_mode={self.debug_mode}, frame_interval={self.adaptive_interval}秒, "
+            f"resize_factor={self.resize_factor}, skip_ratio={self.skip_ratio}, "
+            f"resnet_enabled={self.resnet_enabled}"
         )
 
     async def load_model(self):
@@ -435,7 +438,8 @@ class ZombieDetector:
 
             if verbose_mode:
                 print(
-                    f"[BACKEND] ゾンビ検出 - 閾値: {effective_threshold}, デバッグモード: {debug_mode}, デバイス: {self.device}"
+                    f"[BACKEND] ゾンビ検出 - 閾値: {effective_threshold}, "
+                    f"デバッグモード: {debug_mode}, デバイス: {self.device}"
                 )
 
             # 非同期で画像処理を実行
@@ -615,8 +619,6 @@ class ZombieDetector:
 
                     except Exception as e:
                         print(f"[BACKEND] ResNet分類エラー: {e}")
-                        import traceback
-
                         traceback.print_exc()  # フルスタックトレースを出力
                         logger.error(f"ResNet分類器の実行中にエラー: {e}")
                         logger.error(traceback.format_exc())
@@ -641,8 +643,6 @@ class ZombieDetector:
 
                 except Exception as e:
                     print(f"[BACKEND] ResNet全体処理エラー: {e}")
-                    import traceback
-
                     traceback.print_exc()  # フルスタックトレースを出力
                     logger.error(f"ResNet分類器の実行中にエラー: {e}")
                     logger.error(traceback.format_exc())
@@ -650,7 +650,9 @@ class ZombieDetector:
             # デバッグ情報（一度に含まれる情報量を減らす）
             if detection_count > 0:
                 logger.debug(
-                    f"ゾンビ検出結果: {detection_count}体 (処理時間: {process_time:.1f}ms) - 現在のしきい値: {effective_threshold}"
+                    f"ゾンビ検出結果: {detection_count}体 "
+                    f"(処理時間: {process_time:.1f}ms) - "
+                    f"現在のしきい値: {effective_threshold}"
                 )
 
             # 検出結果をマップに格納
@@ -664,8 +666,6 @@ class ZombieDetector:
 
         except Exception as e:
             print(f"[BACKEND] ゾンビ検出中にエラー: {e}")
-            import traceback
-
             traceback.print_exc()  # フルスタックトレースを出力
             logger.error(f"ゾンビ検出中にエラーが発生: {e}")
             logger.error(traceback.format_exc())
@@ -770,7 +770,8 @@ class ZombieDetector:
                             resnet_prob,
                         )
                         print(
-                            f"[BACKEND] 補足リアクションボイス再生完了: {count}体, ResNet結果={resnet_result}({resnet_prob:.2f})"
+                            f"[BACKEND] 補足リアクションボイス再生完了: {count}体, "
+                            f"ResNet結果={resnet_result}({resnet_prob:.2f})"
                         )
                     except Exception as e:
                         print(f"[BACKEND] 補足リアクションボイス再生エラー: {e}")
@@ -834,7 +835,8 @@ class ZombieDetector:
                         # 「気配」として少数ゾンビコールバックを使用
                         if few_zombies_callback:
                             print(
-                                f"[BACKEND] ゾンビの気配検出コールバック呼び出し: ResNet確率={resnet_prob:.2f}"
+                                f"[BACKEND] ゾンビの気配検出コールバック呼び出し: "
+                                f"ResNet確率={resnet_prob:.2f}"
                             )
                             await self._call_callback(
                                 few_zombies_callback, 0, screenshot, callback_data
@@ -848,9 +850,7 @@ class ZombieDetector:
 
         except Exception as e:
             logger.error(f"検出結果の処理中にエラーが発生: {e}")
-            import traceback
-
-            logger.error(traceback.format_exc())
+            traceback.print_exc()  # フルスタックトレースを出力
 
     async def _call_callback(
         self, callback, zombie_count, screenshot, additional_data=None

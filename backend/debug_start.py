@@ -62,7 +62,8 @@ async def debug_zombie_detection(
             logger.setLevel(logging.DEBUG)
 
         logger.info(
-            f"🔍 ゾンビ検出のデバッグを開始します (閾値: {threshold}, 詳細モード: {verbose})"
+            f"🔍 ゾンビ検出のデバッグを開始します "
+            f"(閾値: {threshold}, 詳細モード: {verbose})"
         )
 
         # detector_coreモジュールをインポート
@@ -140,7 +141,8 @@ async def debug_zombie_detection(
                 use_gpu=use_gpu,
             )
             logger.info(
-                f"ZombieDetectorインスタンスを作成しました: モデル={model_path}, 閾値={threshold}, GPU={use_gpu}"
+                f"ZombieDetectorインスタンスを作成しました: "
+                f"モデル={model_path}, 閾値={threshold}, GPU={use_gpu}"
             )
 
             # モデルをロード

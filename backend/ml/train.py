@@ -481,7 +481,8 @@ class ZombieClassifier:
 
         except Exception as e:
             print(
-                f"[メモリ処理] エラー: バイトデータからの予測中にエラーが発生しました: {e}"
+                f"[メモリ処理] エラー: バイトデータからの予測中に"
+                f"エラーが発生しました: {e}"
             )
             import traceback
 
@@ -551,8 +552,8 @@ def main():
 
     try:
         show_batch(train_loader)
-    except:
-        print("サンプル画像の表示をスキップします")
+    except Exception as e:
+        print(f"サンプル画像の表示中にエラーが発生しました: {e}")
 
     # モデルの学習
     print("🚀 モデルの学習を開始します...")

@@ -4,6 +4,7 @@
 アプリケーション起動時の処理を管理します
 """
 
+import asyncio
 import logging
 
 # ロガーの設定
@@ -50,7 +51,7 @@ async def init_services() -> None:
 
     try:
         # 設定の読み込み
-        settings = get_settings()
+        _ = get_settings()
         logger.info("設定を読み込みました")
 
         # VOICEVOXエンジンの起動（非同期）
@@ -58,7 +59,7 @@ async def init_services() -> None:
         logger.info("VOICEVOXエンジンの起動処理を開始しました")
 
         # 音声サービスの初期化
-        voice_service = get_voice_service()
+        _ = get_voice_service()
         logger.info("音声サービスを初期化しました")
 
         # WebSocketマネージャーの初期化は自動的に行われます
@@ -76,8 +77,6 @@ async def start_zombie_monitoring() -> None:
     try:
         # 開発中の機能のため、モジュールが存在しない場合はスキップ
         try:
-            import asyncio
-
             from ..modules.zombie.service import get_zombie_service
             from ..voice.voicevox_starter import is_voicevox_ready
 

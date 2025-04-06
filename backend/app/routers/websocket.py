@@ -145,7 +145,8 @@ async def websocket_endpoint(websocket: WebSocket):
                             await manager.broadcast(
                                 {
                                     "type": "speak",
-                                    "text": "ゾンビ監視を開始しました。何か見つけたらお知らせします。",
+                                    "text": "ゾンビ監視を開始しました。"
+                                    "何か見つけたらお知らせします。",
                                     "emotion": "happy",
                                     "display_time": 5000,
                                 }

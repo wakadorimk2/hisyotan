@@ -85,7 +85,8 @@ class ZombieConfig:
                         value = float(value)
                 except (ValueError, TypeError):
                     logger.error(
-                        f"❌ 設定更新エラー: '{key}'の値'{value}'を{type(current_value).__name__}型に変換できません"
+                        f"❌ 設定更新エラー: '{key}'の値'{value}'を"
+                        f"{type(current_value).__name__}型に変換できません"
                     )
                     return False
 

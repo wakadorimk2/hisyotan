@@ -5,6 +5,7 @@ VOICEVOX連携の音声合成および再生に関するエンドポイント
 """
 
 import logging
+import traceback
 
 import requests
 from fastapi import APIRouter, Query, Request, Response
@@ -75,7 +76,8 @@ async def synthesize_voice(request: VoiceSynthesisRequest):
             )
 
         logger.info(
-            f"音声合成リクエスト: text={text[:20]}..., speaker={speaker}, emotion={emotion}"
+            f"音声合成リクエスト: text={text[:20]}..., "
+            f"speaker={speaker}, emotion={emotion}"
         )
 
         # 直接音声合成を実行して音声データ（bytes）を取得
@@ -93,8 +95,6 @@ async def synthesize_voice(request: VoiceSynthesisRequest):
         return Response(content=audio_data, media_type="audio/wav")
 
     except Exception as e:
-        import traceback
-
         logger.error(f"音声合成エラー: {str(e)}")
         logger.error(f"詳細なエラー情報: {traceback.format_exc()}")
         return JSONResponse(

@@ -218,10 +218,12 @@ async def synthesize_direct(
         volume_scale = volume if volume is not None else 0.5  # デフォルト音量50%
 
         logger.info(
-            f"音声合成開始 (direct): text={text[:20]}..., speaker={speaker_id}, emotion={emotion}"
+            f"音声合成開始 (direct): text={text[:20]}..., "
+            f"speaker={speaker_id}, emotion={emotion}"
         )
         logger.debug(
-            f"音声パラメータ: speed={speed_scale}, pitch={pitch_scale}, intonation={intonation_scale}"
+            f"音声パラメータ: speed={speed_scale}, "
+            f"pitch={pitch_scale}, intonation={intonation_scale}"
         )
 
         # 音声合成クエリの作成リクエスト
@@ -233,7 +235,8 @@ async def synthesize_direct(
 
         if query_response.status_code != 200:
             logger.error(
-                f"音声合成クエリの作成に失敗: ステータスコード={query_response.status_code}"
+                f"音声合成クエリの作成に失敗: "
+                f"ステータスコード={query_response.status_code}"
             )
             logger.error(f"レスポンス内容: {query_response.text}")
             return None
@@ -585,7 +588,7 @@ def safe_speak_with_preset(
     )
 
 
-# ゾンビ検出用の便利関数
+# ゾンビ検出に対するリアクションを生成
 def react_to_zombie(
     count: int,
     distance: float = 0.0,
@@ -594,12 +597,13 @@ def react_to_zombie(
     resnet_prob: float = 0.0,
 ) -> None:
     """
-    ゾンビ検出に対して適切な音声で反応（3段階リアクション対応）
+    ゾンビ検出に対するリアクションを生成
 
     Args:
         count: ゾンビの数
         distance: 最も近いゾンビとの距離（m）
-        reaction_type: リアクション種別（"immediate"=即時/YOLO, "followup"=補足/ResNet, "confirm"=確定）
+        reaction_type: リアクション種別（"immediate"=即時/YOLO,
+                      "followup"=補足/ResNet, "confirm"=確定）
         resnet_result: ResNetの結果（Trueならゾンビシーン）
         resnet_prob: ResNetの確率
     """

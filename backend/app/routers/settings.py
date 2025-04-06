@@ -85,7 +85,7 @@ async def update_setting(request: SettingUpdateRequest):
         logger.error(f"❌ 設定更新エラー: {e}")
         raise HTTPException(
             status_code=500, detail=f"設定更新中にエラーが発生しました: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/all", response_model=SettingResponse)
@@ -110,4 +110,4 @@ async def get_all_settings():
         logger.error(f"❌ 設定取得エラー: {e}")
         raise HTTPException(
             status_code=500, detail=f"設定取得中にエラーが発生しました: {str(e)}"
-        )
+        ) from e

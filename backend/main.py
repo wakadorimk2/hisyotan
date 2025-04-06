@@ -20,6 +20,9 @@ from typing import Optional
 
 import psutil
 import uvicorn
+from app.core import create_application
+from app.core.logger import setup_logger
+from app.events.startup_handler import on_startup
 from fastapi import Body, FastAPI
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -31,8 +34,6 @@ if str(BASE_DIR) not in sys.path:
     sys.path.append(str(BASE_DIR))
 
 # カスタムロガー設定
-from app.core.logger import setup_logger
-
 logger = setup_logger(__name__)
 logger.info("🚀 秘書たんバックエンドサーバーを初期化しています...")
 
@@ -42,12 +43,7 @@ os.environ.setdefault("DEBUG_MODE", "false")
 os.environ["PYTHONIOENCODING"] = "utf-8"
 
 # アプリケーションの作成
-from app.core import create_application
-
 app = create_application()
-
-# 初期化イベントハンドラーからゾンビ監視が開始されます
-from app.events.startup_handler import on_startup
 
 # シャットダウン用のグローバル変数
 should_exit = False
