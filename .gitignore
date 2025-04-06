@@ -45,3 +45,6 @@ venv/
 *.backup
 *.old
 *.orig
+
+# フレーム抽出
+backend/data/datasets/frames/
