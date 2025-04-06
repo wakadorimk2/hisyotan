@@ -16,8 +16,13 @@ from typing import (
     TypeVar,
 )
 
+from ...config import get_settings
+
 # ロガーの設定
 logger = logging.getLogger(__name__)
+
+# 設定の取得
+settings = get_settings()
 
 # ジェネリック型定義
 T = TypeVar("T")
