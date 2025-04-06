@@ -2,7 +2,7 @@
 line-length = 88
 target-version = "py310"
 lint.select = ["F", "E", "I", "B"]
-lint.ignore = ["E203"]  # ← W503 を削除！
+lint.ignore = ["E203", "E402"]  # ← W503 を削除！
 exclude = ["venv", ".venv", "__pycache__"]
 
 [tool.mypy]
