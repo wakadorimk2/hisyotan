@@ -41,7 +41,7 @@ const isDevCSP = process.env.ELECTRON_CSP_DEV === 'true';
 const setContentSecurityPolicy = () => {
   // 開発モードと本番モードでCSPを分ける
   const csp = isDev ?
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* http://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:;" :
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:;" :
     "default-src 'self'; script-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:;";
 
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
@@ -441,9 +441,11 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: true,
+      sandbox: isDev ? false : true,
       preload: path.join(__dirname, 'preload/preload.js'),
-      webSecurity: true
+      webSecurity: true,
+      allowRunningInsecureContent: isDev,
+      webviewTag: true
     },
     frame: false,
     transparent: true,

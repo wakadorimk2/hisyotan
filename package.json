@@ -6,7 +6,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "vite --port 5173",
-    "dev:frontend": "vite --port 5173 --host",
+    "dev:frontend": "vite --port 5173 --host --force",
     "dev:backend": "cross-env DEBUG_MODE=true python -m uvicorn backend.main:app --reload --port 8000 --reload-exclude node_modules",
     "dev:electron": "node scripts/dev-electron.js",
     "dev:all": "pnpm run dev:electron",

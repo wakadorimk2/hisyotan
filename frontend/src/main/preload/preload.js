@@ -14,20 +14,22 @@ try {
 }
 
 // ESモジュール互換の__dirname定義（より安全に）
-let __dirname;
+// __dirnameの代わりに別名で定義（安全）
+let workingDir;
 try {
   if (typeof process.cwd === 'function') {
-    __dirname = process.env.NODE_ENV === 'development' 
+    workingDir = process.env.NODE_ENV === 'development'
       ? process.cwd()
       : require('path').dirname(process.execPath || '.');
   } else {
-    __dirname = '.';
+    workingDir = '.';
   }
-  console.log(`📂 __dirnameの値: ${__dirname}`);
+  console.log(`📂 作業ディレクトリの値: ${workingDir}`);
 } catch (error) {
-  console.log(`📂 __dirnameの設定に失敗しました: ${error.message}`);
-  __dirname = '.';
+  console.log(`📂 作業ディレクトリの設定に失敗しました: ${error.message}`);
+  workingDir = '.';
 }
+
 
 // メインプロセスにアクセスするためのAPIを公開
 contextBridge.exposeInMainWorld('electron', {
@@ -63,7 +65,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     console.log('🚪 アプリケーション終了を要求');
     ipcRenderer.send('app:quit');
   },
-  
+
   // 秘書たんにテキストを喋らせる
   speakText: async (text, emotion = 'normal') => {
     console.log(`🎤 発話要求: ${text} (感情: ${emotion})`);
@@ -76,13 +78,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
       throw error;
     }
   },
-  
+
   // 秘書たんの表情を変更する
   changeSecretaryExpression: (expression) => {
     console.log(`😊 表情変更: ${expression}`);
     ipcRenderer.send('change-secretary-expression', expression);
   },
-  
+
   // アセットのパスを解決する
   resolveAssetPath: async (relativePath) => {
     console.log(`📂 アセットパス解決: ${relativePath}`);
@@ -90,11 +92,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       // HTTP経由でアクセスするパスを生成
       // パスが/から始まっていない場合は追加
       const normalizedPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
-      
+
       // 相対パスをHTTP URLに変換
       const baseUrl = window.location.origin;
       const assetUrl = new URL(normalizedPath, baseUrl).href;
-      
+
       console.log('✅ HTTP URL生成成功:', assetUrl);
       return assetUrl;
     } catch (error) {
@@ -103,7 +105,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return relativePath;
     }
   },
-  
+
   // 画像ファイルの存在確認
   checkImageExists: async (imagePath) => {
     console.log(`🖼️ 画像存在確認: ${imagePath}`);
@@ -116,7 +118,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       throw error;
     }
   },
-  
+
   // 設定関連
   getSettings: async () => {
     console.log('⚙️ 設定取得を要求');
@@ -129,7 +131,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       throw error;
     }
   },
-  
+
   updateSettings: async (settings) => {
     console.log('⚙️ 設定更新を要求:', settings);
     try {
@@ -141,48 +143,48 @@ contextBridge.exposeInMainWorld('electronAPI', {
       throw error;
     }
   },
-  
+
   // 音声再生の制御
   playAudio: async (audioData, options = {}) => {
     console.log('🎵 音声再生を開始します');
     try {
       // 音声データがBase64形式の場合、デコード
-      const audioBuffer = typeof audioData === 'string' 
+      const audioBuffer = typeof audioData === 'string'
         ? Buffer.from(audioData, 'base64')
         : audioData;
-      
+
       // 音声再生の設定
       const audioContext = new AudioContext();
       const audioSource = audioContext.createBufferSource();
-      
+
       // オーディオバッファをデコード
       const buffer = await audioContext.decodeAudioData(audioBuffer.buffer);
       audioSource.buffer = buffer;
-      
+
       // 音量の設定
       const gainNode = audioContext.createGain();
       gainNode.gain.value = options.volume || 1.0;
-      
+
       // ノードを接続
       audioSource.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       // 再生開始
       audioSource.start(0);
-      
+
       // 再生完了時の処理
       audioSource.onended = () => {
         console.log('✅ 音声再生が完了しました');
         audioContext.close();
       };
-      
+
       return true;
     } catch (error) {
       console.error('❌ 音声再生エラー:', error);
       return false;
     }
   },
-  
+
   // 音声再生の停止
   stopAudio: () => {
     console.log('⏹️ 音声再生を停止します');

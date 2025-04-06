@@ -20,8 +20,17 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    watch: {
+      usePolling: true,
+      interval: 100
+    },
     hmr: {
       overlay: false, // HMRオーバーレイを無効化（Electronウィンドウで表示崩れを防ぐ）
+      protocol: 'ws',
+      host: 'localhost',
+      port: 5173,
+      clientPort: 5173,
+      timeout: 5000
     }
   },
 
