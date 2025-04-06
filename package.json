@@ -21,7 +21,11 @@
     "lint": "eslint . --ext .js,.mjs",
     "lint:fix": "eslint . --ext .js,.mjs --fix",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "lint:py": "ruff check backend",
+    "lint:py:fix": "ruff check backend --fix",
+    "typecheck:py": "mypy backend",
+    "format:py": "ruff format backend"
   },
   "author": "",
   "license": "MIT",
