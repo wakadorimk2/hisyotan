@@ -13,7 +13,7 @@ from starlette.responses import JSONResponse
 from pydantic import BaseModel
 from ..config import Settings, get_settings
 from ..voice.engine import synthesize_direct, react_to_zombie, speak_with_emotion
-from ..models import VoiceSynthesisRequest
+from ..schemas import VoiceSynthesisRequest
 
 # ロガー設定
 logger = logging.getLogger(__name__)

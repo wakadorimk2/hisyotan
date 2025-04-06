@@ -42,8 +42,8 @@ os.environ['PYTHONIOENCODING'] = 'utf-8'
 from app.core import create_application
 app = create_application()
 
-# ゾンビ監視の開始
-from app.events.startup_handler import start_zombie_monitoring
+# 初期化イベントハンドラーからゾンビ監視が開始されます
+from app.events.startup_handler import on_startup
 
 # シャットダウン用のグローバル変数
 should_exit = False
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     monitoring_enabled = args.enable_monitoring or args.zombie_detection
     try:
         # ゾンビ監視を非同期で開始し、初期化処理と同じループで実行
-        monitoring_task = loop.run_until_complete(start_zombie_monitoring())
+        monitoring_task = loop.run_until_complete(on_startup())
         if monitoring_task:
             logger.info("👁️ ゾンビ監視を開始しました")
         elif monitoring_enabled:

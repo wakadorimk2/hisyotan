@@ -6,9 +6,9 @@
 
 from fastapi import APIRouter, Query
 import logging
-from ..models import EventModel
-from ..zombie.callbacks import zombie_few_alert, zombie_warning
-from ..zombie.monitor import log_zombie_detection
+from ..schemas import EventModel
+from ..modules.zombie.callbacks import zombie_few_alert, zombie_warning
+from ..modules.zombie.monitor import log_zombie_detection
 from ..ws.manager import send_notification
 
 # ロガー設定

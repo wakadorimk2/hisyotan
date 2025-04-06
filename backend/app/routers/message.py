@@ -5,7 +5,7 @@
 """
 
 from fastapi import APIRouter
-from ..models import MessageModel
+from ..schemas import MessageModel
 from ..ws.manager import send_notification
 from ..voice.engine import safe_play_voice
 from ..config import Config

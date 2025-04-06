@@ -41,7 +41,7 @@ class ZombieService:
             
         try:
             from .detector_core import ZombieDetector
-            from ..config import Settings
+            from ...config import Settings
             
             # 設定の取得
             settings = Settings()
@@ -49,7 +49,7 @@ class ZombieService:
             # ゾンビ検出器の初期化
             # モデルのパスを取得
             model_name = "yolov8n.pt"  # デフォルトモデル
-            data_models_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "models")
+            data_models_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "trained_models")
             model_path = os.path.join(data_models_dir, model_name)
             
             # モデルファイルの存在確認
@@ -57,8 +57,8 @@ class ZombieService:
                 logger.warning(f"モデルファイルが見つかりません: {model_path}")
                 # バックアップパスを試す
                 backup_paths = [
-                    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), model_name),
-                    os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", model_name)
+                    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), model_name),
+                    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", model_name)
                 ]
                 
                 for alt_path in backup_paths:

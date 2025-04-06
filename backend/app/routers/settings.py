@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from typing import Dict, Any, Union, Optional
 
 # ゾンビ設定のインポート
-from ..zombie.config import get_zombie_config
+from ..modules.zombie.config import get_zombie_config
 
 # カスタムロガーの設定
 logger = logging.getLogger(__name__)

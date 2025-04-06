@@ -12,7 +12,7 @@ from typing import Optional, Union
 
 # ロガーセットアップをインポート
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from app.zombie.logger_setup import setup_file_logging
+from app.modules.zombie.logger_setup import setup_file_logging
 
 # ロガーの設定
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

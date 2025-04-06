@@ -1,7 +1,7 @@
 """
-モデル定義モジュール
+基本モデル定義モジュール
 
-主にFastAPIで使用するためのPydanticモデル定義を提供
+主にFastAPIで使用するPydanticモデル定義を提供
 """
 
 from typing import Dict, Any, Optional
@@ -26,3 +26,11 @@ class EventModel(BaseModel):
     """
     type: str
     data: Optional[Dict[str, Any]] = None 
+
+class BaseEvent:
+    """
+    イベントの基底クラス
+    すべてのイベントはこのクラスを継承する
+    """
+    def __init__(self):
+        pass 

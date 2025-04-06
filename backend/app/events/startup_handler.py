@@ -78,7 +78,7 @@ async def start_zombie_monitoring() -> None:
     try:
         # 開発中の機能のため、モジュールが存在しない場合はスキップ
         try:
-            from ..zombie.service import get_zombie_service
+            from ..modules.zombie.service import get_zombie_service
             from ..voice.voicevox_starter import is_voicevox_ready
             import asyncio
             

@@ -7,7 +7,7 @@
 import logging
 import asyncio
 from typing import Dict, List, Type, Callable, Any, Coroutine, Optional, Union
-from ..models import BaseEvent  # models/__init__.pyからインポート
+from ..schemas import BaseEvent  # schemasからインポート
 
 # ロガーの設定
 logger = logging.getLogger(__name__)

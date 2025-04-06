@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-ヒショたんデスクトップ - ゾンビ検出デバッグスクリプト
+秘書たんデスクトップ - ゾンビ検出デバッグスクリプト
 このスクリプトはゾンビ検出機能をデバッグするためのものです。
 """
 
@@ -53,7 +53,7 @@ async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, 
         
         # detector_coreモジュールをインポート
         try:
-            from app.zombie.detector_core import ZombieDetector
+            from app.modules.zombie.detector_core import ZombieDetector
             logger.info("ZombieDetectorクラスを正常にインポートしました")
         except ImportError as e:
             logger.error(f"ZombieDetectorのインポートエラー: {e}")
@@ -62,17 +62,22 @@ async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, 
             return
         
         # GPU状態の確認
-        if use_gpu and torch.cuda.is_available():
-            logger.info(f"GPU検出: {torch.cuda.get_device_name(0)}")
-        else:
-            if not use_gpu:
-                logger.info("GPU無効モード: CPUのみを使用します")
-            elif not torch.cuda.is_available():
-                logger.info("GPU検出できません: CPUのみを使用します")
-                use_gpu = False
+        try:
+            import torch
+            if use_gpu and torch.cuda.is_available():
+                logger.info(f"GPU検出: {torch.cuda.get_device_name(0)}")
             else:
-                logger.info("GPU検出: できませんでした")
-                use_gpu = False
+                if not use_gpu:
+                    logger.info("GPU無効モード: CPUのみを使用します")
+                elif not torch.cuda.is_available():
+                    logger.info("GPU検出できません: CPUのみを使用します")
+                    use_gpu = False
+                else:
+                    logger.info("GPU検出: できませんでした")
+                    use_gpu = False
+        except ImportError:
+            logger.warning("PyTorch (torch) をインポートできませんでした。CPUのみを使用します。")
+            use_gpu = False
         
         # モデルのロード処理を修正
         try:
@@ -84,7 +89,7 @@ async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, 
                     logger.info(f"YOLOをインポートしました")
                     
                     # 標準のYOLOv8nを使用
-                    model_path = "yolov8n.pt"
+                    model_path = os.path.join(os.path.dirname(__file__), "trained_models", "yolov8n.pt")
                     logger.info(f"デフォルトのYOLOv8nモデルを使用します: {model_path}")
                 except ImportError as e:
                     logger.error(f"YOLOのインポートエラー: {e}")
@@ -92,10 +97,14 @@ async def debug_zombie_detection(threshold=0.3, verbose=False, model_path=None, 
                 logger.info(f"指定されたモデルを使用します: {model_path}")
             
             # モデルパスの存在確認
-            if model_path != "yolov8n.pt" and not os.path.exists(model_path):
+            if not os.path.exists(model_path):
                 logger.warning(f"指定されたモデルファイルが存在しません: {model_path}")
-                logger.warning("デフォルトのYOLOv8nモデルを使用します")
-                model_path = "yolov8n.pt"
+                # バックアップとして標準のYOLOv8nパスを試す
+                model_path = os.path.join(os.path.dirname(__file__), "trained_models", "yolov8n.pt")
+                if not os.path.exists(model_path):
+                    logger.warning(f"バックアップモデルも存在しません: {model_path}")
+                    model_path = "yolov8n.pt"  # 最終手段としてライブラリ内蔵のモデルを使用
+                logger.warning(f"代替モデルを使用します: {model_path}")
             
             # 検出器インスタンスを作成
             detector = ZombieDetector(model_path=model_path, confidence=threshold, debug_mode=True, use_gpu=use_gpu)

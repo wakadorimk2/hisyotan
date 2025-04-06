@@ -18,4 +18,4 @@ class VoiceSynthesisRequest(BaseModel):
     post_phoneme_length: float = 0.1
     output_sampling_rate: Optional[int] = None
     output_stereo: bool = False
-    emotion: str = "normal" 
+    emotion: str = "normal"

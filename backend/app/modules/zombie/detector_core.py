@@ -27,7 +27,7 @@ from .notification import notification_manager
 logger = logging.getLogger(__name__)
 
 # データ保存用のディレクトリ設定
-WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+WORKSPACE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 DATA_DIR = os.path.join(WORKSPACE_ROOT, "data")
 DETECTION_DIR = os.path.join(DATA_DIR, "detections")
 DEBUG_DIR = os.path.join(DATA_DIR, "debug")
@@ -127,7 +127,7 @@ class ZombieDetector:
                 try:
                     # 絶対パスではなく相対パスを使ってインポート
                     import sys
-                    sys.path.append(str(Path(__file__).parent.parent.parent.parent))
+                    sys.path.append(str(Path(__file__).parent.parent.parent.parent.parent))
                     from ml.train import ZombieClassifier
                     logger.info("ZombieClassifierをインポートしました")
                     
