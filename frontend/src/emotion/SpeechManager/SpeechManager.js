@@ -126,11 +126,30 @@ export class SpeechManager {
    * @param {string} [params.emotion='neutral'] - VOICEVOX用の感情
    * @param {string} [params.type='normal'] - 吹き出しの種類
    * @param {boolean} [params.autoHide=true] - 再生後に自動で吹き出しを消すか
+   * @param {number} [params.autoHideDelay=3000] - 自動非表示までの遅延時間（ミリ秒）
+   * @param {boolean} [params.adaptiveDelay=true] - テキスト長に応じて遅延時間を調整するか
    * @returns {Promise<boolean>} 処理が成功したかどうか
    */
-  async speakWithObject({ text, emotion = 'neutral', type = 'normal', autoHide = true }) {
+  async speakWithObject({
+    text,
+    emotion = 'neutral',
+    type = 'normal',
+    autoHide = true,
+    autoHideDelay = 3000,
+    adaptiveDelay = true
+  }) {
     try {
-      logDebug(`speakWithObject: "${text}" (感情: ${emotion}, タイプ: ${type}, 自動非表示: ${autoHide})`);
+      logDebug(`speakWithObject: "${text}" (感情: ${emotion}, タイプ: ${type}, 自動非表示: ${autoHide}, 遅延: ${autoHideDelay}ms)`);
+
+      // テキスト長に応じた表示時間の調整（適応的遅延が有効な場合）
+      let actualDelay = autoHideDelay;
+      if (adaptiveDelay && text) {
+        // 1文字あたり約150ms（読み上げ速度の目安）+ 基本表示時間1秒
+        const estimatedReadTime = Math.max(text.length * 150, 1000);
+        // 遅延時間は読み上げ時間+猶予時間（最低でも指定された遅延時間を保証）
+        actualDelay = Math.max(estimatedReadTime + 1000, autoHideDelay);
+        logDebug(`📏 テキスト長 ${text.length}文字に対する適応的遅延時間: ${actualDelay}ms`);
+      }
 
       // テキストを設定
       setText(text);
@@ -138,18 +157,35 @@ export class SpeechManager {
       // 吹き出しを表示
       showBubble(type, text);
 
-      // 音声再生
-      await speakText(text, emotion);
+      // 音声再生（エラーを補足して失敗判定できるようにする）
+      let audioSuccess = true;
+      try {
+        await speakText(text, emotion);
+        logDebug('✅ 音声再生完了しました');
+      } catch (audioError) {
+        audioSuccess = false;
+        logError(`音声再生エラー: ${audioError.message}`);
+      }
 
-      // 自動非表示が有効なら吹き出しを隠す
-      if (autoHide) {
+      // 自動非表示が有効で、かつ音声再生に成功した場合のみ吹き出しを隠す
+      if (autoHide && audioSuccess) {
         // 少し遅延させて吹き出しを非表示にする
-        const hideTimeoutId = setTimeout(() => {
+        const hideTimeoutId = setTimeout(async () => {
+          logDebug(`🧹 吹き出しを非表示にします（自動非表示タイマー: ${actualDelay}ms後）`);
           hideBubble();
-        }, 1000); // 1秒後に非表示
+
+          // 安全なテキストクリア関数を使用
+          await this.safeClearText(2000);
+
+        }, actualDelay); // 適応的な遅延時間を使用
 
         // タイムアウトをMapに保存（type をキーとして使用）
         this.hideTimeoutMap.set(type, hideTimeoutId);
+        logDebug(`⏱️ 非表示タイマーを設定しました（ID: ${hideTimeoutId}, タイプ: ${type}）`);
+      } else if (!autoHide) {
+        logDebug('🔒 自動非表示は無効です。吹き出しは表示されたままです。');
+      } else if (!audioSuccess) {
+        logDebug('⚠️ 音声再生に失敗したため、吹き出しを表示したままにします。');
       }
 
       return true;
@@ -250,15 +286,19 @@ export class SpeechManager {
    * メッセージの表示と音声合成を行う
    * @param {string} message - メッセージ
    * @param {string} emotion - 感情
-   * @param {number} duration - 表示時間
+   * @param {number} duration - 表示時間（ミリ秒）
+   * @param {boolean} adaptiveDelay - テキスト長に応じて遅延時間を調整するか
+   * @returns {Promise<boolean>} 処理が成功したかどうか
    */
-  sayMessage(message, emotion = 'normal', duration = 5000) {
+  sayMessage(message, emotion = 'normal', duration = 5000, adaptiveDelay = true) {
     // 新しいspeakWithObjectを使用して表示と発話を行う
     return this.speakWithObject({
       text: message,
       emotion: emotion,
       type: 'normal',
-      autoHide: true
+      autoHide: true,
+      autoHideDelay: duration || 5000,
+      adaptiveDelay: adaptiveDelay
     });
   }
 
@@ -343,7 +383,7 @@ export class SpeechManager {
   /**
    * すべての発話を停止し、UIをクリアする
    */
-  stopAllSpeech() {
+  async stopAllSpeech() {
     try {
       logDebug('すべての発話を停止します');
 
@@ -360,8 +400,8 @@ export class SpeechManager {
       // 吹き出しを非表示にする
       hideBubble();
 
-      // 吹き出しのテキストをクリア
-      clearText();
+      // 吹き出しのテキストをクリア（安全に）
+      await SpeechManager.safeClearText();
 
       // タイムアウトをクリア
       for (const [key, timerId] of this.hideTimeoutMap.entries()) {
@@ -377,7 +417,79 @@ export class SpeechManager {
       return false;
     }
   }
+
+  /**
+   * テキスト要素のロック状態を確認しながら安全にクリアする
+   * @param {number} timeout - 最大待機時間（ミリ秒）
+   * @returns {Promise<boolean>} クリア成功ならtrue
+   */
+  async safeClearText(timeout = 3000) {
+    try {
+      const start = Date.now();
+      const speechTextEl = document.getElementById("speechText");
+
+      if (!speechTextEl) {
+        logDebug('⚠️ safeClearText: speechText要素が見つかりません');
+        return false;
+      }
+
+      logDebug('🔍 safeClearText: テキスト要素のロック状態を確認します: ' + speechTextEl.dataset.locked);
+
+      // ロック状態なら少し待機
+      if (speechTextEl.dataset.locked === 'true') {
+        logDebug('⏳ safeClearText: テキスト要素がロック中。解除を待機します（最大' + timeout + 'ms）');
+
+        // 非同期待機ループ
+        let waited = 0;
+        while (speechTextEl.dataset.locked === 'true' && waited < timeout) {
+          await new Promise(resolve => setTimeout(resolve, 100)); // 100ms待機
+          waited += 100;
+        }
+
+        logDebug(`⌛ safeClearText: ${waited}ms待機しました。現在のロック状態: ${speechTextEl.dataset.locked}`);
+      }
+
+      // タイムアウトしたか確認
+      if (Date.now() - start > timeout && speechTextEl.dataset.locked === 'true') {
+        logDebug('⚠️ safeClearText: タイムアウト。ロック中でもクリアを試行します');
+      }
+
+      // クリア実行
+      clearText();
+      logDebug('✅ safeClearText: テキストを安全にクリアしました');
+      return true;
+    } catch (error) {
+      logError(`safeClearText エラー: ${error.message}`);
+      return false;
+    }
+  }
 }
 
 // デフォルトのインスタンスを作成してエクスポート
-export default new SpeechManager(); 
+export default new SpeechManager();
+
+/**
+ * テスト用：吹き出しを固定表示するコマンド例
+ * 
+ * 実行方法:
+ * ```js
+ * // 吹き出しを固定表示する（消えない）
+ * speechManager.speakWithObject({
+ *   text: "テスト表示です。これは消えないはず！",
+ *   autoHide: false
+ * });
+ * 
+ * // 長い文章でも適応的に表示時間を調整
+ * speechManager.speakWithObject({
+ *   text: "これは長めの文章です。テキストの長さに応じて表示時間が自動的に調整されます。読み上げ速度に合わせて適切な時間だけ表示されるはずです。",
+ *   adaptiveDelay: true
+ * });
+ * 
+ * // 表示時間を固定（10秒）
+ * speechManager.speakWithObject({
+ *   text: "この吹き出しは10秒間表示されます",
+ *   autoHideDelay: 10000,
+ *   adaptiveDelay: false
+ * });
+ * ```
+ */ 
