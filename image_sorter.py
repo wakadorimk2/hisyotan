@@ -1,16 +1,19 @@
 # image_sorter.py
-import os
 import shutil
-import cv2
 from pathlib import Path
 
-INPUT_DIR = Path("backend/data/datasets/classified/non_zombie")
-ZOMBIE_DIR = Path("backend/data/datasets/classified/zombie")
-NON_ZOMBIE_DIR = Path("backend/data/datasets/classified/non_zombie")
-UNKNOWN_DIR = Path("backend/data/datasets/classified/unknown")  # 再仕分けでもう一度入れ直すとき用
+import cv2
+
+INPUT_DIR = Path("runs/detect/predict/crops")
+ZOMBIE_DIR = Path("backend/data/datasets/zombie_classifier/train/zombie")
+NON_ZOMBIE_DIR = Path("backend/data/datasets/zombie_classifier/train/non_zombie")
+UNKNOWN_DIR = Path(
+    "backend/data/datasets/zombie_classifier/train/unknown"
+)  # 再仕分けでもう一度入れ直すとき用
 
 # 履歴スタックで戻れるように
 history = []
+
 
 def move_file(file_path, dest_dir):
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -18,10 +21,12 @@ def move_file(file_path, dest_dir):
     shutil.move(str(file_path), str(target_path))
     history.append((target_path, file_path))  # for undo
 
+
 def undo_last():
     if history:
         dest_path, original_path = history.pop()
         shutil.move(str(dest_path), str(original_path))
+
 
 def main():
     files = sorted(INPUT_DIR.glob("*.jpg")) + sorted(INPUT_DIR.glob("*.png"))
@@ -39,11 +44,11 @@ def main():
 
         if key == 27:  # ESC
             break
-        elif key == ord('z'):
+        elif key == ord("z"):
             move_file(img_path, ZOMBIE_DIR)
-        elif key == ord('x'):
+        elif key == ord("x"):
             move_file(img_path, NON_ZOMBIE_DIR)
-        elif key == ord('u'):
+        elif key == ord("u"):
             move_file(img_path, UNKNOWN_DIR)
         elif key == 8:  # Backspace
             undo_last()
@@ -55,6 +60,7 @@ def main():
         index += 1
 
     cv2.destroyAllWindows()
+
 
 if __name__ == "__main__":
     main()
