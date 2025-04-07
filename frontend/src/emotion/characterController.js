@@ -122,6 +122,61 @@ export function setTag(category, tags) {
 }
 
 /**
+ * タグをランダムに設定する
+ * @param {string} category - カテゴリ（'expression', 'pose', 'extras'）
+ * @param {string} tagPrefix - タグの接頭辞（例: "POINTING"）- 接頭辞で始まるタグからランダムに選択します
+ * @returns {boolean} 成功したかどうか
+ */
+export function setRandomTag(category, tagPrefix) {
+    if (!category || !tagPrefix) {
+        logError('ランダムタグ設定エラー: カテゴリとタグ接頭辞は必須です');
+        return false;
+    }
+
+    // 辞書からカテゴリに対応するオブジェクトを取得
+    let categoryDict;
+    switch (category) {
+        case 'expression':
+            categoryDict = dictionary?.expressions;
+            break;
+        case 'pose':
+            categoryDict = dictionary?.poses;
+            break;
+        case 'extras':
+            categoryDict = dictionary?.extras;
+            break;
+        default:
+            logError(`不明なタグカテゴリ: ${category}`);
+            return false;
+    }
+
+    if (!categoryDict) {
+        logError('差分辞書がロードされていないか、カテゴリが見つかりません');
+        return false;
+    }
+
+    // 接頭辞で始まるタグを抽出
+    const matchingTags = Object.keys(categoryDict).filter(tag => tag.startsWith(tagPrefix));
+
+    if (matchingTags.length === 0) {
+        logError(`接頭辞 "${tagPrefix}" に一致するタグが見つかりません`);
+        return false;
+    }
+
+    // ランダムにタグを選択
+    const randomIndex = Math.floor(Math.random() * matchingTags.length);
+    const selectedTag = matchingTags[randomIndex];
+
+    // 選択されたタグのインデックスをログ出力（デバッグ用）
+    const tagNumber = selectedTag.match(/\d+/);
+    const variant = tagNumber ? parseInt(tagNumber[0]) : 0;
+    logDebug(`ランダムタグを選択: ${selectedTag} (バリエーション ${variant}番)`);
+
+    // 選択したタグを設定
+    return setTag(category, selectedTag);
+}
+
+/**
  * タグの有効性を検証する
  * @param {string} category - カテゴリ名
  * @param {string} tag - 検証するタグ

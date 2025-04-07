@@ -138,6 +138,34 @@ export function setPose(poseTag) {
 }
 
 /**
+ * ランダムにタグを設定する（新メソッド）
+ * @param {string} category - カテゴリ（'expression', 'pose'）
+ * @param {string} tagPrefix - タグの接頭辞（例: "POINTING"）
+ * @returns {boolean} 成功したかどうか
+ */
+export function setRandomTag(category, tagPrefix) {
+    try {
+        if (!isInitialized) {
+            initEmotionalBridge();
+        }
+
+        const result = characterController.setRandomTag(category, tagPrefix);
+
+        // 既存実装にも反映（表情カテゴリの場合）
+        if (result && category === 'expression') {
+            const tags = characterController.getCurrentTags();
+            const expression = tagToExpressionMap[tags.expression] || 'normal';
+            expressionManager.setExpression(expression);
+        }
+
+        return result;
+    } catch (error) {
+        logError(`ランダムタグ設定エラー: ${error.message}`);
+        return false;
+    }
+}
+
+/**
  * エクストラタグを追加する（新メソッド）
  * @param {string} extraTag - 追加するタグ
  * @returns {boolean} 成功したかどうか

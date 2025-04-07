@@ -227,6 +227,96 @@
                 "pose": "seiza",
                 "parameters": {}
             }
+        },
+        "POINTING1": {
+            "image": {
+                "pathModifier": "_pointing1",
+                "description": "指さしポーズ1番"
+            },
+            "live2d": {
+                "motion": "pointing",
+                "parameters": {
+                    "variant": 1
+                }
+            },
+            "vrm": {
+                "pose": "pointing",
+                "parameters": {
+                    "variant": 1
+                }
+            }
+        },
+        "POINTING2": {
+            "image": {
+                "pathModifier": "_pointing2",
+                "description": "指さしポーズ2番"
+            },
+            "live2d": {
+                "motion": "pointing",
+                "parameters": {
+                    "variant": 2
+                }
+            },
+            "vrm": {
+                "pose": "pointing",
+                "parameters": {
+                    "variant": 2
+                }
+            }
+        },
+        "POINTING3": {
+            "image": {
+                "pathModifier": "_pointing3",
+                "description": "指さしポーズ3番"
+            },
+            "live2d": {
+                "motion": "pointing",
+                "parameters": {
+                    "variant": 3
+                }
+            },
+            "vrm": {
+                "pose": "pointing",
+                "parameters": {
+                    "variant": 3
+                }
+            }
+        },
+        "POINTING4": {
+            "image": {
+                "pathModifier": "_pointing4",
+                "description": "指さしポーズ4番"
+            },
+            "live2d": {
+                "motion": "pointing",
+                "parameters": {
+                    "variant": 4
+                }
+            },
+            "vrm": {
+                "pose": "pointing",
+                "parameters": {
+                    "variant": 4
+                }
+            }
+        },
+        "POINTING5": {
+            "image": {
+                "pathModifier": "_pointing5",
+                "description": "指さしポーズ5番"
+            },
+            "live2d": {
+                "motion": "pointing",
+                "parameters": {
+                    "variant": 5
+                }
+            },
+            "vrm": {
+                "pose": "pointing",
+                "parameters": {
+                    "variant": 5
+                }
+            }
         }
     },
     "extras": {
