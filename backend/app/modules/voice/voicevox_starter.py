@@ -40,7 +40,7 @@ def is_voicevox_running() -> bool:
 
     # API接続の確認
     try:
-        from ..config import get_settings
+        from ...config import get_settings
 
         settings = get_settings()
 
@@ -65,7 +65,7 @@ def start_voicevox_engine() -> bool:
         return True
 
     # 設定の取得
-    from ..config import get_settings
+    from ...config import get_settings
 
     settings = get_settings()
 
@@ -191,7 +191,7 @@ async def is_voicevox_ready() -> bool:
 
         import aiohttp
 
-        from ..config import get_settings
+        from ...config import get_settings
 
         settings = get_settings()
 

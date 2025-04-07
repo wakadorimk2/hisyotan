@@ -46,8 +46,8 @@ async def init_services() -> None:
     各種サービスの初期化
     """
     from ..config import get_settings
+    from ..modules.voice.voicevox_starter import start_voicevox_in_thread
     from ..services.voice import get_voice_service
-    from ..voice.voicevox_starter import start_voicevox_in_thread
 
     try:
         # 設定の読み込み
@@ -77,8 +77,8 @@ async def start_zombie_monitoring() -> None:
     try:
         # 開発中の機能のため、モジュールが存在しない場合はスキップ
         try:
+            from ..modules.voice.voicevox_starter import is_voicevox_ready
             from ..modules.zombie.service import get_zombie_service
-            from ..voice.voicevox_starter import is_voicevox_ready
 
             # VOICEVOXの準備ができるまで少し待機
             wait_count = 0

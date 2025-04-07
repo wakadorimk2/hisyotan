@@ -10,9 +10,10 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import requests
 
+from ..emotion.analyzer import analyze_text
+
 # 自モジュールからのインポート
 from .cache import get_voice_cache_path, is_voice_cached, save_to_cache
-from .emotion import analyze_text
 from .player import is_message_duplicate, play_voice_async
 
 # ロガーの設定

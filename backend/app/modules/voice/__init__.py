@@ -4,8 +4,8 @@
 VOICEVOXを使用した音声合成と再生を管理する機能を提供します
 """
 
+from ..emotion.analyzer import analyze_text
 from .cache import get_voice_cache_path, is_voice_cached
-from .emotion import analyze_text
 from .engine import (
     safe_play_voice,
     speak,
@@ -15,6 +15,14 @@ from .engine import (
 from .player import play_voice, play_voice_async, reset_audio_playback
 from .presets import safe_speak_with_preset, speak_with_preset
 from .react import legacy_react_to_zombie, react_to_zombie
+from .voicevox_starter import (
+    cleanup_on_exit,
+    is_voicevox_ready,
+    is_voicevox_running,
+    start_voicevox_engine,
+    start_voicevox_in_thread,
+    stop_voicevox_engine,
+)
 
 __all__ = [
     "speak_with_emotion",
@@ -31,4 +39,11 @@ __all__ = [
     "safe_speak_with_preset",
     "react_to_zombie",
     "legacy_react_to_zombie",
+    # voicevox_starter関連
+    "is_voicevox_ready",
+    "is_voicevox_running",
+    "start_voicevox_engine",
+    "start_voicevox_in_thread",
+    "stop_voicevox_engine",
+    "cleanup_on_exit",
 ]

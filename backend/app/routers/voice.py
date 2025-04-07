@@ -12,8 +12,9 @@ from fastapi import APIRouter, Query, Request, Response
 from starlette.responses import JSONResponse
 
 from ..config import get_settings
+from ..modules.voice.engine import speak_with_emotion, synthesize_direct
+from ..modules.voice.react import react_to_zombie
 from ..schemas import VoiceSynthesisRequest
-from ..voice.engine import react_to_zombie, speak_with_emotion, synthesize_direct
 
 # ロガー設定
 logger = logging.getLogger(__name__)
