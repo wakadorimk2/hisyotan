@@ -50,6 +50,9 @@ venv/
 backend/data/datasets/frames/
 *.npy
 
+# 学習データ
+backend/data/datasets/*
+
 # YOLOv8
 backend/trained_models/zombie_detector_v1/*
 !backend\trained_models\zombie_detector_v1\weights\best.pt
