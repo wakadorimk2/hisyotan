@@ -15,6 +15,11 @@ let isPlaying = false;
 const audioCache = new Map();
 const CACHE_MAX_SIZE = 20; // キャッシュの最大エントリ数
 
+// 重複実行防止用の変数
+let lastSpeechText = '';
+let lastSpeechTimestamp = 0;
+const DUPLICATE_SPEECH_THRESHOLD = 500; // ミリ秒単位での重複防止時間閾値
+
 /**
  * AudioContextの初期化
  * @returns {AudioContext} 初期化されたAudioContext
@@ -150,6 +155,17 @@ async function decodeAudioData(audioData) {
  */
 export async function speakText(text, emotion = 'normal', speakerId = 8, signal = null, useCache = true) {
     try {
+        // 重複実行防止処理
+        const now = Date.now();
+        if (text === lastSpeechText && now - lastSpeechTimestamp < DUPLICATE_SPEECH_THRESHOLD) {
+            logDebug(`🛑 重複発話を検出しました: "${text.substring(0, 15)}..." (${now - lastSpeechTimestamp}ms以内の重複)`);
+            return true; // 重複とみなして処理せず成功扱いで返す
+        }
+
+        // 実行情報を記録
+        lastSpeechText = text;
+        lastSpeechTimestamp = now;
+
         // キャッシュキーを生成
         const cacheKey = generateCacheKey(text, emotion, speakerId);
 

@@ -37,6 +37,10 @@ import { speakText, stopSpeaking } from '@voice/speechVoice.js';
 //   setHordeModeState
 // } from './hordeModeToggle.js';
 
+// 重複防止用の変数
+let lastSpokenText = "";
+let lastSpokenAt = 0;
+
 /**
  * エラーメッセージを表示する (showErrorの代替関数)
  * @param {string} message - エラーメッセージ
@@ -137,6 +141,17 @@ export class SpeechManager {
     adaptiveDelay = true
   }) {
     try {
+      // 重複防止ガード
+      const now = Date.now();
+      if (text === lastSpokenText && now - lastSpokenAt < 5000) {
+        logDebug(`🛑 重複した speakWithObject の呼び出しを防止しました: "${text}"`);
+        return true; // 成功扱いで戻す
+      }
+
+      // 現在の呼び出しを記録
+      lastSpokenText = text;
+      lastSpokenAt = now;
+
       logDebug(`speakWithObject: "${text}" (感情: ${emotion}, タイプ: ${type}, 自動非表示: ${autoHide}, 遅延: ${autoHideDelay}ms)`);
 
       // テキスト長に応じた表示時間の調整（適応的遅延が有効な場合）

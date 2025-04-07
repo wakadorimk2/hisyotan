@@ -6,6 +6,7 @@
 import { getFunyaStatus } from '../../core/apiClient.js';
 import { logDebug } from '../../core/logger.js';
 import { updateBubblePosition } from './uiBuilder.js';
+import { speak } from '../../emotion/speechManager.js';
 
 // 設定値
 const POLLING_INTERVAL = 5000; // 5秒ごとにステータスをチェック
@@ -24,6 +25,16 @@ let bubbleElement = null;
 let textElement = null;
 let pollingInterval = null;
 let timeout = null; // 自動非表示タイマー用
+
+// 音声再生済みフラグ (吹き出し表示と音声再生の分離のため)
+let voicePlayedForCurrentBubble = false;
+
+// 発話処理中フラグ（無限ループ防止用）
+let isSpeakingInProgress = false;
+
+// 最後に表示したテキストとタイムスタンプ（重複防止用）
+let lastDisplayedText = '';
+let lastDisplayedTime = 0;
 
 /**
  * ランダムなメッセージを取得
@@ -94,8 +105,9 @@ function updateFunyaBubblePosition() {
 /**
  * 吹き出しの表示状態を更新
  * @param {boolean} watching 見守り中かどうか
+ * @param {boolean} withVoice テキストを音声で読み上げるかどうか
  */
-function updateBubbleVisibility(watching) {
+function updateBubbleVisibility(watching, withVoice = true) {
     if (!bubbleElement) {
         bubbleElement = createBubbleElement();
         textElement = document.getElementById('funyaText');
@@ -118,11 +130,22 @@ function updateBubbleVisibility(watching) {
             updateFunyaBubblePosition();
 
             logDebug('ふにゃ吹き出しを表示: ' + message);
+
+            // テキストを音声で読み上げる
+            if (withVoice && !voicePlayedForCurrentBubble) {
+                // 絵文字を除去してテキストだけを抽出
+                const plainText = message.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}]/gu, '').trim();
+                if (plainText) {
+                    speak(plainText); // speechManagerを使用
+                    voicePlayedForCurrentBubble = true;
+                    logDebug(`🔊 ふにゃ見守りメッセージを音声で再生: "${plainText}"`);
+                }
+            }
         } else {
             // 非表示
             bubbleElement.classList.remove('show');
             bubbleElement.classList.add('hide');
-
+            voicePlayedForCurrentBubble = false; // フラグをリセット
             logDebug('ふにゃ吹き出しを非表示');
         }
     }
@@ -132,8 +155,22 @@ function updateBubbleVisibility(watching) {
  * 任意のメッセージを表示する吹き出し
  * @param {string} text 表示するテキスト
  * @param {number} duration 表示時間（ミリ秒）デフォルトは5000ms
+ * @param {boolean} withVoice テキストを音声で読み上げるかどうか
+ * @param {string} emotion 音声の感情（'normal', 'happy', 'sad', 'surprised'など）
+ * @returns {HTMLElement} 吹き出し要素
  */
-export function showFunyaBubble(text, duration = 5000) {
+export function showFunyaBubble(text, duration = 5000, withVoice = true, emotion = 'normal') {
+    // 重複防止：直近で同じテキストが表示されていたら無視する（5秒以内）
+    const now = Date.now();
+    if (text === lastDisplayedText && now - lastDisplayedTime < 5000) {
+        logDebug(`🛑 重複表示を防止しました: "${text?.substring(0, 15)}..." (前回から${now - lastDisplayedTime}ms)`);
+        return bubbleElement;
+    }
+
+    // 表示テキストとタイムスタンプを記録
+    lastDisplayedText = text || '';
+    lastDisplayedTime = now;
+
     // 既存のタイマーをクリア
     if (timeout) {
         clearTimeout(timeout);
@@ -146,10 +183,13 @@ export function showFunyaBubble(text, duration = 5000) {
     }
 
     // テキストを設定
+    let displayText;
     if (text) {
+        displayText = text;
         textElement.innerHTML = `<span class="funya-icon">🐾</span>${text}`;
     } else {
-        textElement.innerHTML = `<span class="funya-icon">🐾</span>${getRandomMessage()}`;
+        displayText = getRandomMessage();
+        textElement.innerHTML = `<span class="funya-icon">🐾</span>${displayText}`;
     }
 
     // 吹き出しを表示
@@ -159,7 +199,31 @@ export function showFunyaBubble(text, duration = 5000) {
     // 立ち絵の位置に合わせて吹き出しの位置を調整
     updateFunyaBubblePosition();
 
-    logDebug(`ふにゃ吹き出しを表示: ${text || 'ランダムメッセージ'}`);
+    logDebug(`ふにゃ吹き出しを表示: ${displayText || 'ランダムメッセージ'}`);
+
+    // 音声再生は呼び出し元（speechBridge）に任せる
+    // 直接呼び出した場合のみここで音声再生する
+    if (withVoice && displayText && !voicePlayedForCurrentBubble && !isSpeakingInProgress) {
+        try {
+            // 発話処理中フラグをセット
+            isSpeakingInProgress = true;
+
+            // 絵文字を除去してテキストだけを抽出
+            const plainText = displayText.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}]/gu, '').trim();
+            if (plainText) {
+                // speechManagerを使用して音声再生
+                speak(plainText);
+                voicePlayedForCurrentBubble = true;
+                logDebug(`🔊 ふにゃ吹き出しのテキストを音声で再生: "${plainText}"`);
+            }
+        } finally {
+            // 処理が終わったらフラグをリセット
+            setTimeout(() => {
+                isSpeakingInProgress = false;
+                logDebug('🔓 発話処理フラグをリセットしました');
+            }, 500);
+        }
+    }
 
     // 指定時間後に自動的に非表示
     timeout = setTimeout(() => {
@@ -176,6 +240,7 @@ export function hideFunyaBubble() {
     if (bubbleElement) {
         bubbleElement.classList.remove('show');
         bubbleElement.classList.add('hide');
+        voicePlayedForCurrentBubble = false; // フラグをリセット
         logDebug('ふにゃ吹き出しを非表示');
     }
 
@@ -187,11 +252,12 @@ export function hideFunyaBubble() {
 
 /**
  * ステータス確認と吹き出し制御
+ * @param {boolean} withVoice テキストを音声で読み上げるかどうか
  */
-async function checkFunyaStatus() {
+async function checkFunyaStatus(withVoice = true) {
     try {
         const status = await getFunyaStatus();
-        updateBubbleVisibility(status.watching);
+        updateBubbleVisibility(status.watching, withVoice);
     } catch (error) {
         logDebug('ふにゃステータス取得エラー:', error);
         // エラー時は吹き出しを非表示
