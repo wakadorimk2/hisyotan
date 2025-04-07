@@ -46,6 +46,9 @@ venv/
 *.old
 *.orig
 
+# yoloの作業ディレクトリ
+runs/*
+
 # フレーム抽出
 backend/data/datasets/frames/
 *.npy
