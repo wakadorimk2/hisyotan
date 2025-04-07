@@ -78,10 +78,96 @@ def filter_ocr_lines(lines: List[str]) -> List[str]:
     return filtered
 
 
+def filter_ocr_lines_game(lines: List[str]) -> List[str]:
+    """
+    ゲーム画面のOCR結果に最適化されたフィルタリング関数です。
+    ステータス情報、クエスト情報、位置情報などのゲーム内重要テキストを保持します。
+
+    フィルタ条件:
+    - 各行を strip() で前後トリム
+    - 2文字未満の行は除外（短いステータス表示を許可）
+    - 80文字超の行は除外（長めのクエスト情報を許可）
+    - '%'や'/'を含む行は英数字がなくても許可（例: 15%、0/120）
+    - 数値と記号の組み合わせは許可（例: HP:100、0/50）
+    - すべての行を小文字に変換し、重複行は除外
+
+    Args:
+        lines: フィルタリングする行のリスト
+
+    Returns:
+        フィルタリングされた行のリスト
+    """
+    if not lines:
+        return []
+
+    filtered: List[str] = []
+    seen: Set[str] = set()
+
+    for line in lines:
+        # 前後の空白を削除
+        trimmed = line.strip()
+
+        # 長さチェック（2文字未満または80文字超は除外）
+        if len(trimmed) < 2 or len(trimmed) > 80:
+            continue
+
+        # '%'や'/'を含む行は特別に許可
+        has_special_chars = re.search(r"[%/:]", trimmed)
+
+        # 英数字チェック - 特殊文字があるか英数字があれば許可
+        if not has_special_chars and not re.search(r"[a-zA-Z0-9]", trimmed):
+            continue
+
+        # 記号だけで構成されているか確認 - 数値と記号の組み合わせは許可
+        if re.match(r'^[!@#$%^&*()\-_=+\[\]{}|\\;:\'",.<>/?`~]*$', trimmed):
+            continue
+
+        # LOCATION: やクエスト情報を特別に検出
+        is_location = re.search(r"location\s*:\s*\w+", trimmed.lower())
+        is_quest = re.search(
+            r"(retrieve|clear|collect|find|kill|defeat)", trimmed.lower()
+        )
+
+        # 小文字に変換
+        lower_line = trimmed.lower()
+
+        # 重複チェック
+        if lower_line in seen:
+            continue
+
+        seen.add(lower_line)
+
+        # 元の大文字小文字を保持（クエスト情報などは大文字で表示されることが多い）
+        if is_location or is_quest:
+            filtered.append(trimmed)
+        else:
+            filtered.append(lower_line)
+
+    return filtered
+
+
+def extract_location_info(lines: List[str]) -> Optional[str]:
+    """
+    OCR結果からロケーション情報を抽出します。
+
+    Args:
+        lines: 処理する行のリスト
+
+    Returns:
+        ロケーション情報、または見つからない場合はNone
+    """
+    for line in lines:
+        # LOCATION: XXX_XXX 形式を検索
+        match = re.search(r"(?i)location\s*:\s*(\w+(?:_\w+)*)", line)
+        if match:
+            return match.group(1)
+    return None
+
+
 def filter_ocr_results(
     texts: List[str],
     include_keywords: Optional[List[str]] = None,
-    exclude_keywords: Optional[List[str]] = None,
+    exclude_keywords: Optional[List[str]] = DEFAULT_EXCLUDE_KEYWORDS,
 ) -> List[str]:
     """
     OCR結果のテキストをフィルタリングします。
@@ -125,6 +211,7 @@ def run_random_ocr(
     num_samples: int = 5,
     include_keywords: Optional[List[str]] = None,
     exclude_keywords: Optional[List[str]] = DEFAULT_EXCLUDE_KEYWORDS,
+    use_game_filter: bool = False,
 ) -> List[str]:
     """
     指定したディレクトリ内の画像ファイル（.jpg/.png）からランダムに選んだ画像に対してOCRを実行し、
@@ -135,6 +222,7 @@ def run_random_ocr(
         num_samples: 処理する画像の数（デフォルト: 5）
         include_keywords: 結果に含めるキーワードのリスト（指定がない場合はフィルタしない）
         exclude_keywords: 結果から除外するキーワードのリスト（デフォルトあり、Noneで無効化可能）
+        use_game_filter: ゲーム用の軽量フィルタを使用するかどうか
 
     Returns:
         フィルタリングされたOCR処理結果のテキストリスト
@@ -209,8 +297,12 @@ def run_random_ocr(
                 enhanced_results.append(result)
                 continue
 
-            # OCR結果の各行をフィルタリング
-            filtered_lines = filter_ocr_lines(content.strip().splitlines())
+            # OCR結果の各行をフィルタリング（ゲームモードに応じて選択）
+            if use_game_filter:
+                filtered_lines = filter_ocr_lines_game(content.strip().splitlines())
+            else:
+                filtered_lines = filter_ocr_lines(content.strip().splitlines())
+
             if filtered_lines:
                 enhanced_results.append(f"{filename}:\n" + "\n".join(filtered_lines))
             else:
@@ -226,6 +318,7 @@ def run_random_ocr(
 def ocr_from_screenshot(
     include_keywords: Optional[List[str]] = None,
     exclude_keywords: Optional[List[str]] = DEFAULT_EXCLUDE_KEYWORDS,
+    use_game_filter: bool = True,
 ) -> List[str]:
     """
     現在の画面をキャプチャしてOCRを実行し、フィルタリングされたテキスト結果を返します。
@@ -233,6 +326,7 @@ def ocr_from_screenshot(
     Args:
         include_keywords: 結果に含めるキーワードのリスト（指定がない場合はフィルタしない）
         exclude_keywords: 結果から除外するキーワードのリスト（デフォルトあり、Noneで無効化可能）
+        use_game_filter: ゲーム用の軽量フィルタを使用するかどうか
 
     Returns:
         フィルタリングされたOCR処理結果のテキストリスト
@@ -273,7 +367,10 @@ def ocr_from_screenshot(
             exclude_keywords=exclude_keywords,
         )
 
-        # 追加のフィルタリングルールを適用
-        return filter_ocr_lines(keyword_filtered)
+        # 追加のフィルタリングルールを適用（ゲームモードに応じて選択）
+        if use_game_filter:
+            return filter_ocr_lines_game(keyword_filtered)
+        else:
+            return filter_ocr_lines(keyword_filtered)
     except Exception as e:
         return [f"エラー: スクリーンショットOCR処理に失敗しました - {str(e)}"]
