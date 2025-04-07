@@ -48,3 +48,15 @@ venv/
 
 # フレーム抽出
 backend/data/datasets/frames/
+*.npy
+
+# YOLOv8
+backend/trained_models/zombie_detector_v1/*
+!backend\trained_models\zombie_detector_v1\weights\best.pt
+
+backend/trained_models/zombie_detector_v2/*
+!backend\trained_models\zombie_detector_v2\weights\best.pt
+
+# YOLOv8のラベルファイル（train/val）を無視
+backend/data/datasets/yolov8/labels/train/*.txt
+backend/data/datasets/yolov8/labels/val/*.txt
