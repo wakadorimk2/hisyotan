@@ -1,0 +1,34 @@
+"""
+音声合成モジュール
+
+VOICEVOXを使用した音声合成と再生を管理する機能を提供します
+"""
+
+from .cache import get_voice_cache_path, is_voice_cached
+from .emotion import analyze_text
+from .engine import (
+    safe_play_voice,
+    speak,
+    speak_with_emotion,
+    synthesize_direct,
+)
+from .player import play_voice, play_voice_async, reset_audio_playback
+from .presets import safe_speak_with_preset, speak_with_preset
+from .react import legacy_react_to_zombie, react_to_zombie
+
+__all__ = [
+    "speak_with_emotion",
+    "safe_play_voice",
+    "synthesize_direct",
+    "speak",
+    "analyze_text",
+    "is_voice_cached",
+    "get_voice_cache_path",
+    "play_voice",
+    "play_voice_async",
+    "reset_audio_playback",
+    "speak_with_preset",
+    "safe_speak_with_preset",
+    "react_to_zombie",
+    "legacy_react_to_zombie",
+]
