@@ -254,7 +254,8 @@ export function updateBubblePosition() {
 }
 
 /**
- * UI要素の初期化
+ * UI要素の初期化処理
+ * すでに存在する要素があれば取得し、なければ作成する
  */
 export function initUIElements() {
   console.log('🌸 assistantUI: UI要素を初期化します');
@@ -265,37 +266,49 @@ export function initUIElements() {
     return;
   }
 
-  // 必要なUI要素の定義
-  const requiredElements = {
-    pawButton: { id: 'paw-button', type: 'button' },
-    quitButton: { id: 'quit-button', type: 'button' },
+  // UI要素の事前定義
+  const uiElements = {
+    assistantImage: { id: 'assistantImage', type: 'img' },
     speechBubble: { id: 'speechBubble', type: 'div' },
     speechText: { id: 'speechText', type: 'div' },
-    assistantImage: { id: 'assistantImage', type: 'img' },
-    // errorBubble関連の要素を完全に削除
-    statusIndicator: { id: 'statusIndicator', type: 'div' }
-    // speechSettingUI要素を削除（吹き出し内に表示するため）
+    pawButton: { id: 'paw-button', type: 'button' },
+    quitButton: { id: 'quit-button', type: 'button' },
+    errorBubble: { id: 'errorBubble', type: 'div' },
+    errorText: { id: 'errorText', type: 'div' }
   };
 
-  // 各要素の初期化
-  for (const [key, config] of Object.entries(requiredElements)) {
-    let element = document.getElementById(config.id);
+  // 旧吹き出しUI要素（ゾンビBubble）を削除
+  const zombieBubble = document.getElementById('speechBubble');
+  if (zombieBubble) {
+    console.warn('💀 uiBuilder: 旧吹き出しを除霊します');
+    zombieBubble.remove();
+  }
+
+  // UI要素の初期化
+  const elements = {};
+
+  for (const [key, { id, type }] of Object.entries(uiElements)) {
+    // 既存の要素を検索
+    let element = document.getElementById(id);
 
     if (!element) {
-      console.log(`🆕 ${config.id}要素を作成します`);
-      element = document.createElement(config.type);
-      element.id = config.id;
+      console.log(`🆕 ${id}要素を作成します`);
+      element = document.createElement(type);
+      element.id = id;
 
       // 要素に応じた初期設定
-      switch (config.id) {
+      switch (id) {
         case 'speechBubble':
           element.className = 'speech-bubble';
           break;
         case 'speechText':
           element.className = 'speech-text';
           break;
-        case 'statusIndicator':
-          element.className = 'status-indicator';
+        case 'errorBubble':
+          element.className = 'error-bubble';
+          break;
+        case 'errorText':
+          element.className = 'error-text';
           break;
       }
 

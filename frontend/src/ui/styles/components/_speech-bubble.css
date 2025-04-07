@@ -1,3 +1,12 @@
+/* ゾンビBubble対策：旧吹き出し要素を強制的に非表示 */
+#speechBubble {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -999 !important;
+}
+
 /* 吹き出しの基本スタイル */
 .speech-bubble {
   position: fixed;

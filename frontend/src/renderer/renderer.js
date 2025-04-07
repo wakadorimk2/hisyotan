@@ -14,7 +14,7 @@ import * as assistantUI from './assistantUI.js';
 import apiClient from '../core/apiClient.js';
 import speechManager from '../emotion/speechManager.js';
 import { initAssistantUI } from './assistantUI.js';
-import funyaBubble from '../ui/helpers/funyaBubble.js';
+import { startFunyaWatchingMode, showFunyaBubble } from '../ui/helpers/funyaBubble.js';
 
 // デバッグ情報
 console.log('🌸 renderer.js が読み込まれました');
@@ -24,7 +24,10 @@ console.log('📁 現在の実行パス:', import.meta.env.BASE_URL);
 // グローバルアクセス用に設定
 window.assistantUI = assistantUI;
 window.settingsApi = apiClient;
-window.funyaBubble = funyaBubble;
+window.funyaBubble = {
+  startFunyaWatchingMode,
+  showFunyaBubble
+};
 
 // speechManagerが正しく読み込まれていることを確認
 try {
@@ -72,7 +75,7 @@ async function init() {
 
     // ふにゃ見守りモードの開始
     console.log('🐈️ ふにゃ見守りモードを開始します');
-    funyaBubble.startFunyaWatchingMode();
+    startFunyaWatchingMode();
 
     // ここにアプリケーションの初期化コードを追加
 
@@ -190,5 +193,5 @@ export default {
   assistantUI,
   apiClient,
   speechManager,
-  funyaBubble
+  funyaBubble: { startFunyaWatchingMode, showFunyaBubble }
 }; 

@@ -23,6 +23,7 @@ let isWatching = false;
 let bubbleElement = null;
 let textElement = null;
 let pollingInterval = null;
+let timeout = null; // 自動非表示タイマー用
 
 /**
  * ランダムなメッセージを取得
@@ -128,6 +129,63 @@ function updateBubbleVisibility(watching) {
 }
 
 /**
+ * 任意のメッセージを表示する吹き出し
+ * @param {string} text 表示するテキスト
+ * @param {number} duration 表示時間（ミリ秒）デフォルトは5000ms
+ */
+export function showFunyaBubble(text, duration = 5000) {
+    // 既存のタイマーをクリア
+    if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+    }
+
+    if (!bubbleElement) {
+        bubbleElement = createBubbleElement();
+        textElement = document.getElementById('funyaText');
+    }
+
+    // テキストを設定
+    if (text) {
+        textElement.innerHTML = `<span class="funya-icon">🐾</span>${text}`;
+    } else {
+        textElement.innerHTML = `<span class="funya-icon">🐾</span>${getRandomMessage()}`;
+    }
+
+    // 吹き出しを表示
+    bubbleElement.classList.remove('hide');
+    bubbleElement.classList.add('show');
+
+    // 立ち絵の位置に合わせて吹き出しの位置を調整
+    updateFunyaBubblePosition();
+
+    logDebug(`ふにゃ吹き出しを表示: ${text || 'ランダムメッセージ'}`);
+
+    // 指定時間後に自動的に非表示
+    timeout = setTimeout(() => {
+        hideFunyaBubble();
+    }, duration);
+
+    return bubbleElement;
+}
+
+/**
+ * 吹き出しを非表示にする
+ */
+export function hideFunyaBubble() {
+    if (bubbleElement) {
+        bubbleElement.classList.remove('show');
+        bubbleElement.classList.add('hide');
+        logDebug('ふにゃ吹き出しを非表示');
+    }
+
+    if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+    }
+}
+
+/**
  * ステータス確認と吹き出し制御
  */
 async function checkFunyaStatus() {
@@ -168,7 +226,7 @@ export function startFunyaWatchingMode() {
 function setupPositionObserver() {
     // ResizeObserverを追加し、画面サイズ変更時に吹き出しの位置を調整
     const resizeObserver = new ResizeObserver(() => {
-        if (isWatching) {
+        if (isWatching || document.getElementById('funyaBubble')?.classList.contains('show')) {
             updateFunyaBubblePosition();
         }
     });
@@ -179,7 +237,7 @@ function setupPositionObserver() {
         mutations.forEach((mutation) => {
             if (mutation.type === 'attributes' &&
                 (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
-                if (isWatching) {
+                if (isWatching || document.getElementById('funyaBubble')?.classList.contains('show')) {
                     updateFunyaBubblePosition();
                 }
             }
@@ -215,10 +273,4 @@ export function stopFunyaWatchingMode() {
 document.addEventListener('DOMContentLoaded', () => {
     logDebug('ふにゃ見守りモードを自動起動');
     startFunyaWatchingMode();
-});
-
-// モジュールのエクスポート
-export default {
-    startFunyaWatchingMode,
-    stopFunyaWatchingMode
-}; 
+}); 

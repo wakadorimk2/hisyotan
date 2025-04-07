@@ -21,7 +21,7 @@ import {
 } from '@emotion/expressionManager.js';
 import { playPresetSound } from '@emotion/audioReactor.js';
 import { speakText, stopCurrentPlayback } from '@voice/speechVoice.js';
-import { showBubble, hideBubble, setText } from '@ui/helpers/speechController.js';
+import { showBubble, hideBubble, setText } from '@ui/helpers/speechBridge.js';
 
 /**
  * エラーメッセージを表示する (showErrorの代替関数)

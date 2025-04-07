@@ -7,7 +7,7 @@
 import { observeSpeechTextAutoRecovery } from '../ui/helpers/speechObserver.js';
 import { createUI, initUIElements } from '../ui/helpers/uiBuilder.js';
 import { setupEventListeners } from '../ui/handlers/uiEventHandlers.js';
-import { showHordeModeSettings, showBubble, setText } from '../ui/helpers/speechController.js';
+import { showHordeModeSettings, showBubble, setText } from '../ui/helpers/speechBridge.js';
 import { showAssistantImage } from '../ui/helpers/assistantImage.js';
 import { cleanupDuplicateElements, verifyAndFixUIStructure } from '../ui/helpers/uiVerifier.js';
 
@@ -53,6 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 重複要素のクリーンアップを最初に実行
   cleanupDuplicateElements();
+
+  // 旧吹き出しUI要素（ゾンビBubble）を削除
+  const zombieBubble = document.getElementById('speechBubble');
+  if (zombieBubble) {
+    console.warn('💀 旧吹き出しを除霊します');
+    zombieBubble.remove();
+  }
 
   // DOM構造やCSSをチェックし、問題があれば修正
   setTimeout(() => {
