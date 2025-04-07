@@ -6,6 +6,7 @@
 @import './components/_assistant.css';
 @import './components/_speech-bubble.css';
 @import './components/_paw-button.css';
+@import './components/_funya-bubble.css';
 
 /* アニメーションのインポート */
 @import './animations/_keyframes.css';

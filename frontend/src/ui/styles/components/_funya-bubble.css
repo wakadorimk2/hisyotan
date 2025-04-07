@@ -1,0 +1,115 @@
+/* 
+ * ふにゃ吹き出しのスタイル
+ * 画面の左下に表示するふわふわとした吹き出し
+ */
+
+.funya-bubble {
+    position: fixed;
+    left: 20px;
+    bottom: 30px;
+    width: auto;
+    min-width: 200px;
+    max-width: 300px;
+    background: rgba(255, 245, 252, 0.95);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: 18px;
+    padding: 14px 18px;
+    font-size: 1.05rem;
+    color: #4e3b2b;
+    box-shadow: 0 4px 15px rgba(210, 180, 222, 0.25);
+    border: 1.5px solid rgba(255, 200, 220, 0.7);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    height: auto;
+}
+
+/* 吹き出しの表示状態 */
+.funya-bubble.show {
+    opacity: 1;
+    transform: translateY(0);
+    animation: funyaBubblePop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* 吹き出しの非表示状態 */
+.funya-bubble.hide {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+/* 吹き出しの矢印（左下向き） */
+.funya-bubble:after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 30px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(255, 245, 252, 0.95);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-left: 1.5px solid rgba(255, 200, 220, 0.7);
+    border-bottom: 1.5px solid rgba(255, 200, 220, 0.7);
+    transform: rotate(-45deg);
+    z-index: -1;
+}
+
+/* 吹き出しテキスト */
+.funya-text {
+    font-size: 1.05rem;
+    color: #4e3b2b;
+    line-height: 1.6;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    display: block;
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+    visibility: visible;
+    opacity: 1;
+    margin: 0;
+    text-align: left;
+    position: relative;
+    z-index: 2;
+}
+
+/* ふにゃアイコン */
+.funya-icon {
+    display: inline-block;
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+/* アニメーション */
+@keyframes funyaBubblePop {
+    0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+
+    70% {
+        opacity: 1;
+        transform: translateY(-5px) scale(1.03);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 小さい画面用の調整 */
+@media screen and (max-height: 600px) {
+    .funya-bubble {
+        bottom: 10px;
+        left: 10px;
+        padding: 10px 14px;
+        font-size: 0.95rem;
+    }
+}

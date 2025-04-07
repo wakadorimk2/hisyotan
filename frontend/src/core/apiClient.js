@@ -67,8 +67,25 @@ export async function getSettings() {
   return getAllSettings();
 }
 
+/**
+ * ふにゃの見守り状態を取得するAPIを呼び出す
+ * @returns {Promise<Object>} - レスポンスデータ（watching: boolean を含む）
+ */
+export async function getFunyaStatus() {
+  try {
+    console.log('🐈️ ふにゃ状態取得API呼び出し');
+    const response = await apiClient.get('/api/funya/status');
+    console.log('✅ ふにゃ状態取得API成功:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ ふにゃ状態取得APIエラー:', error);
+    throw error;
+  }
+}
+
 export default {
   updateSetting,
   getAllSettings,
-  getSettings
+  getSettings,
+  getFunyaStatus
 }; 

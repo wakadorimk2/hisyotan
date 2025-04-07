@@ -36,6 +36,9 @@ const __dirname = path.dirname(__filename);
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const isDevCSP = process.env.ELECTRON_CSP_DEV === 'true';
 
+// バックエンド初期化状態フラグ
+let isBackendInitialized = false;
+
 // セキュリティポリシーの設定
 const setContentSecurityPolicy = () => {
   // 開発モードと本番モードでCSPを分ける
