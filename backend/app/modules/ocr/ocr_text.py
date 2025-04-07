@@ -1,6 +1,7 @@
 import os
 import random
-from typing import List, Optional
+import re
+from typing import List, Optional, Set
 
 import pytesseract
 from PIL import Image
@@ -23,6 +24,58 @@ DEFAULT_EXCLUDE_KEYWORDS = [
     ".json",
     "https",
 ]
+
+
+def filter_ocr_lines(lines: List[str]) -> List[str]:
+    """
+    OCR結果の行リストをフィルタリングします。
+
+    フィルタ条件:
+    - 各行を strip() で前後トリム
+    - 3文字未満、または50文字超の行は除外
+    - 英数字（a-zA-Z0-9）が1文字も含まれない行は除外
+    - 記号や記号類（!@#$%^&*()など）だけで構成されている行は除外
+    - すべての行を小文字に変換し、重複行は除外
+
+    Args:
+        lines: フィルタリングする行のリスト
+
+    Returns:
+        フィルタリングされた行のリスト
+    """
+    if not lines:
+        return []
+
+    filtered: List[str] = []
+    seen: Set[str] = set()
+
+    for line in lines:
+        # 前後の空白を削除
+        trimmed = line.strip()
+
+        # 長さチェック（3文字未満または50文字超は除外）
+        if len(trimmed) < 3 or len(trimmed) > 50:
+            continue
+
+        # 英数字が含まれていないか確認
+        if not re.search(r"[a-zA-Z0-9]", trimmed):
+            continue
+
+        # 記号だけで構成されているか確認
+        if re.match(r'^[!@#$%^&*()\-_=+\[\]{}|\\;:\'",.<>/?`~]*$', trimmed):
+            continue
+
+        # 小文字に変換
+        lower_line = trimmed.lower()
+
+        # 重複チェック
+        if lower_line in seen:
+            continue
+
+        seen.add(lower_line)
+        filtered.append(lower_line)
+
+    return filtered
 
 
 def filter_ocr_results(
@@ -143,7 +196,29 @@ def run_random_ocr(
             exclude_keywords=exclude_keywords,
         )
 
-        return filtered_results
+        # 各OCR結果から行を抽出してフィルタリング
+        enhanced_results: List[str] = []
+        for result in filtered_results:
+            if result.startswith("エラー:") or ":" not in result:
+                enhanced_results.append(result)
+                continue
+
+            # ファイル名とOCR結果を分離
+            filename, content = result.split(":", 1)
+            if not content.strip():
+                enhanced_results.append(result)
+                continue
+
+            # OCR結果の各行をフィルタリング
+            filtered_lines = filter_ocr_lines(content.strip().splitlines())
+            if filtered_lines:
+                enhanced_results.append(f"{filename}:\n" + "\n".join(filtered_lines))
+            else:
+                enhanced_results.append(
+                    f"{filename}: フィルター後にテキストが残りませんでした"
+                )
+
+        return enhanced_results
     except Exception as e:
         return [f"エラー: {str(e)}"]
 
@@ -191,11 +266,14 @@ def ocr_from_screenshot(
         # 空の行を除去
         non_empty_lines = [line for line in lines if line.strip()]
 
-        # フィルタリングして結果を返す
-        return filter_ocr_results(
+        # キーワードベースのフィルタリング
+        keyword_filtered = filter_ocr_results(
             non_empty_lines,
             include_keywords=include_keywords,
             exclude_keywords=exclude_keywords,
         )
+
+        # 追加のフィルタリングルールを適用
+        return filter_ocr_lines(keyword_filtered)
     except Exception as e:
         return [f"エラー: スクリーンショットOCR処理に失敗しました - {str(e)}"]
