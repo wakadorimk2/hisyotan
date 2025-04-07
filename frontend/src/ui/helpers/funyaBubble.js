@@ -9,7 +9,7 @@ import { updateBubblePosition } from './uiBuilder.js';
 import { speak } from '../../emotion/speechManager.js';
 
 // 設定値
-const POLLING_INTERVAL = 5000; // 5秒ごとにステータスをチェック
+const POLLING_INTERVAL = 30000; // 5秒ごとにステータスをチェック
 const MESSAGES = [
     '……ふにゃ？ だいじょうぶ？',
     '集中してるのかな？',
