@@ -6,6 +6,7 @@
 
 import asyncio
 import logging
+import os
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
@@ -75,6 +76,17 @@ async def start_zombie_monitoring() -> None:
     ゾンビ検出の監視を開始
     """
     try:
+        # 環境変数でゾンビ検出機能の有効/無効を制御
+        is_zombie_detection_enabled = os.environ.get(
+            "ZOMBIE_DETECTION_ENABLED", "false"
+        ).lower() in ["true", "1", "yes"]
+
+        if not is_zombie_detection_enabled:
+            logger.info(
+                "ゾンビ検出機能は環境変数により無効化されています。(ZOMBIE_DETECTION_ENABLED=false)"
+            )
+            return
+
         # 開発中の機能のため、モジュールが存在しない場合はスキップ
         try:
             from ..modules.voice.voicevox_starter import is_voicevox_ready

@@ -5,6 +5,7 @@ VOICEVOX連携の音声合成および再生に関するエンドポイント
 """
 
 import logging
+import os
 import traceback
 
 import requests
@@ -240,6 +241,24 @@ async def react_to_zombie_endpoint(
         distance: 最も近いゾンビとの距離（メートル）
         force: クールダウンを無視して強制的に再生するか
     """
+    # 環境変数で機能が無効化されている場合
+    is_zombie_detection_enabled = os.environ.get(
+        "ZOMBIE_DETECTION_ENABLED", "false"
+    ).lower() in ["true", "1", "yes"]
+    if not is_zombie_detection_enabled:
+        logger.info(
+            "ゾンビ検出機能は無効化されています。ゾンビに対する反応は処理されません。"
+        )
+        return {
+            "status": "disabled",
+            "message": "ゾンビ検出機能は現在無効化されています。",
+            "reaction": {
+                "text": "",
+                "emotion": "normal",
+                "speaker_id": settings.VOICEVOX_SPEAKER,
+            },
+        }
+
     try:
         logger.info(
             f"ゾンビ検出リクエスト: count={count}, "

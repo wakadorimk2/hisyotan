@@ -5,6 +5,7 @@ WebSocket接続とリアルタイム通信を管理するエンドポイント
 """
 
 import logging
+import os
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
@@ -17,8 +18,18 @@ logger = logging.getLogger(__name__)
 # モック関数を実際のゾンビ監視状態を返す関数に変更
 def is_monitoring_started() -> bool:
     """ゾンビ監視が開始されているかどうかを返す"""
+    # 環境変数で機能が無効化されている場合
+    is_zombie_detection_enabled = os.environ.get(
+        "ZOMBIE_DETECTION_ENABLED", "false"
+    ).lower() in ["true", "1", "yes"]
+    if not is_zombie_detection_enabled:
+        logger.debug(
+            "ゾンビ検出機能は無効化されています。監視状態は常にfalseを返します。"
+        )
+        return False
+
     try:
-        from ..zombie.service import get_zombie_service
+        from ..modules.zombie.service import get_zombie_service
 
         # ゾンビサービスからモニタリング状態を取得
         service = get_zombie_service()
@@ -92,8 +103,28 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     )
                 elif command == "start_monitoring":
                     # 🆕 監視開始要求
+                    # 環境変数で機能が無効化されている場合
+                    is_zombie_detection_enabled = os.environ.get(
+                        "ZOMBIE_DETECTION_ENABLED", "false"
+                    ).lower() in ["true", "1", "yes"]
+                    if not is_zombie_detection_enabled:
+                        logger.info(
+                            "ゾンビ検出機能は無効化されています。監視開始は処理されません。"
+                        )
+                        # 結果を通知
+                        await manager.send_personal_message(
+                            {
+                                "type": "command_result",
+                                "command": "start_monitoring",
+                                "success": False,
+                                "message": "ゾンビ検出機能は現在無効化されています。",
+                            },
+                            websocket,
+                        )
+                        continue
+
                     try:
-                        from ..zombie.service import get_zombie_service
+                        from ..modules.zombie.service import get_zombie_service
 
                         # ゾンビ監視の開始
                         service = get_zombie_service()
@@ -165,8 +196,28 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                         )
                 elif command == "stop_monitoring":
                     # 🆕 監視停止要求
+                    # 環境変数で機能が無効化されている場合
+                    is_zombie_detection_enabled = os.environ.get(
+                        "ZOMBIE_DETECTION_ENABLED", "false"
+                    ).lower() in ["true", "1", "yes"]
+                    if not is_zombie_detection_enabled:
+                        logger.info(
+                            "ゾンビ検出機能は無効化されています。監視停止は処理されません。"
+                        )
+                        # 結果を通知
+                        await manager.send_personal_message(
+                            {
+                                "type": "command_result",
+                                "command": "stop_monitoring",
+                                "success": False,
+                                "message": "ゾンビ検出機能は現在無効化されています。",
+                            },
+                            websocket,
+                        )
+                        continue
+
                     try:
-                        from ..zombie.service import get_zombie_service
+                        from ..modules.zombie.service import get_zombie_service
 
                         # ゾンビ監視の停止
                         service = get_zombie_service()

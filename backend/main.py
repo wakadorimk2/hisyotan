@@ -43,6 +43,8 @@ logger.info("🚀 秘書たんバックエンドサーバーを初期化して�
 
 # 環境変数の設定（必要に応じて）
 os.environ.setdefault("DEBUG_MODE", "false")
+# ゾンビ検出機能をデフォルトでオフに設定
+os.environ.setdefault("ZOMBIE_DETECTION_ENABLED", "false")
 # UTF-8エンコーディングを強制
 os.environ["PYTHONIOENCODING"] = "utf-8"
 

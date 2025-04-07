@@ -5,6 +5,7 @@
 """
 
 import logging
+import os
 
 from fastapi import APIRouter, Query
 
@@ -77,7 +78,7 @@ async def zombie_alert(
     count: int = Query(..., description="検出されたゾンビの数"),
     play_audio: bool = Query(True, description="音声を再生するかどうか"),
     force: bool = Query(False, description="クールダウンを無視して強制的に再生するか"),
-) -> dict[str, str]:
+) -> dict:
     """
     ゾンビアラートを手動でトリガーするエンドポイント
 
@@ -86,6 +87,19 @@ async def zombie_alert(
         play_audio: 音声を再生するかどうか
         force: クールダウンを無視して強制的に再生するか
     """
+    # 環境変数で機能が無効化されている場合
+    is_zombie_detection_enabled = os.environ.get(
+        "ZOMBIE_DETECTION_ENABLED", "false"
+    ).lower() in ["true", "1", "yes"]
+    if not is_zombie_detection_enabled:
+        logger.info(
+            "ゾンビ検出機能は無効化されています。ゾンビアラートは処理されません。"
+        )
+        return {
+            "status": "disabled",
+            "message": "ゾンビ検出機能は現在無効化されています。",
+        }
+
     log_zombie_detection(count)
 
     # ゾンビ数に応じて処理を分岐
