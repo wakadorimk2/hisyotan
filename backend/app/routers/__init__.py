@@ -2,6 +2,7 @@
 ルーターモジュールパッケージ
 """
 
+from .funya import router as funya_router
 from .health import router as health_router
 from .ocr_router import router as ocr_router
 from .settings import router as settings_router
@@ -14,4 +15,5 @@ __all__ = [
     "websocket_router",
     "settings_router",
     "ocr_router",
+    "funya_router",
 ]

@@ -13,6 +13,8 @@ import sys
 import time
 from typing import Any, Optional
 
+# サービス層のインポート
+from ...services.funya_state import get_funya_state_service
 from .funya_watcher import FunyaWatcher
 
 
@@ -58,7 +60,14 @@ if __name__ == "__main__":
             on_enter_funya_mode=on_enter_funya_mode,
             on_exit_funya_mode=on_exit_funya_mode,
         )
+
+        # ふにゃ状態サービスにインスタンスを設定
+        funya_service = get_funya_state_service()
+        funya_service.set_watcher(watcher)
+
+        # 見守りを開始
         watcher.start()
+        print("🔍 APIからステータス確認: http://localhost:8000/api/funya/status")
 
         # メインスレッドはキープ
         while True:
