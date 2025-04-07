@@ -4,12 +4,13 @@ OCRルーター
 画像からテキストを抽出するOCR機能のAPIエンドポイントを提供
 """
 
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Union
 
 from fastapi import APIRouter, HTTPException, Query
 
 from ..modules.ocr.ocr_text import (
-    ocr_from_screenshot,  # 追加する関数がある前提で！
+    ocr_from_screenshot,
+    ocr_regions_from_screenshot,  # 新しい関数をインポート
     run_random_ocr,
 )
 
@@ -85,4 +86,42 @@ async def screenshot_ocr() -> Dict[str, Union[str, List[str]]]:
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"OCR処理中にエラーが発生しました: {str(e)}"
+        )
+
+
+@router.get("/regions_screenshot")
+async def screenshot_regions_ocr() -> Dict[str, Any]:
+    """
+    現在の画面をキャプチャして、3つの領域（status、inventory、quest）に分割してOCR処理を実行します。
+    それぞれの領域のテキスト認識結果を返します。
+
+    Returns:
+        dict: 各領域のOCR結果を含むレスポンス
+    """
+    try:
+        ocr_results = ocr_regions_from_screenshot()
+
+        # エラーチェック
+        if "error" in ocr_results:
+            return {"status": "error", "message": ocr_results["error"], "results": {}}
+
+        # 3領域のいずれにもテキストが検出されなかったか確認
+        total_texts = sum(len(texts) for texts in ocr_results.values())
+        if total_texts == 0:
+            return {
+                "status": "warning",
+                "message": "いずれの領域でもテキストが検出されませんでした",
+                "results": ocr_results,
+            }
+
+        # 正常な処理結果
+        return {
+            "status": "success",
+            "message": f"3つの領域から合計{total_texts}件のテキストを抽出しました",
+            "results": ocr_results,
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"領域別OCR処理中にエラーが発生しました: {str(e)}"
         )
