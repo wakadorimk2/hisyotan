@@ -1,0 +1,299 @@
+{
+    "metadata": {
+        "version": "1.0.0",
+        "author": "わかどり",
+        "description": "秘書たんキャラクター差分辞書",
+        "lastUpdated": "2023-04-08"
+    },
+    "modes": {
+        "IMAGE": {
+            "basePath": "/assets/images/",
+            "filenamePattern": "secretary_${expression}.png",
+            "fallbackImage": "secretary_normal.png"
+        },
+        "LIVE2D": {
+            "basePath": "/assets/live2d/",
+            "modelPath": "secretary/secretary.model3.json",
+            "fallbackExpression": "NORMAL"
+        },
+        "VRM": {
+            "basePath": "/assets/vrm/",
+            "modelPath": "secretary/secretary.vrm",
+            "fallbackExpression": "NORMAL"
+        }
+    },
+    "expressions": {
+        "NORMAL": {
+            "image": {
+                "filename": "secretary_normal.png",
+                "description": "通常表情"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamMouthForm": 0,
+                    "ParamEyeLOpen": 1,
+                    "ParamEyeROpen": 1,
+                    "ParamBrowLY": 0,
+                    "ParamBrowRY": 0
+                }
+            },
+            "vrm": {
+                "blendShapes": {
+                    "happy": 0,
+                    "sad": 0,
+                    "surprised": 0,
+                    "angry": 0
+                }
+            }
+        },
+        "HAPPY": {
+            "image": {
+                "filename": "secretary_happy.png",
+                "description": "嬉しい表情"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamMouthForm": 1,
+                    "ParamEyeLOpen": 0.7,
+                    "ParamEyeROpen": 0.7,
+                    "ParamBrowLY": 0.2,
+                    "ParamBrowRY": 0.2
+                }
+            },
+            "vrm": {
+                "blendShapes": {
+                    "happy": 1,
+                    "sad": 0,
+                    "surprised": 0,
+                    "angry": 0
+                }
+            }
+        },
+        "SURPRISED": {
+            "image": {
+                "filename": "secretary_surprised.png",
+                "description": "驚いた表情"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamMouthForm": -1,
+                    "ParamEyeLOpen": 1.3,
+                    "ParamEyeROpen": 1.3,
+                    "ParamBrowLY": 0.8,
+                    "ParamBrowRY": 0.8
+                }
+            },
+            "vrm": {
+                "blendShapes": {
+                    "happy": 0,
+                    "sad": 0,
+                    "surprised": 1,
+                    "angry": 0
+                }
+            }
+        },
+        "SERIOUS": {
+            "image": {
+                "filename": "secretary_serious.png",
+                "description": "真面目な表情"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamMouthForm": -0.5,
+                    "ParamEyeLOpen": 0.9,
+                    "ParamEyeROpen": 0.9,
+                    "ParamBrowLY": -0.2,
+                    "ParamBrowRY": -0.2
+                }
+            },
+            "vrm": {
+                "blendShapes": {
+                    "happy": 0,
+                    "sad": 0.2,
+                    "surprised": 0,
+                    "angry": 0.3
+                }
+            }
+        },
+        "SLEEPY": {
+            "image": {
+                "filename": "secretary_sleepy.png",
+                "description": "眠そうな表情"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamMouthForm": 0,
+                    "ParamEyeLOpen": 0.3,
+                    "ParamEyeROpen": 0.3,
+                    "ParamBrowLY": 0,
+                    "ParamBrowRY": 0
+                }
+            },
+            "vrm": {
+                "blendShapes": {
+                    "happy": 0,
+                    "sad": 0.3,
+                    "surprised": 0,
+                    "angry": 0
+                }
+            }
+        },
+        "RELIEVED": {
+            "image": {
+                "filename": "secretary_relieved.png",
+                "description": "安心した表情"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamMouthForm": 0.3,
+                    "ParamEyeLOpen": 0.6,
+                    "ParamEyeROpen": 0.6,
+                    "ParamBrowLY": 0.1,
+                    "ParamBrowRY": 0.1
+                }
+            },
+            "vrm": {
+                "blendShapes": {
+                    "happy": 0.5,
+                    "sad": 0,
+                    "surprised": 0,
+                    "angry": 0
+                }
+            }
+        },
+        "SMILE": {
+            "image": {
+                "filename": "secretary_smile.png",
+                "description": "微笑んだ表情"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamMouthForm": 0.7,
+                    "ParamEyeLOpen": 0.8,
+                    "ParamEyeROpen": 0.8,
+                    "ParamBrowLY": 0.1,
+                    "ParamBrowRY": 0.1
+                }
+            },
+            "vrm": {
+                "blendShapes": {
+                    "happy": 0.8,
+                    "sad": 0,
+                    "surprised": 0,
+                    "angry": 0
+                }
+            }
+        }
+    },
+    "poses": {
+        "NEUTRAL": {
+            "image": {
+                "pathModifier": "",
+                "description": "通常のポーズ（修飾子なし）"
+            },
+            "live2d": {
+                "motion": "idle",
+                "parameters": {}
+            },
+            "vrm": {
+                "pose": "T-pose",
+                "parameters": {}
+            }
+        },
+        "ARMSCROSSED": {
+            "image": {
+                "pathModifier": "_arms",
+                "description": "腕を組んだポーズ"
+            },
+            "live2d": {
+                "motion": "arms_crossed",
+                "parameters": {}
+            },
+            "vrm": {
+                "pose": "arms_crossed",
+                "parameters": {}
+            }
+        },
+        "SEIZA": {
+            "image": {
+                "pathModifier": "_seiza",
+                "description": "正座のポーズ"
+            },
+            "live2d": {
+                "motion": "seiza",
+                "parameters": {}
+            },
+            "vrm": {
+                "pose": "seiza",
+                "parameters": {}
+            }
+        }
+    },
+    "extras": {
+        "SFX_ZZZ": {
+            "image": {
+                "overlay": "sfx_zzz.png",
+                "position": {
+                    "x": 10,
+                    "y": -20
+                },
+                "description": "睡眠エフェクト"
+            },
+            "live2d": {
+                "overlay": "effects/zzz.json",
+                "parameters": {}
+            }
+        },
+        "BLUSH": {
+            "image": {
+                "overlay": "sfx_blush.png",
+                "position": {
+                    "x": 0,
+                    "y": 0
+                },
+                "description": "頬を赤らめるエフェクト"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamCheek": 1
+                }
+            }
+        },
+        "SWEAT": {
+            "image": {
+                "overlay": "sfx_sweat.png",
+                "position": {
+                    "x": 15,
+                    "y": 0
+                },
+                "description": "汗エフェクト"
+            },
+            "live2d": {
+                "overlay": "effects/sweat.json",
+                "parameters": {}
+            }
+        }
+    },
+    "combinations": {
+        "SLEEPY_WITH_ZZZ": {
+            "tags": [
+                "SLEEPY",
+                "SFX_ZZZ"
+            ],
+            "image": {
+                "filename": "secretary_sleepy_sfx_zzz.png",
+                "description": "眠そうな表情＋睡眠エフェクト"
+            }
+        },
+        "HAPPY_SEIZA": {
+            "tags": [
+                "HAPPY",
+                "SEIZA"
+            ],
+            "image": {
+                "filename": "secretary_happy_seiza.png",
+                "description": "正座で嬉しそうな表情"
+            }
+        }
+    }
+}
