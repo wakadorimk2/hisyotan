@@ -87,6 +87,7 @@ def register_routers(app: FastAPI) -> None:
         # 各種ルーターのインポート
         from ..routers import (
             health_router,
+            ocr_router,
             settings_router,
             voice_router,
             websocket_router,
@@ -94,6 +95,7 @@ def register_routers(app: FastAPI) -> None:
 
         # ルーターの登録
         app.include_router(health_router)
+        app.include_router(ocr_router)
         app.include_router(voice_router)
         app.include_router(websocket_router)
         app.include_router(settings_router)
