@@ -5,6 +5,7 @@
 
 import { getFunyaStatus } from '../../core/apiClient.js';
 import { logDebug } from '../../core/logger.js';
+import { updateBubblePosition } from './uiBuilder.js';
 
 // 設定値
 const POLLING_INTERVAL = 5000; // 5秒ごとにステータスをチェック
@@ -65,6 +66,31 @@ function createBubbleElement() {
 }
 
 /**
+ * ふにゃ吹き出しの位置を立ち絵に合わせて更新する
+ */
+function updateFunyaBubblePosition() {
+    const assistantImage = document.getElementById('assistantImage');
+    const funyaBubble = document.getElementById('funyaBubble');
+
+    if (!assistantImage || !funyaBubble) return;
+
+    // 立ち絵の位置情報を取得
+    const imageRect = assistantImage.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+
+    // 画面が小さい場合は上部に配置、それ以外は立ち絵の頭上に配置
+    if (windowHeight < 600) {
+        funyaBubble.style.top = '10px';
+        funyaBubble.style.bottom = 'auto';
+        funyaBubble.style.right = '10px';
+    } else {
+        funyaBubble.style.bottom = `${window.innerHeight - imageRect.top + 20}px`;
+        funyaBubble.style.top = 'auto';
+        funyaBubble.style.right = `${window.innerWidth - imageRect.right + 50}px`;
+    }
+}
+
+/**
  * 吹き出しの表示状態を更新
  * @param {boolean} watching 見守り中かどうか
  */
@@ -86,6 +112,9 @@ function updateBubbleVisibility(watching) {
             // クラスを変更して表示
             bubbleElement.classList.remove('hide');
             bubbleElement.classList.add('show');
+
+            // 立ち絵の位置に合わせて吹き出しの位置を調整
+            updateFunyaBubblePosition();
 
             logDebug('ふにゃ吹き出しを表示: ' + message);
         } else {
@@ -128,6 +157,42 @@ export function startFunyaWatchingMode() {
 
     // ポーリングを開始
     pollingInterval = setInterval(checkFunyaStatus, POLLING_INTERVAL);
+
+    // 立ち絵の位置変更を監視
+    setupPositionObserver();
+}
+
+/**
+ * 立ち絵の位置変更を監視する設定
+ */
+function setupPositionObserver() {
+    // ResizeObserverを追加し、画面サイズ変更時に吹き出しの位置を調整
+    const resizeObserver = new ResizeObserver(() => {
+        if (isWatching) {
+            updateFunyaBubblePosition();
+        }
+    });
+    resizeObserver.observe(document.body);
+
+    // MutationObserverを使用して立ち絵の位置変更を監視
+    const assistantObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' &&
+                (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+                if (isWatching) {
+                    updateFunyaBubblePosition();
+                }
+            }
+        });
+    });
+
+    // 立ち絵の監視を開始
+    setTimeout(() => {
+        const imgElement = document.getElementById('assistantImage');
+        if (imgElement) {
+            assistantObserver.observe(imgElement, { attributes: true });
+        }
+    }, 100);
 }
 
 /**

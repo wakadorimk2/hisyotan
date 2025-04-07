@@ -5,8 +5,7 @@
 """
 
 import logging
-from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional, Union
 
 from ..modules.funya_watcher import FunyaWatcher
 
@@ -51,12 +50,12 @@ class FunyaStateService:
         self._watcher = watcher
         logger.info("✅ ふにゃ見守りモードインスタンスを設定しました")
 
-    def get_status(self) -> dict:
+    def get_status(self) -> Dict[str, Union[bool, float, int]]:
         """
         ふにゃ見守りモードの状態を取得
 
         Returns:
-            dict: 状態情報を含む辞書
+            Dict[str, Union[bool, float, int]]: 状態情報を含む辞書
         """
         if not self._watcher:
             return {
@@ -65,14 +64,13 @@ class FunyaStateService:
                 "last_active_seconds": 0.0,
             }
 
-        now = datetime.now()
-        last_active_seconds = (now - self._watcher.last_activity_time).total_seconds()
+        # FunyaWatcherのget_statusメソッドを使用
+        status = self._watcher.get_status()
 
-        return {
-            "watching": self._watcher.is_in_funya_mode,
-            "initialized": self._watcher.is_watching,
-            "last_active_seconds": last_active_seconds,
-        }
+        # 初期化状態を追加
+        status["initialized"] = self._watcher.is_watching
+
+        return status
 
 
 # グローバルなアクセス用の関数

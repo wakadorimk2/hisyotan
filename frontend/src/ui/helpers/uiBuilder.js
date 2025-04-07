@@ -54,12 +54,11 @@ export function createUI() {
 
   // 画面サイズを取得して適切な位置に配置
   const windowHeight = window.innerHeight;
-  // const windowWidth = window.innerWidth;
 
-  // 小さい画面の場合は上部に、それ以外は立ち絵の上に配置
+  // 立ち絵に合わせた吹き出しのポジション設定
   const bubblePosition = windowHeight < 600 ?
     `top: 10px; bottom: auto;` :
-    `bottom: 300px; top: auto;`;
+    `bottom: 350px; top: auto; right: 120px; left: auto;`;
 
   speechBubble.style.cssText = `
       display: flex !important; 
@@ -68,9 +67,6 @@ export function createUI() {
       position: fixed !important;
       z-index: 2147483647 !important;
       ${bubblePosition}
-      right: 10px !important;
-      left: auto !important;
-      width: 250px !important;
       max-width: 300px !important;
       background-color: rgba(255, 255, 255, 0.9) !important;
     `;
@@ -205,7 +201,56 @@ export function createUI() {
     setupEventListeners();
   }, 50);
 
+  // ドキュメントボディにResizeObserverを追加し、画面サイズ変更時に吹き出しの位置を調整
+  const resizeObserver = new ResizeObserver(() => {
+    updateBubblePosition();
+  });
+  resizeObserver.observe(document.body);
+
+  // MutationObserverを使用して立ち絵の位置変更を監視
+  const assistantObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'attributes' &&
+        (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+        updateBubblePosition();
+      }
+    });
+  });
+
+  // 立ち絵の監視を開始（DOMツリーに追加された後）
+  setTimeout(() => {
+    const imgElement = document.getElementById('assistantImage');
+    if (imgElement) {
+      assistantObserver.observe(imgElement, { attributes: true });
+    }
+  }, 100);
+
   console.log('✨ UI要素の作成が完了しました');
+}
+
+/**
+ * 吹き出しの位置を立ち絵に合わせて更新する
+ */
+export function updateBubblePosition() {
+  const assistantImage = document.getElementById('assistantImage');
+  const speechBubble = document.getElementById('speechBubble');
+
+  if (!assistantImage || !speechBubble) return;
+
+  // 立ち絵の位置情報を取得
+  const imageRect = assistantImage.getBoundingClientRect();
+  const windowHeight = window.innerHeight;
+
+  // 画面が小さい場合は上部に配置、それ以外は立ち絵の頭上に配置
+  if (windowHeight < 600) {
+    speechBubble.style.top = '10px';
+    speechBubble.style.bottom = 'auto';
+    speechBubble.style.right = '10px';
+  } else {
+    speechBubble.style.bottom = `${window.innerHeight - imageRect.top + 20}px`;
+    speechBubble.style.top = 'auto';
+    speechBubble.style.right = `${window.innerWidth - imageRect.right + 50}px`;
+  }
 }
 
 /**

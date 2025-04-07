@@ -27,6 +27,7 @@ import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 import fetch from 'node-fetch';
 import iconv from 'iconv-lite';
+import fs from 'fs';
 
 // ESモジュールでの__dirnameの代替
 const __filename = fileURLToPath(import.meta.url);
@@ -35,6 +36,54 @@ const __dirname = path.dirname(__filename);
 // 開発モードかどうかを判定
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const isDevCSP = process.env.ELECTRON_CSP_DEV === 'true';
+
+// .envファイルから環境変数を読み込む
+function loadEnvVars() {
+  try {
+    const envPath = app.isPackaged
+      ? path.join(process.resourcesPath, '.env')
+      : path.join(process.cwd(), '.env');
+
+    console.log(`🔍 環境変数ファイルを探しています: ${envPath}`);
+
+    if (fs.existsSync(envPath)) {
+      console.log('✅ .envファイルが見つかりました');
+      const envContent = fs.readFileSync(envPath, 'utf8');
+      const envVars = {};
+
+      // .envファイルの各行をパース
+      envContent.split('\n').forEach(line => {
+        // コメントや空行をスキップ
+        if (!line || line.startsWith('#')) return;
+
+        // KEY=VALUE形式の行を解析
+        const match = line.match(/^\s*([^=]+)=(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          const value = match[2].trim().replace(/^['"]|['"]$/g, ''); // 引用符を削除
+          envVars[key] = value;
+          // 環境変数が未設定の場合のみ設定
+          if (process.env[key] === undefined) {
+            process.env[key] = value;
+          }
+        }
+      });
+
+      console.log('✨ 環境変数を読み込みました');
+      return envVars;
+    } else {
+      console.warn('⚠️ .envファイルが見つかりません');
+      return {};
+    }
+  } catch (error) {
+    console.error('❌ 環境変数読み込みエラー:', error);
+    return {};
+  }
+}
+
+// アプリ起動時に環境変数を読み込む
+const envVars = loadEnvVars();
+console.log(`🌸 バックエンドポート設定: ${process.env.PORT || '(デフォルト:8000)'}`);
 
 // バックエンド初期化状態フラグ
 let isBackendInitialized = false;
@@ -94,6 +143,28 @@ function setupDevCSP() {
 // バックエンドサーバーの起動
 async function startBackendServer() {
   try {
+    // ポート環境変数を取得
+    const backendPort = parseInt(process.env.PORT || '8000', 10);
+    console.log(`🔍 バックエンドポートをチェックします: ${backendPort}`);
+
+    // ポートが既に使用されているか確認
+    const isPortInUse = await checkPortInUse(backendPort);
+    if (isPortInUse) {
+      console.log(`✅ ポート ${backendPort} は既に使用中です。バックエンドは既に起動していると判断します。`);
+      isBackendInitialized = true;
+
+      // バックエンドの接続確認
+      const isConnected = await checkBackendConnection(backendPort);
+      if (isConnected) {
+        console.log('🌸 既存のバックエンドサーバーに接続できました');
+        return true;
+      } else {
+        console.warn('⚠️ ポートは使用中ですが、バックエンドに接続できません。別のサービスがポートを使用している可能性があります。');
+        isBackendInitialized = false;
+        return false;
+      }
+    }
+
     // 既存のバックエンドプロセスを確認
     if (backendProcess !== null) {
       console.log('🔄 既存のバックエンドプロセスを終了します');
@@ -124,7 +195,11 @@ async function startBackendServer() {
     backendProcess = spawn(pythonPath, [backendScript], {
       stdio: 'pipe',
       detached: false,
-      windowsHide: true
+      windowsHide: true,
+      env: {
+        ...process.env,  // 既存の環境変数を引き継ぐ
+        PORT: backendPort.toString()  // ポート番号を設定
+      }
     });
 
     // プロセスIDを記録
@@ -155,7 +230,7 @@ async function startBackendServer() {
     console.log('✅ バックエンドサーバー起動待機完了');
 
     // バックエンドの接続確認
-    const isConnected = await checkBackendConnection();
+    const isConnected = await checkBackendConnection(backendPort);
     if (!isConnected) {
       throw new Error('バックエンドサーバーへの接続に失敗しました');
     }
@@ -171,17 +246,56 @@ async function startBackendServer() {
   }
 }
 
-// バックエンド接続確認
-async function checkBackendConnection() {
+// ポートが使用中かどうかを確認する関数
+async function checkPortInUse(port) {
   try {
-    console.log('バックエンド接続確認中...');
+    console.log(`ポート ${port} が使用中かチェックしています...`);
+
+    // サーバーを作成して指定ポートをリッスンしようとする
+    const net = await import('net');
+
+    return new Promise((resolve) => {
+      const server = net.createServer();
+
+      server.once('error', (err) => {
+        // ERREDDRINUSEエラーが発生した場合、ポートは使用中
+        if (err.code === 'EADDRINUSE') {
+          console.log(`ポート ${port} は既に使用中です`);
+          resolve(true);
+        } else {
+          console.error('ポートチェックエラー:', err);
+          resolve(false);
+        }
+      });
+
+      server.once('listening', () => {
+        // サーバーがリッスンできた場合、ポートは利用可能
+        server.close();
+        console.log(`ポート ${port} は利用可能です`);
+        resolve(false);
+      });
+
+      // ポートをチェック（127.0.0.1でのみチェック）
+      server.listen(port, '127.0.0.1');
+    });
+  } catch (error) {
+    console.error('ポートチェック中にエラーが発生しました:', error);
+    return false;
+  }
+}
+
+// バックエンド接続確認
+async function checkBackendConnection(port) {
+  try {
+    const backendPort = port || parseInt(process.env.PORT || '8000', 10);
+    console.log(`バックエンド接続確認中... ポート: ${backendPort}`);
 
     // タイムアウト付きの接続確認
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/', {
+      const response = await fetch(`http://127.0.0.1:${backendPort}/`, {
         signal: controller.signal
       });
 

@@ -4,9 +4,17 @@
 アプリケーション全体で使用される拡張ロギング機能を提供します
 """
 
+import io
 import logging
 import sys
 from typing import Optional
+
+# UTF-8エンコーディングの標準出力・標準エラー出力を設定
+# 既に設定されていない場合のみ設定
+if not hasattr(sys.stdout, "encoding") or sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+if not hasattr(sys.stderr, "encoding") or sys.stderr.encoding.lower() != "utf-8":
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
 
 
 # カラー定義
@@ -75,6 +83,7 @@ def setup_logger(
         logger.handlers.clear()
 
     # 標準出力へのハンドラを作成
+    # sys.stdoutは既にUTF-8エンコーディングが設定されているので、そのまま使用
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(level)
 

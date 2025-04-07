@@ -16,4 +16,5 @@ pyaudio==0.2.13
 pydub==0.25.1
 websockets==11.0.3
 psutil==5.9.6
-pynput==1.7.6 
+pynput==1.7.6
+python-dotenv==1.0.0 

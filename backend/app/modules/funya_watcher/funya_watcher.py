@@ -8,7 +8,7 @@
 import threading
 import time
 from datetime import datetime
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from pynput import keyboard, mouse
 
@@ -161,3 +161,18 @@ class FunyaWatcher:
         self._monitor_thread = None
 
         print("🐾 ふにゃ見守りモードを終了しました…")
+
+    def get_status(self) -> Dict[str, Union[bool, int]]:
+        """
+        ふにゃモードの状態を取得する
+
+        Returns:
+            Dict[str, Union[bool, int]]: ふにゃモードの状態情報を含む辞書
+        """
+        now = datetime.now()
+        inactive_duration = (now - self.last_activity_time).total_seconds()
+
+        return {
+            "watching": self.is_in_funya_mode,
+            "last_active_seconds": int(inactive_duration),
+        }

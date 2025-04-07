@@ -6,7 +6,6 @@
 
 import argparse
 import asyncio
-import io
 import os
 import signal
 import sys
@@ -28,14 +27,20 @@ if str(BACKEND_DIR) not in sys.path:
 
 import psutil
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import Body, FastAPI
 
 from backend.app.core import create_application
 from backend.app.core.logger import setup_logger
 
-# 標準出力・標準エラー出力のエンコーディングを明示的に設定
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+# .env ファイルの読み込み
+env_path = Path(ROOT_DIR) / ".env"
+print(f"Reading .env file from: {env_path} (exists: {env_path.exists()})")
+load_dotenv(env_path)
+
+# 環境変数の値を表示（デバッグ用）
+port_value = os.getenv("PORT", "未設定")
+print(f"読み込まれたPORT環境変数の値: '{port_value}'")
 
 # カスタムロガー設定
 logger = setup_logger(__name__)
@@ -230,9 +235,30 @@ async def main() -> None:
     # コマンドライン引数の解析
     parser = argparse.ArgumentParser(description="秘書たんバックエンドサーバー")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="ホストアドレス")
-    parser.add_argument("--port", type=int, default=8000, help="ポート番号")
+
+    # .env から PORT 環境変数を取得（デフォルト: 8000）
+    try:
+        port_env = os.getenv("PORT")
+        default_port = (
+            int(port_env) if port_env and port_env.strip().isdigit() else 8000
+        )
+        print(f"使用するポート: {default_port} (環境変数: '{port_env}')")
+    except (ValueError, TypeError) as e:
+        print(f"ポート番号の解析エラー: {e}")
+        default_port = 8000
+
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=default_port,
+        help=f"ポート番号 (デフォルト: {default_port}, .env で設定可能)",
+    )
+
     parser.add_argument("--reload", action="store_true", help="ホットリロードを有効化")
     args = parser.parse_args()
+
+    # ポート番号をログに出力
+    logger.info(f"🔌 サーバーは {args.host}:{args.port} で起動します")
 
     # サーバー設定
     config = uvicorn.Config(

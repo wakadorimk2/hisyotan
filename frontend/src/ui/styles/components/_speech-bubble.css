@@ -1,14 +1,17 @@
 /* 吹き出しの基本スタイル */
 .speech-bubble {
   position: fixed;
-  top: 10%;
-  right: 10px;
+  bottom: 350px;
+  /* 立ち絵の頭上に配置するため下からの位置を調整 */
+  right: 120px;
+  /* 右側の位置を調整して立ち絵に合わせる */
   left: auto;
-  bottom: auto;
+  top: auto;
   width: var(--bubble-min-width);
   max-width: var(--bubble-max-width);
   min-height: var(--bubble-min-height);
-  background: rgba(255, 255, 255, 0.9); /* 背景の透明度を上げて文字を見やすく */
+  background: rgba(255, 255, 255, 0.9);
+  /* 背景の透明度を上げて文字を見やすく */
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-radius: 12px;
@@ -19,14 +22,18 @@
   border: 1.5px solid rgba(255, 200, 220, 0.7);
   z-index: 2147483647;
   opacity: 1;
-  transition: opacity var(--transition-duration) ease, 
-              transform var(--transition-duration) ease;
+  transition: opacity var(--transition-duration) ease,
+    transform var(--transition-duration) ease;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
   -webkit-app-region: drag;
-  overflow: visible !important; /* テキストがはみ出す場合でも表示されるように */
-  height: auto; /* 高さを自動調整 */
+  overflow: visible !important;
+  /* テキストがはみ出す場合でも表示されるように */
+  height: auto;
+  /* 高さを自動調整 */
+  transform-origin: bottom right;
+  /* アニメーションの基点を右下に設定 */
 }
 
 /* 吹き出しの表示状態 */
@@ -49,16 +56,19 @@
   content: '';
   position: absolute;
   bottom: -12px;
-  right: 30px; /* 矢印の位置を調整して立ち絵に合わせる */
+  right: 50px;
+  /* 矢印の位置を調整して立ち絵の頭上に合わせる */
   width: 20px;
   height: 20px;
-  background-color: rgba(255, 255, 255, 0.9); /* 吹き出しと同じ背景色に */
+  background-color: rgba(255, 255, 255, 0.9);
+  /* 吹き出しと同じ背景色に */
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   border-right: 1.5px solid rgba(255, 200, 220, 0.7);
   border-bottom: 1.5px solid rgba(255, 200, 220, 0.7);
   transform: rotate(45deg);
-  z-index: -1; /* 矢印を吹き出しの下に表示し、テキストとの重なりを防ぐ */
+  z-index: -1;
+  /* 矢印を吹き出しの下に表示し、テキストとの重なりを防ぐ */
 }
 
 /* 吹き出しテキスト */
@@ -77,7 +87,8 @@
   margin: 0;
   text-align: left;
   position: relative;
-  z-index: 2; /* z-indexを低く設定して吹き出し内に収める */
+  z-index: 2;
+  /* z-indexを低く設定して吹き出し内に収める */
 }
 
 /* 吹き出しテキスト内容 */
@@ -199,15 +210,15 @@
   transition: .3s;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #ff69b4;
 }
 
-input:focus + .slider {
+input:focus+.slider {
   box-shadow: 0 0 1px #ff69b4;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   transform: translateX(16px);
 }
 
@@ -259,10 +270,12 @@ input:checked + .slider:before {
     opacity: 0;
     transform: scale(0.9) translateY(10px);
   }
+
   60% {
     opacity: 1;
     transform: scale(1.05) translateY(-5px);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -279,8 +292,10 @@ body.mouse-active .speech-bubble.active {
   content: '' !important;
   position: absolute !important;
   bottom: -12px !important;
-  right: 30px !important; /* 矢印の位置を調整 */
-  left: auto !important; /* 左側の位置指定を解除 */
+  right: 30px !important;
+  /* 矢印の位置を調整 */
+  left: auto !important;
+  /* 左側の位置指定を解除 */
   width: var(--spacing-lg) !important;
   height: var(--spacing-lg) !important;
   background-color: var(--color-bubble) !important;
@@ -335,4 +350,4 @@ body.mouse-active .speech-bubble.active {
   transform: none;
   animation: none;
   transition: none;
-} 
+}
