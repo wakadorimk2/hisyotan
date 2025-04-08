@@ -7,6 +7,7 @@
 @import './components/_speech-bubble.css';
 @import './components/_paw-button.css';
 @import './components/_funya-bubble.css';
+@import './components/_volume-slider.css';
 
 /* アニメーションのインポート */
 @import './animations/_keyframes.css';

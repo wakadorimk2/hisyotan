@@ -7,6 +7,7 @@
 
 import { setupEventListeners } from '../handlers/uiEventHandlers.js';
 import { startFunyaWatchingMode, showFunyaBubble } from '../helpers/funyaBubble.js';
+import { createVolumeSlider } from '../helpers/volumeSlider.js';
 
 // 初期化済みフラグ（エクスポートしてどこからでもアクセスできるように）
 export let isUIInitialized = false;
@@ -117,106 +118,8 @@ export function createUI() {
     quitButton.style.opacity = '0.8';
   });
 
-  // 音量ボタンの作成
-  const volumeButton = document.createElement('button');
-  volumeButton.id = 'volumeControlIcon';
-  volumeButton.textContent = '🔊';
-  volumeButton.setAttribute('role', 'button');
-  volumeButton.setAttribute('tabindex', '0');
-  volumeButton.setAttribute('aria-label', '音量設定');
-
-  // 必要最小限のスタイルをインラインで設定（CSSが読み込まれない場合の対策）
-  volumeButton.style.webkitAppRegion = 'no-drag';
-  volumeButton.style.position = 'fixed';
-  volumeButton.style.bottom = '90px';
-  volumeButton.style.right = '20px';
-  volumeButton.style.width = '36px';
-  volumeButton.style.height = '36px';
-  volumeButton.style.borderRadius = '50%';
-  volumeButton.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-  volumeButton.style.border = 'none';
-  volumeButton.style.boxShadow = '0 2px 8px rgba(169, 144, 225, 0.15)';
-  volumeButton.style.zIndex = '9999';
-  volumeButton.style.cursor = 'pointer';
-  volumeButton.style.display = 'flex';
-  volumeButton.style.alignItems = 'center';
-  volumeButton.style.justifyContent = 'center';
-  volumeButton.style.fontSize = '18px';
-  volumeButton.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
-
-  // 音量スライダーポップアップ
-  const volumePopup = document.createElement('div');
-  volumePopup.id = 'volumeControlPopup';
-
-  // 必要最小限のスタイルをインラインで設定
-  volumePopup.style.position = 'fixed';
-  volumePopup.style.bottom = '130px';
-  volumePopup.style.right = '20px';
-  volumePopup.style.width = '36px';
-  volumePopup.style.minHeight = '140px';
-  volumePopup.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
-  volumePopup.style.backdropFilter = 'blur(3px)';
-  volumePopup.style.webkitBackdropFilter = 'blur(3px)';
-  volumePopup.style.borderRadius = '22px';
-  volumePopup.style.padding = '10px 0';
-  volumePopup.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.05), 0 0 5px rgba(169, 144, 225, 0.15)';
-  volumePopup.style.zIndex = '9998';
-  volumePopup.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-  volumePopup.style.opacity = '0';
-  volumePopup.style.transform = 'translateY(10px) scale(0.8)';
-  volumePopup.style.pointerEvents = 'none';
-  volumePopup.style.border = '1px solid rgba(255, 255, 255, 0.25)';
-  volumePopup.style.webkitAppRegion = 'no-drag';
-  volumePopup.style.display = 'flex';
-  volumePopup.style.alignItems = 'center';
-  volumePopup.style.justifyContent = 'center';
-
-  // スライダーコンテナ
-  const sliderContainer = document.createElement('div');
-  sliderContainer.className = 'slider-container';
-  sliderContainer.style.margin = '5px 0';
-  sliderContainer.style.padding = '0';
-  sliderContainer.style.background = 'transparent';
-  sliderContainer.style.borderRadius = '12px';
-  sliderContainer.style.transition = 'all 0.3s ease';
-  sliderContainer.style.display = 'flex';
-  sliderContainer.style.flexDirection = 'column';
-  sliderContainer.style.position = 'relative';
-  sliderContainer.style.width = '100%';
-  sliderContainer.style.boxShadow = 'none';
-
-  // スライダーコントロール
-  const sliderControls = document.createElement('div');
-  sliderControls.className = 'slider-controls';
-  sliderControls.style.display = 'flex';
-  sliderControls.style.flexDirection = 'column';
-  sliderControls.style.alignItems = 'center';
-  sliderControls.style.justifyContent = 'center';
-  sliderControls.style.width = '100%';
-  sliderControls.style.height = '100%';
-
-  // スライダー入力
-  const slider = document.createElement('input');
-  slider.type = 'range';
-  slider.min = '0';
-  slider.max = '100';
-  slider.value = '80';
-  slider.className = 'slider-input';
-  slider.id = 'volumeSlider';
-  slider.style.width = '6px';
-  slider.style.height = '120px';
-  slider.style.WebkitAppearance = 'slider-vertical';
-  slider.style.margin = '10px auto';
-  slider.style.background = 'rgba(240, 230, 255, 0.5)';
-  slider.style.borderRadius = '20px';
-  slider.style.outline = 'none';
-  slider.style.opacity = '0.85';
-  slider.style.transition = 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
-
-  // 要素を組み合わせる
-  sliderControls.appendChild(slider);
-  sliderContainer.appendChild(sliderControls);
-  volumePopup.appendChild(sliderContainer);
+  // 音量スライダーを作成（volumeSlider.jsから取得）
+  const { volumeButton, volumePopup } = createVolumeSlider();
 
   // 要素をラッパーに追加
   characterSpeechWrapper.appendChild(assistantImage);
