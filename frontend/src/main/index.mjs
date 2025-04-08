@@ -126,19 +126,6 @@ let mainWindow = null;
 let backendProcess = null;
 let backendPID = null;
 
-// CSP設定を開発モードで無効化する処理（開発時のみ）
-function setupDevCSP() {
-  if (isDevCSP) {
-    console.log('🔓 開発モード: CSP制限を一時的に緩和します');
-    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-      delete details.responseHeaders['content-security-policy'];
-      callback({
-        cancel: false,
-        responseHeaders: details.responseHeaders
-      });
-    });
-  }
-}
 
 // バックエンドサーバーの起動
 async function startBackendServer() {
@@ -558,19 +545,20 @@ function createWindow() {
           "style-src 'self' 'unsafe-inline';" +
           "img-src 'self' data:;" +
           "font-src 'self' data:;" +
-          "connect-src 'self' https://api.voicevox.jp;"
+          "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 ws://localhost:* ws://127.0.0.1:*;"
         ]
       }
     });
   });
 
-  // 開発モードの場合はデベロッパーツールを開く
-  if (isDev) {
-    mainWindow.webContents.openDevTools();
+  if (isDev && process.env.VITE_DEV_SERVER_URL) {
+    console.log('🌐開発モード: Viteサーバーから読み込みます');
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+  } else {
+    // メインウィンドウにindex.htmlを読み込む
+    console.log('🌐 本番モード: ローカルファイルから読み込みます');
+    mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
   }
-
-  // メインウィンドウにindex.htmlを読み込む
-  mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
 
   return mainWindow;
 }
@@ -582,11 +570,6 @@ app.whenReady().then(async () => {
   console.log('Electronアプリケーションの初期化を開始しています...');
 
   try {
-    // 開発モードの場合、CSP制限を緩和
-    if (isDev) {
-      setupDevCSP();
-    }
-
     // CSP設定を先に適用
     setContentSecurityPolicy();
 

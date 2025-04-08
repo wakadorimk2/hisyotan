@@ -51,7 +51,8 @@ const startProcesses = async () => {
     processes.frontend = frontendResult.process;
 
     if (!frontendResult.ready) {
-      console.warn('⚠️ フロントエンドサーバーの準備ができませんでしたが、処理を続行します');
+      console.error('❌ フロントエンドサーバーが起動しなかったため、Electronを起動しません');
+      return;
     }
 
     // Electron起動

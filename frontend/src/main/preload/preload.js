@@ -1,5 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
-const { nativeTheme } = require('electron');
+const { contextBridge, ipcRenderer, nativeTheme } = require('electron');
 
 // 実行パスやディレクトリ関連の出力を安全に行う
 console.log('🔍 preload.js が読み込まれました');
@@ -58,7 +57,7 @@ contextBridge.exposeInMainWorld('electron', {
 
   // OSのテーマ情報を提供
   theme: {
-    // 現在のテーマがダークモードかどうかを取得
+    // 現在のテーマがダークモードかどうかを取得 -> bugでクラッシュする?(https://github.com/electron/electron/issues/46429)
     isDarkMode: () => {
       return nativeTheme.shouldUseDarkColors;
     },
