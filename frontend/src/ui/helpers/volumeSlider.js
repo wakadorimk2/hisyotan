@@ -48,7 +48,7 @@ function createCustomSlider(initialValue, onChangeCallback) {
     // スライダーコンテナ
     const sliderContainer = document.createElement('div');
     sliderContainer.className = 'slider-container custom-slider-container';
-    sliderContainer.id = 'volumeSlider'; // 既存コードと互換性を持たせるためにIDを設定
+    sliderContainer.id = 'volumeSlider';
     sliderContainer.style.position = 'relative';
     sliderContainer.style.width = '100%';
     sliderContainer.style.height = '120px';
@@ -56,17 +56,19 @@ function createCustomSlider(initialValue, onChangeCallback) {
     sliderContainer.style.flexDirection = 'column';
     sliderContainer.style.alignItems = 'center';
     sliderContainer.style.justifyContent = 'center';
-    sliderContainer.style.border = '1px dashed rgba(169, 144, 225, 0.3)'; // デバッグ用に境界を表示
+    sliderContainer.style.border = '1px dashed rgba(169, 144, 225, 0.3)';
+    sliderContainer.style.overflow = 'visible';
 
     // スライダートラック（背景バー）
     const sliderTrack = document.createElement('div');
     sliderTrack.className = 'custom-slider-track';
-    sliderTrack.style.position = 'absolute';
+    sliderTrack.style.position = 'relative';
     sliderTrack.style.width = '6px';
     sliderTrack.style.height = '100px';
     sliderTrack.style.background = 'rgba(220, 200, 255, 0.7)';
     sliderTrack.style.borderRadius = '10px';
     sliderTrack.style.boxShadow = 'inset 0 2px 4px rgba(0, 0, 0, 0.1)';
+    sliderTrack.style.zIndex = '1';
 
     // スライダー進捗バー（塗りつぶし部分）
     const sliderFill = document.createElement('div');
@@ -84,18 +86,24 @@ function createCustomSlider(initialValue, onChangeCallback) {
     sliderThumb.style.position = 'absolute';
     sliderThumb.style.width = '20px';
     sliderThumb.style.height = '20px';
-    sliderThumb.style.background = 'hotpink'; // 目立つ色に変更してデバッグ
+    sliderThumb.style.background = 'rgba(147, 112, 219, 0.9)';
     sliderThumb.style.borderRadius = '50%';
     sliderThumb.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
     sliderThumb.style.border = '2px solid rgba(255, 255, 255, 0.8)';
     sliderThumb.style.cursor = 'pointer';
-    sliderThumb.style.zIndex = '10';
+    sliderThumb.style.zIndex = '9999';
     sliderThumb.style.transition = 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
     sliderThumb.style.left = '50%';
     sliderThumb.style.transform = 'translateX(-50%)';
-    sliderThumb.style.visibility = 'visible'; // 初期状態でも必ず表示
-    sliderThumb.style.display = 'block'; // 確実に表示するためdisplayも設定
-    sliderThumb.style.bottom = '50px'; // 初期位置を中央に設定
+    sliderThumb.style.visibility = 'visible !important';
+    sliderThumb.style.display = 'block !important';
+    sliderThumb.style.bottom = '50px';
+    sliderThumb.style.pointerEvents = 'auto';
+    sliderThumb.style.opacity = '1';
+
+    // デバッグ用の目立つスタイル
+    sliderThumb.style.background = 'hotpink';
+    sliderThumb.style.border = '2px dashed yellow';
 
     logDebug('🔴 スライダーつまみ要素を生成しました');
 
@@ -111,11 +119,10 @@ function createCustomSlider(initialValue, onChangeCallback) {
     sliderValue.style.opacity = '0';
     sliderValue.style.transition = 'opacity 0.3s ease';
 
-    // 要素を組み立て
-    logDebug('🔄 スライダー要素を組み立てます');
+    // 要素を組み立て（順序を変更）
+    sliderContainer.appendChild(sliderThumb);
     sliderTrack.appendChild(sliderFill);
     sliderContainer.appendChild(sliderTrack);
-    sliderContainer.appendChild(sliderThumb); // つまみを追加
     sliderContainer.appendChild(sliderValue);
 
     // DOM追加後の確認
@@ -139,19 +146,20 @@ function createCustomSlider(initialValue, onChangeCallback) {
         logDebug(`📝 スライダー値を更新: ${value}%`);
 
         // つまみと塗りつぶしバーの位置を更新
-        const trackHeight = sliderTrack.offsetHeight || 100; // offsetHeightが0の場合は100をデフォルト値とする
+        const trackHeight = sliderTrack.offsetHeight || 100;
         const position = (value / 100) * trackHeight;
 
         logDebug(`📏 スライダーの位置計算: trackHeight=${trackHeight}, position=${position}, value=${value}`);
 
-        // つまみの位置計算を修正（位置が負にならないように補正）
-        const thumbPosition = Math.max(0, position - 10); // マイナス値にならないよう制限
-        sliderThumb.style.bottom = `${thumbPosition}px`;
+        // つまみの位置を正確に計算
+        const thumbHeight = sliderThumb.offsetHeight;
+        const thumbPosition = trackHeight - position - (thumbHeight / 2);
+        sliderThumb.style.top = `${thumbPosition}px`;
         sliderFill.style.height = `${position}px`;
 
         // CSSで必ず表示されるように強制
         sliderThumb.style.visibility = 'visible';
-        sliderThumb.style.display = 'block'; // 確実に表示するためdisplayも設定
+        sliderThumb.style.display = 'block';
         sliderFill.style.visibility = 'visible';
         sliderTrack.style.visibility = 'visible';
 
@@ -203,8 +211,8 @@ function createCustomSlider(initialValue, onChangeCallback) {
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
         // トラック内での相対位置を計算（上下反転）
-        const relativePosition = trackRect.bottom - clientY;
-        let newValue = (relativePosition / trackHeight) * 100;
+        const relativePosition = clientY - trackRect.top;
+        let newValue = (1 - (relativePosition / trackHeight)) * 100;
 
         // 値を0〜100の範囲に制限
         newValue = Math.max(0, Math.min(100, newValue));
@@ -241,34 +249,16 @@ function createCustomSlider(initialValue, onChangeCallback) {
         document.removeEventListener('touchend', handleEnd);
     }
 
-    // クリックでも位置を変更できるようにする
+    // トラッククリックイベント
     function handleTrackClick(e) {
-        if (isDragging) return;
-
+        e.preventDefault();
         const trackRect = sliderTrack.getBoundingClientRect();
         const trackHeight = trackRect.height;
-
-        // クリック位置の相対位置を計算（上下反転）
-        const relativePosition = trackRect.bottom - e.clientY;
-        let newValue = (relativePosition / trackHeight) * 100;
-
-        // 値を0〜100の範囲に制限
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const relativePosition = clientY - trackRect.top;
+        let newValue = (1 - (relativePosition / trackHeight)) * 100;
         newValue = Math.max(0, Math.min(100, newValue));
-
-        // UIと値を更新
         updateSliderUI(newValue);
-
-        // ふにゃっとするアニメーション追加
-        sliderThumb.classList.add('squish');
-        setTimeout(() => {
-            sliderThumb.classList.remove('squish');
-        }, 600);
-
-        // 値表示を一時的に表示
-        sliderValue.style.opacity = '1';
-        setTimeout(() => {
-            sliderValue.style.opacity = '0';
-        }, 1500);
     }
 
     // イベントリスナーの設定
