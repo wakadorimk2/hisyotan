@@ -17,13 +17,14 @@
 body,
 html {
   background-color: transparent !important;
-  /* 透明に変更 */
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
   -webkit-app-region: drag;
-  /* ウィンドウ全体をドラッグ可能に */
   border-radius: 25px !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  box-sizing: border-box !important;
 }
 
 /* 角丸ウィンドウ用クラス */
@@ -34,13 +35,19 @@ html {
 
 /* ウィンドウ全体を角丸に */
 #app {
-  width: 100% !important;
-  height: 100% !important;
+  width: 100vw !important;
+  height: 100vh !important;
   border-radius: 25px !important;
   overflow: hidden !important;
   position: relative !important;
   background-color: transparent !important;
-  /* 透明に変更 */
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 /* アシスタントコンテナを柔らかい雰囲気に */
@@ -53,7 +60,16 @@ html {
   -webkit-app-region: drag;
   position: relative;
   overflow: hidden;
-  /* 背景演出のためにオーバーフローを隠す */
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  /* 下部配置にするため */
 }
 
 /* 背景の演出用要素 */
@@ -61,12 +77,14 @@ html {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw !important;
+  height: 100vh !important;
   pointer-events: none;
   z-index: -1;
   overflow: hidden;
   border-radius: 25px !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* パーティクル要素 */
@@ -95,11 +113,12 @@ html {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw !important;
+  height: 100vh !important;
   background: linear-gradient(135deg, rgba(253, 246, 249, 0.85) 0%, rgba(243, 230, 240, 0.85) 50%, rgba(249, 240, 245, 0.85) 100%);
   opacity: 0.8;
   z-index: -2;
   border-radius: 25px !important;
-  /* 角丸を追加 */
+  margin: 0 !important;
+  padding: 0 !important;
 }

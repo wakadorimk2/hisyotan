@@ -22,6 +22,66 @@ console.log('🌸 renderer.js が読み込まれました');
 console.log('🔍 ビルドモード:', import.meta.env.MODE);
 console.log('📁 現在の実行パス:', import.meta.env.BASE_URL);
 
+// OSのテーマを確認（electronでアクセス）
+let isDarkMode = false;
+if (window.electron && window.electron.theme) {
+  isDarkMode = window.electron.theme.isDarkMode();
+  console.log(`🌓 OSテーマの検出: ${isDarkMode ? 'ダークモード' : 'ライトモード'}`);
+
+  // テーマ変更イベントのリスナー登録
+  window.electron.theme.onThemeChanged((darkMode) => {
+    console.log(`🌓 OSテーマが変更されました: ${darkMode ? 'ダークモード' : 'ライトモード'}`);
+    isDarkMode = darkMode;
+    applyThemeColors(darkMode);
+  });
+}
+
+// テーマに応じた色を適用する関数
+function applyThemeColors(darkMode) {
+  // 背景色の設定
+  const lightBgColor = 'rgba(253, 246, 249, 0.85)'; // ふんわりピンク
+  const darkBgColor = 'rgba(30, 30, 30, 0.6)'; // ふにゃグレー
+
+  // グラデーション背景の設定
+  const lightGradient = 'linear-gradient(135deg, rgba(253, 246, 249, 0.85) 0%, rgba(243, 230, 240, 0.85) 50%, rgba(249, 240, 245, 0.85) 100%)';
+  const darkGradient = 'linear-gradient(135deg, rgba(30, 30, 30, 0.6) 0%, rgba(40, 40, 45, 0.6) 50%, rgba(35, 35, 40, 0.6) 100%)';
+
+  // CSSでテーマ色を設定
+  const themeStyle = document.createElement('style');
+  themeStyle.id = 'theme-colors';
+
+  // 既存のテーマスタイルを削除
+  const existingStyle = document.getElementById('theme-colors');
+  if (existingStyle) {
+    existingStyle.remove();
+  }
+
+  themeStyle.textContent = `
+    .gradient-bg {
+      background: ${darkMode ? darkGradient : lightGradient} !important;
+    }
+    
+    #assistant-container {
+      background-color: ${darkMode ? 'rgba(45, 45, 50, 0.6)' : 'rgba(255, 255, 255, 0.6)'} !important;
+      box-shadow: 0 8px 32px ${darkMode ? 'rgba(0, 0, 0, 0.3)' : 'rgba(219, 188, 209, 0.3)'} !important;
+    }
+    
+    .particle {
+      background-color: ${darkMode ? 'rgba(200, 200, 255, 0.15)' : 'rgba(255, 192, 203, 0.2)'};
+    }
+  `;
+
+  document.head.appendChild(themeStyle);
+
+  // 背景要素にも直接スタイルを適用
+  const gradientBg = document.querySelector('.gradient-bg');
+  if (gradientBg) {
+    gradientBg.style.background = darkMode ? darkGradient : lightGradient;
+  }
+
+  console.log(`✨ テーマカラーを適用しました: ${darkMode ? 'ダーク' : 'ライト'}モード`);
+}
+
 // グローバルアクセス用に設定
 window.assistantUI = assistantUI;
 window.settingsApi = apiClient;
@@ -56,7 +116,15 @@ if (!window.speechManager) {
   window.speechManager = {
     speak: (text, emotion, duration) => {
       console.log(`フォールバックspeak: ${text} (${emotion}, ${duration}ms)`);
-      assistantUI.showBubble('default', text);
+
+      // funyaBubbleが利用可能ならそちらを使用
+      if (window.funyaBubble && typeof window.funyaBubble.showFunyaBubble === 'function') {
+        window.funyaBubble.showFunyaBubble(text, emotion || 'normal');
+        console.log('🐈 funyaBubbleを使ってメッセージを表示しました');
+      } else {
+        // 旧方式（非推奨）
+        assistantUI.showBubble('default', text);
+      }
       return true;
     },
     checkVoicevoxConnection: async () => false,
@@ -94,6 +162,9 @@ async function init() {
   try {
     console.log('🚀 レンダラープロセスを初期化します');
 
+    // レガシー吹き出しを無効化
+    disableLegacySpeechBubble();
+
     // アシスタントUIの初期化
     initAssistantUI();
 
@@ -113,6 +184,72 @@ async function init() {
 init();
 
 /**
+ * レガシー吹き出しを無効化する
+ */
+function disableLegacySpeechBubble() {
+  console.log('🔄 レガシー吹き出しを無効化します');
+
+  // スタイルで非表示にする
+  const style = document.createElement('style');
+  style.textContent = `
+    #speechBubble, .speech-bubble {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      z-index: -999 !important;
+      position: absolute !important;
+      width: 0 !important;
+      height: 0 !important;
+      overflow: hidden !important;
+    }
+    
+    .speech-text, .speech-text-content {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      z-index: -999 !important;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // 既存の要素があれば削除
+  setTimeout(() => {
+    const oldBubble = document.getElementById('speechBubble');
+    if (oldBubble) {
+      console.log('💀 レガシー吹き出しを除霊します');
+      oldBubble.remove();
+    }
+
+    // speechBridge.jsのメソッドをfunyaBubbleに置き換え
+    if (window.assistantUI) {
+      // showBubbleをfunyaBubbleに置き換え
+      window.assistantUI.showBubble = (type, text) => {
+        console.log('🔄 レガシーshowBubbleがfunyaBubbleに転送されました:', text);
+        if (window.funyaBubble && window.funyaBubble.showFunyaBubble) {
+          window.funyaBubble.showFunyaBubble(text, type === 'error' ? 'sad' : 'normal');
+        }
+        return true;
+      };
+
+      // setTextもfunyaBubbleに転送
+      if (window.assistantUI.setText) {
+        window.assistantUI.setText = (text) => {
+          console.log('🔄 レガシーsetTextがfunyaBubbleに転送されました:', text);
+          if (window.funyaBubble && window.funyaBubble.showFunyaBubble) {
+            window.funyaBubble.showFunyaBubble(text, 'normal');
+          }
+          return true;
+        };
+      }
+    }
+  }, 100);
+
+  console.log('✅ レガシー吹き出しの無効化が完了しました');
+}
+
+/**
  * 背景演出の初期化と制御
  */
 function initBackgroundEffects() {
@@ -121,11 +258,42 @@ function initBackgroundEffects() {
   // グラデーション背景の追加
   const gradientBg = document.createElement('div');
   gradientBg.className = 'gradient-bg rounded-window';
+
+  // インラインスタイルでもサイズを明示的に指定
+  gradientBg.style.width = '100vw';
+  gradientBg.style.height = '100vh';
+  gradientBg.style.margin = '0';
+  gradientBg.style.padding = '0';
+  gradientBg.style.boxSizing = 'border-box';
+  gradientBg.style.position = 'fixed';
+  gradientBg.style.top = '0';
+  gradientBg.style.left = '0';
+  gradientBg.style.borderRadius = '25px';
+
+  // OSテーマに合わせた背景色を設定
+  if (isDarkMode) {
+    gradientBg.style.background = 'linear-gradient(135deg, rgba(30, 30, 30, 0.6) 0%, rgba(40, 40, 45, 0.6) 50%, rgba(35, 35, 40, 0.6) 100%)';
+  } else {
+    gradientBg.style.background = 'linear-gradient(135deg, rgba(253, 246, 249, 0.85) 0%, rgba(243, 230, 240, 0.85) 50%, rgba(249, 240, 245, 0.85) 100%)';
+  }
+
   document.body.appendChild(gradientBg);
 
   // パーティクル要素のコンテナ
   const particlesContainer = document.createElement('div');
   particlesContainer.className = 'bg-particles rounded-window';
+
+  // インラインスタイルでもサイズを明示的に指定
+  particlesContainer.style.width = '100vw';
+  particlesContainer.style.height = '100vh';
+  particlesContainer.style.margin = '0';
+  particlesContainer.style.padding = '0';
+  particlesContainer.style.boxSizing = 'border-box';
+  particlesContainer.style.position = 'fixed';
+  particlesContainer.style.top = '0';
+  particlesContainer.style.left = '0';
+  particlesContainer.style.borderRadius = '25px';
+
   document.body.appendChild(particlesContainer);
 
   // パーティクルの数
@@ -161,6 +329,9 @@ function initBackgroundEffects() {
     }
   }, 3000);
 
+  // 初期テーマ適用
+  applyThemeColors(isDarkMode);
+
   console.log('✅ 背景演出の初期化が完了しました');
 }
 
@@ -179,6 +350,34 @@ function optimizeWindowStyle() {
   const appContainer = document.getElementById('app');
   if (appContainer) {
     appContainer.classList.add('rounded-window');
+
+    // サイズをビューポートに合わせる
+    appContainer.style.width = '100vw';
+    appContainer.style.height = '100vh';
+    appContainer.style.margin = '0';
+    appContainer.style.padding = '0';
+    appContainer.style.boxSizing = 'border-box';
+
+    // フレックスレイアウト設定
+    appContainer.style.display = 'flex';
+    appContainer.style.flexDirection = 'column';
+    appContainer.style.alignItems = 'center';
+    appContainer.style.justifyContent = 'center';
+
+    // アシスタントコンテナも確認
+    const assistantContainer = document.getElementById('assistant-container');
+    if (assistantContainer) {
+      assistantContainer.style.width = '100%';
+      assistantContainer.style.height = '100%';
+      assistantContainer.style.margin = '0';
+      assistantContainer.style.padding = '0';
+      assistantContainer.style.boxSizing = 'border-box';
+      assistantContainer.style.display = 'flex';
+      assistantContainer.style.flexDirection = 'column';
+      assistantContainer.style.alignItems = 'center';
+      assistantContainer.style.justifyContent = 'flex-end';
+      assistantContainer.classList.add('rounded-window');
+    }
   }
 
   // CSSで角丸を強制適用
@@ -188,12 +387,30 @@ function optimizeWindowStyle() {
       border-radius: 25px !important;
       overflow: hidden !important;
       background-color: transparent !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+    }
+    
+    #assistant-container {
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+      border-radius: 25px !important;
     }
     
     /* グラデーション背景要素にも角丸を適用 */
     .gradient-bg, .bg-particles {
       border-radius: 25px !important;
       overflow: hidden !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
     }
     
     /* Windows固有の角丸最適化 */
@@ -208,12 +425,14 @@ function optimizeWindowStyle() {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw !important;
+      height: 100vh !important;
       pointer-events: none;
       z-index: 9999;
       border-radius: 25px !important;
       box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.01);
+      margin: 0 !important;
+      padding: 0 !important;
     }
   `;
   document.head.appendChild(styleElement);
@@ -295,6 +514,9 @@ function createPawPrint(container) {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🌟 DOMContentLoaded: UIの初期化を開始します');
 
+  // レガシー吹き出しを無効化（優先的に実行）
+  disableLegacySpeechBubble();
+
   // ウィンドウスタイルの最適化
   optimizeWindowStyle();
 
@@ -305,6 +527,24 @@ document.addEventListener('DOMContentLoaded', () => {
   setTimeout(async () => {
     await initializeApp();
   }, 100);
+
+  // funyaBubbleの表示を優先するための処理
+  setTimeout(() => {
+    // レガシー吹き出しが消えていることを確認
+    const legacyBubble = document.getElementById('speechBubble');
+    if (legacyBubble) {
+      legacyBubble.remove();
+      console.log('💀 レガシー吹き出しを再度除霊しました');
+    }
+
+    // ふにゃBubbleが初期化されていなければ初期化
+    if (window.funyaBubble && !window.funyaBubble.initialized) {
+      if (typeof window.funyaBubble.startFunyaWatchingMode === 'function') {
+        window.funyaBubble.startFunyaWatchingMode();
+        console.log('🐈 ふにゃ見守りモードを再初期化しました');
+      }
+    }
+  }, 500);
 
   // スタイル適用確認
   setTimeout(() => {

@@ -1,5 +1,20 @@
 /* ゾンビBubble対策：旧吹き出し要素を強制的に非表示 */
-#speechBubble {
+#speechBubble,
+.speech-bubble {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -999 !important;
+  position: absolute !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* 関連する旧要素も非表示に */
+.speech-text,
+.speech-text-content {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
@@ -393,61 +408,57 @@ body.mouse-active .speech-bubble.active {
 
 .slider-input {
   flex-grow: 1;
-  width: 6px;
+  width: 10px;
   height: 120px;
   -webkit-appearance: none;
   appearance: none;
-  background: rgba(240, 230, 255, 0.5);
-  border-radius: 20px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: rgba(220, 200, 255, 0.7);
+  border-radius: 10px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   outline: none;
-  opacity: 0.85;
+  opacity: 0.9;
   transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   margin: 10px auto;
-  writing-mode: bt-lr;
-  /* IE */
-  -webkit-appearance: slider-vertical;
-  /* WebKit */
+  transform: rotate(180deg);
 }
 
 .slider-input::-webkit-slider-runnable-track {
-  width: 6px;
+  width: 10px;
   cursor: pointer;
-  background: rgba(240, 230, 255, 0.5);
-  border-radius: 20px;
+  background: rgba(220, 200, 255, 0.7);
+  border-radius: 10px;
 }
 
 .slider-input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
-  transform: translateX(5px);
-  /* つまみの位置を調整 - 中央に配置 */
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  background: rgba(169, 144, 225, 0.7);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  background: rgba(147, 112, 219, 0.9);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  transform: none;
 }
 
 .slider-input:hover {
   opacity: 1;
-  width: 8px;
-  background: rgba(240, 230, 255, 0.7);
-  box-shadow: 0 0 10px rgba(169, 144, 225, 0.2), 0 0 4px rgba(255, 255, 255, 0.3);
+  width: 12px;
+  background: rgba(220, 200, 255, 0.9);
+  box-shadow: 0 0 10px rgba(169, 144, 225, 0.4), 0 0 4px rgba(255, 255, 255, 0.5);
 }
 
 .slider-input::-webkit-slider-thumb:hover {
-  transform: translateX(5px) scale(1.15);
-  background: rgba(147, 112, 219, 0.8);
-  box-shadow: 0 0 8px rgba(147, 112, 219, 0.4), 0 0 4px rgba(255, 255, 255, 0.3);
+  transform: scale(1.15);
+  background: rgba(147, 112, 219, 0.95);
+  box-shadow: 0 0 8px rgba(147, 112, 219, 0.6), 0 0 4px rgba(255, 255, 255, 0.5);
 }
 
 .slider-input::-webkit-slider-thumb:active {
-  transform: translateX(5px) scale(0.9);
-  background: rgba(138, 92, 214, 0.8);
+  transform: scale(0.9);
+  background: rgba(138, 92, 214, 0.95);
 }
 
 /* ラベルと数値表示を非表示 */
@@ -470,29 +481,29 @@ body.mouse-active .speech-bubble.active {
   right: 20px !important;
   width: 36px !important;
   height: 36px !important;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(169, 144, 225, 0.5) !important;
   border-radius: 50%;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
-  box-shadow: 0 2px 8px rgba(169, 144, 225, 0.15);
+  box-shadow: 0 2px 8px rgba(100, 80, 200, 0.3) !important;
   z-index: 9999 !important;
   font-size: 18px;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  /* ふにゃっとした動き */
-  opacity: 0.8;
+  opacity: 1 !important;
+  color: rgba(130, 100, 200, 0.9) !important;
   pointer-events: auto !important;
   -webkit-app-region: no-drag !important;
   user-select: none;
-  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+  filter: none !important;
 }
 
 #volumeControlIcon:hover {
   transform: scale(1.1) translateY(-2px);
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 4px 12px rgba(169, 144, 225, 0.3), 0 0 4px rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 1) !important;
+  box-shadow: 0 4px 12px rgba(169, 144, 225, 0.5), 0 0 4px rgba(255, 255, 255, 0.6);
 }
 
 #volumeControlIcon:active {
@@ -504,22 +515,22 @@ body.mouse-active .speech-bubble.active {
   position: fixed !important;
   bottom: 70px !important;
   right: 20px !important;
-  width: 36px !important;
+  width: 40px !important;
   height: auto !important;
   min-height: 140px !important;
-  background: rgba(255, 255, 255, 0.25);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border-radius: 20px;
+  border: 1px solid rgba(169, 144, 225, 0.4) !important;
   padding: 10px 0;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05), 0 0 5px rgba(169, 144, 225, 0.15);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15) !important;
   z-index: 9999 !important;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   transform-origin: bottom center;
   opacity: 0;
   transform: translateY(10px) scale(0.8);
   pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.25);
   -webkit-app-region: no-drag !important;
   display: flex !important;
   align-items: center !important;
@@ -530,6 +541,7 @@ body.mouse-active .speech-bubble.active {
   opacity: 1;
   transform: translateY(-25px) scale(1);
   pointer-events: all;
+  visibility: visible !important;
 }
 
 /* 音量アイコンの矢印装飾（PopUpへの誘導） */

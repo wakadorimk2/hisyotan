@@ -1,5 +1,5 @@
 // 必要なモジュールのインポート
-import { updateBubblePosition } from './uiBuilder.js';
+// import { updateBubblePosition } from './uiBuilder.js';
 
 // 立ち絵を表示する関数
 export function showAssistantImage() {
@@ -50,13 +50,16 @@ export function showAssistantImage() {
         displayHeight: imgElement.offsetHeight
       });
 
-      // 吹き出しの位置を更新
-      updateBubblePosition();
+      // 吹き出しの位置を更新 - 直接イベントを発火させる
+      // updateBubblePosition()の代わりに、イベントを発火させるか、何もしない
+      // カスタムイベントを発火
+      window.dispatchEvent(new CustomEvent('assistant-image-loaded'));
     };
 
-    // 吹き出しの位置を調整
+    // 吹き出しの位置を調整 - タイマーを使ってイベントを発火させる
     setTimeout(() => {
-      updateBubblePosition();
+      // updateBubblePosition()の代わりに、イベントを発火
+      window.dispatchEvent(new CustomEvent('assistant-image-loaded'));
     }, 200);
 
     console.log('✅ 立ち絵を表示しました');

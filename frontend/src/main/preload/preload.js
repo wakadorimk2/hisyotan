@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const { nativeTheme } = require('electron');
 
 // 実行パスやディレクトリ関連の出力を安全に行う
 console.log('🔍 preload.js が読み込まれました');
@@ -54,6 +55,29 @@ contextBridge.exposeInMainWorld('electron', {
         console.error(`❌ IPC invokeエラー: ${channel}`, error);
         throw error;
       }
+    }
+  },
+
+  // OSのテーマ情報を提供
+  theme: {
+    // 現在のテーマがダークモードかどうかを取得
+    isDarkMode: () => {
+      return nativeTheme.shouldUseDarkColors;
+    },
+
+    // テーマ変更イベントを監視
+    onThemeChanged: (callback) => {
+      const themeChangeHandler = () => {
+        callback(nativeTheme.shouldUseDarkColors);
+      };
+
+      // イベントリスナーを登録
+      nativeTheme.on('updated', themeChangeHandler);
+
+      // 登録解除用関数を返す
+      return () => {
+        nativeTheme.off('updated', themeChangeHandler);
+      };
     }
   }
 });

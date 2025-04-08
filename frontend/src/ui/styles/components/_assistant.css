@@ -22,6 +22,19 @@
   transition: all 0.4s ease-in-out !important;
 }
 
+/* キャラクターとセリフのラッパー */
+.character-speech-wrapper {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  overflow: visible !important;
+  -webkit-app-region: drag !important;
+}
+
 /* 立ち絵 */
 .assistant-image {
   position: absolute;
@@ -115,11 +128,11 @@
 
 /* 吹き出し */
 .speech-bubble {
-  position: fixed !important;
+  position: absolute !important;
   top: auto !important;
-  bottom: 300px !important;
+  bottom: 280px !important;
   left: auto !important;
-  right: 10px !important;
+  right: 20px !important;
   width: 250px !important;
   max-width: 300px !important;
   background: rgba(255, 255, 255, 0.85) !important;
@@ -137,6 +150,7 @@
   backdrop-filter: blur(3px) !important;
   -webkit-backdrop-filter: blur(3px) !important;
   border: 1px solid rgba(255, 240, 245, 0.8) !important;
+  transform-origin: bottom right !important;
 }
 
 .speech-bubble.show {
@@ -223,6 +237,11 @@
     max-width: 160px;
     max-height: 280px;
   }
+
+  .speech-bubble {
+    width: 200px !important;
+    bottom: 220px !important;
+  }
 }
 
 /* モバイル対応 */
@@ -235,6 +254,11 @@
   .assistant-image {
     max-width: 120px;
     max-height: 200px;
+  }
+
+  .speech-bubble {
+    width: 180px !important;
+    bottom: 180px !important;
   }
 }
 

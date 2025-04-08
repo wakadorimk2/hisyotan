@@ -5,7 +5,6 @@
 
 import { getFunyaStatus } from '../../core/apiClient.js';
 import { logDebug } from '../../core/logger.js';
-import { updateBubblePosition } from './uiBuilder.js';
 import { speak } from '../../emotion/speechManager.js';
 
 // 設定値
@@ -330,6 +329,15 @@ function setupPositionObserver() {
             assistantObserver.observe(imgElement, { attributes: true });
         }
     }, 100);
+
+    // カスタムイベントリスナーを追加
+    window.addEventListener('assistant-image-loaded', () => {
+        // 立ち絵が読み込まれたときに吹き出しの位置を更新
+        if (document.getElementById('funyaBubble')) {
+            updateFunyaBubblePosition();
+            logDebug('🔄 カスタムイベントで吹き出し位置を更新しました');
+        }
+    });
 }
 
 /**

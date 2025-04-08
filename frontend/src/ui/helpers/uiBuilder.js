@@ -6,6 +6,7 @@
  */
 
 import { setupEventListeners } from '../handlers/uiEventHandlers.js';
+import { startFunyaWatchingMode, showFunyaBubble } from '../helpers/funyaBubble.js';
 
 // 初期化済みフラグ（エクスポートしてどこからでもアクセスできるように）
 export let isUIInitialized = false;
@@ -27,6 +28,10 @@ export function createUI() {
   container.id = 'assistant-container';
   container.className = 'assistant-container';
 
+  // キャラクターとセリフのラッパーを作成
+  const characterSpeechWrapper = document.createElement('div');
+  characterSpeechWrapper.className = 'character-speech-wrapper';
+
   // 立ち絵の作成
   const assistantImage = document.createElement('img');
   assistantImage.id = 'assistantImage';
@@ -42,72 +47,13 @@ export function createUI() {
   assistantImage.style.display = 'block';
   assistantImage.style.visibility = 'visible';
   assistantImage.style.opacity = '1';
-  assistantImage.style.position = 'fixed';
-  assistantImage.style.bottom = '124px';
+  assistantImage.style.position = 'absolute'; // 変更: fixedからabsoluteに
+  assistantImage.style.bottom = '0';
   assistantImage.style.right = '10px';
   assistantImage.style.zIndex = '1000';
 
-  // 吹き出しの作成
-  const speechBubble = document.createElement('div');
-  speechBubble.id = 'speechBubble';
-  speechBubble.className = 'speech-bubble show'; // showクラスを追加
-
-  // 画面サイズを取得して適切な位置に配置
-  const windowHeight = window.innerHeight;
-
-  // 立ち絵に合わせた吹き出しのポジション設定
-  const bubblePosition = windowHeight < 600 ?
-    `top: 10px; bottom: auto;` :
-    `bottom: 350px; top: auto; right: 120px; left: auto;`;
-
-  speechBubble.style.cssText = `
-      display: flex !important; 
-      visibility: visible !important; 
-      opacity: 1 !important;
-      position: fixed !important;
-      z-index: 2147483647 !important;
-      ${bubblePosition}
-      max-width: 300px !important;
-      background-color: rgba(255, 255, 255, 0.9) !important;
-    `;
-  speechBubble.style.webkitAppRegion = 'drag'; // ドラッグ可能に設定
-
-  // 吹き出しテキストの作成
-  const speechText = document.createElement('div');
-  speechText.id = 'speechText';
-  speechText.className = 'speech-text';
-  speechText.style.cssText = `
-      display: block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      color: #4e3b2b !important;
-      font-size: 1.05rem !important;
-      line-height: 1.6 !important;
-      width: 100% !important;
-      padding: 5px !important;
-      margin: 0 !important;
-      text-align: left !important;
-      position: relative !important;
-      z-index: 2147483646 !important;
-    `;
-
-  // テキストをスパン要素として追加
-  const spanElement = document.createElement('span');
-  spanElement.textContent = 'こんにちは！何かお手伝いしましょうか？';
-  spanElement.className = 'speech-text-content';
-  spanElement.style.cssText = `
-      color: #4e3b2b !important; 
-      display: inline-block !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-      width: 100% !important;
-      font-size: 1.05rem !important;
-      line-height: 1.6 !important;
-    `;
-  speechText.appendChild(spanElement);
-
-  // 吹き出し要素を組み立て
-  speechBubble.appendChild(speechText);
+  // レガシー吹き出しは作成しないように変更
+  // 代わりにfunyaBubbleを後で初期化する
 
   // 肉球ボタンのラッパーを作成
   const pawButtonWrapper = document.createElement('div');
@@ -171,28 +117,142 @@ export function createUI() {
     quitButton.style.opacity = '0.8';
   });
 
-  // 要素をコンテナに追加
-  container.appendChild(assistantImage);
-  container.appendChild(speechBubble);
-  container.appendChild(pawButtonWrapper); // ラッパーを追加
+  // 音量ボタンの作成
+  const volumeButton = document.createElement('button');
+  volumeButton.id = 'volumeControlIcon';
+  volumeButton.textContent = '🔊';
+  volumeButton.setAttribute('role', 'button');
+  volumeButton.setAttribute('tabindex', '0');
+  volumeButton.setAttribute('aria-label', '音量設定');
+
+  // 必要最小限のスタイルをインラインで設定（CSSが読み込まれない場合の対策）
+  volumeButton.style.webkitAppRegion = 'no-drag';
+  volumeButton.style.position = 'fixed';
+  volumeButton.style.bottom = '90px';
+  volumeButton.style.right = '20px';
+  volumeButton.style.width = '36px';
+  volumeButton.style.height = '36px';
+  volumeButton.style.borderRadius = '50%';
+  volumeButton.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+  volumeButton.style.border = 'none';
+  volumeButton.style.boxShadow = '0 2px 8px rgba(169, 144, 225, 0.15)';
+  volumeButton.style.zIndex = '9999';
+  volumeButton.style.cursor = 'pointer';
+  volumeButton.style.display = 'flex';
+  volumeButton.style.alignItems = 'center';
+  volumeButton.style.justifyContent = 'center';
+  volumeButton.style.fontSize = '18px';
+  volumeButton.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+  // 音量スライダーポップアップ
+  const volumePopup = document.createElement('div');
+  volumePopup.id = 'volumeControlPopup';
+
+  // 必要最小限のスタイルをインラインで設定
+  volumePopup.style.position = 'fixed';
+  volumePopup.style.bottom = '130px';
+  volumePopup.style.right = '20px';
+  volumePopup.style.width = '36px';
+  volumePopup.style.minHeight = '140px';
+  volumePopup.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
+  volumePopup.style.backdropFilter = 'blur(3px)';
+  volumePopup.style.webkitBackdropFilter = 'blur(3px)';
+  volumePopup.style.borderRadius = '22px';
+  volumePopup.style.padding = '10px 0';
+  volumePopup.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.05), 0 0 5px rgba(169, 144, 225, 0.15)';
+  volumePopup.style.zIndex = '9998';
+  volumePopup.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+  volumePopup.style.opacity = '0';
+  volumePopup.style.transform = 'translateY(10px) scale(0.8)';
+  volumePopup.style.pointerEvents = 'none';
+  volumePopup.style.border = '1px solid rgba(255, 255, 255, 0.25)';
+  volumePopup.style.webkitAppRegion = 'no-drag';
+  volumePopup.style.display = 'flex';
+  volumePopup.style.alignItems = 'center';
+  volumePopup.style.justifyContent = 'center';
+
+  // スライダーコンテナ
+  const sliderContainer = document.createElement('div');
+  sliderContainer.className = 'slider-container';
+  sliderContainer.style.margin = '5px 0';
+  sliderContainer.style.padding = '0';
+  sliderContainer.style.background = 'transparent';
+  sliderContainer.style.borderRadius = '12px';
+  sliderContainer.style.transition = 'all 0.3s ease';
+  sliderContainer.style.display = 'flex';
+  sliderContainer.style.flexDirection = 'column';
+  sliderContainer.style.position = 'relative';
+  sliderContainer.style.width = '100%';
+  sliderContainer.style.boxShadow = 'none';
+
+  // スライダーコントロール
+  const sliderControls = document.createElement('div');
+  sliderControls.className = 'slider-controls';
+  sliderControls.style.display = 'flex';
+  sliderControls.style.flexDirection = 'column';
+  sliderControls.style.alignItems = 'center';
+  sliderControls.style.justifyContent = 'center';
+  sliderControls.style.width = '100%';
+  sliderControls.style.height = '100%';
+
+  // スライダー入力
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.min = '0';
+  slider.max = '100';
+  slider.value = '80';
+  slider.className = 'slider-input';
+  slider.id = 'volumeSlider';
+  slider.style.width = '6px';
+  slider.style.height = '120px';
+  slider.style.WebkitAppearance = 'slider-vertical';
+  slider.style.margin = '10px auto';
+  slider.style.background = 'rgba(240, 230, 255, 0.5)';
+  slider.style.borderRadius = '20px';
+  slider.style.outline = 'none';
+  slider.style.opacity = '0.85';
+  slider.style.transition = 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+  // 要素を組み合わせる
+  sliderControls.appendChild(slider);
+  sliderContainer.appendChild(sliderControls);
+  volumePopup.appendChild(sliderContainer);
+
+  // 要素をラッパーに追加
+  characterSpeechWrapper.appendChild(assistantImage);
+  // speechBubbleはfunyaBubbleに置き換えるため追加しない
+
+  // ラッパーをコンテナに追加
+  container.appendChild(characterSpeechWrapper);
+  container.appendChild(pawButtonWrapper); // ボタンラッパーを追加
   container.appendChild(quitButton);
+  container.appendChild(volumeButton); // 音量ボタンを追加
+  container.appendChild(volumePopup); // 音量スライダーポップアップを追加
 
   // コンテナをドキュメントに追加
   document.body.appendChild(container);
 
+  // デバッグ: volumePopupが正しく追加されたか確認
+  console.log('📊 volumePopup要素の追加状態:', {
+    added: document.getElementById('volumeControlPopup') !== null,
+    element: document.getElementById('volumeControlPopup')
+  });
+
   // グローバル変数に要素を割り当て（参照をセット）
   window.pawButton = pawButton;
   window.quitButton = quitButton;
-  window.speechBubble = speechBubble;
-  window.speechText = speechText;
+  window.volumeButton = volumeButton; // 音量ボタンを追加
+  window.volumePopup = volumePopup; // 音量ポップアップも追加
   window.assistantImage = assistantImage;
+  window.characterSpeechWrapper = characterSpeechWrapper;
 
   // モジュール内グローバル変数にも割り当て
   globalThis.pawButton = pawButton;
   globalThis.quitButton = quitButton;
-  globalThis.speechBubble = speechBubble;
-  globalThis.speechText = speechText;
+  globalThis.volumeButton = volumeButton; // 音量ボタンを追加
+  globalThis.volumePopup = volumePopup; // 音量ポップアップも追加
   globalThis.assistantImage = assistantImage;
+  globalThis.characterSpeechWrapper = characterSpeechWrapper;
 
   // イベントリスナーの設定（DOM要素を直接渡す）
   setTimeout(() => {
@@ -201,18 +261,19 @@ export function createUI() {
     setupEventListeners();
   }, 50);
 
-  // ドキュメントボディにResizeObserverを追加し、画面サイズ変更時に吹き出しの位置を調整
-  const resizeObserver = new ResizeObserver(() => {
-    updateBubblePosition();
-  });
-  resizeObserver.observe(document.body);
+  // funyaBubbleを初期化
+  setTimeout(() => {
+    // funyaBubbleを初期化（レガシー吹き出しの代わりに使用）
+    startFunyaWatchingMode();
+    console.log('🌸 funyaBubbleを初期化しました');
+  }, 100);
 
   // MutationObserverを使用して立ち絵の位置変更を監視
   const assistantObserver = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => {
       if (mutation.type === 'attributes' &&
         (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
-        updateBubblePosition();
+        // 位置変更があった場合の処理（funyaBubbleの位置は自動調整される）
       }
     });
   });
@@ -226,31 +287,6 @@ export function createUI() {
   }, 100);
 
   console.log('✨ UI要素の作成が完了しました');
-}
-
-/**
- * 吹き出しの位置を立ち絵に合わせて更新する
- */
-export function updateBubblePosition() {
-  const assistantImage = document.getElementById('assistantImage');
-  const speechBubble = document.getElementById('speechBubble');
-
-  if (!assistantImage || !speechBubble) return;
-
-  // 立ち絵の位置情報を取得
-  const imageRect = assistantImage.getBoundingClientRect();
-  const windowHeight = window.innerHeight;
-
-  // 画面が小さい場合は上部に配置、それ以外は立ち絵の頭上に配置
-  if (windowHeight < 600) {
-    speechBubble.style.top = '10px';
-    speechBubble.style.bottom = 'auto';
-    speechBubble.style.right = '10px';
-  } else {
-    speechBubble.style.bottom = `${window.innerHeight - imageRect.top + 20}px`;
-    speechBubble.style.top = 'auto';
-    speechBubble.style.right = `${window.innerWidth - imageRect.right + 50}px`;
-  }
 }
 
 /**
@@ -269,12 +305,13 @@ export function initUIElements() {
   // UI要素の事前定義
   const uiElements = {
     assistantImage: { id: 'assistantImage', type: 'img' },
-    speechBubble: { id: 'speechBubble', type: 'div' },
-    speechText: { id: 'speechText', type: 'div' },
     pawButton: { id: 'paw-button', type: 'button' },
     quitButton: { id: 'quit-button', type: 'button' },
+    volumeButton: { id: 'volumeControlIcon', type: 'button' }, // 音量ボタンを追加
+    volumePopup: { id: 'volumeControlPopup', type: 'div' }, // 音量ポップアップを追加
     errorBubble: { id: 'errorBubble', type: 'div' },
     errorText: { id: 'errorText', type: 'div' }
+    // speechBubbleとspeechTextは削除（非推奨）
   };
 
   // 旧吹き出しUI要素（ゾンビBubble）を削除
@@ -298,12 +335,6 @@ export function initUIElements() {
 
       // 要素に応じた初期設定
       switch (id) {
-        case 'speechBubble':
-          element.className = 'speech-bubble';
-          break;
-        case 'speechText':
-          element.className = 'speech-text';
-          break;
         case 'errorBubble':
           element.className = 'error-bubble';
           break;
@@ -318,8 +349,7 @@ export function initUIElements() {
     // グローバル変数に要素を保存
     if (key === 'pawButton') window.pawButton = element;
     if (key === 'quitButton') window.quitButton = element;
-    if (key === 'speechBubble') window.speechBubble = element;
-    if (key === 'speechText') window.speechText = element;
+    if (key === 'volumeButton') window.volumeButton = element; // 音量ボタンを追加
     if (key === 'assistantImage') window.assistantImage = element;
   }
 
@@ -332,6 +362,12 @@ export function initUIElements() {
       console.error('❌ イベントリスナー設定中にエラーが発生しました:', error);
     }
   }, 100);
+
+  // funyaBubbleを初期化
+  setTimeout(() => {
+    startFunyaWatchingMode();
+    console.log('🌸 funyaBubbleを初期化しました');
+  }, 150);
 
   // 初期化済みフラグをセット
   isUIInitialized = true;
