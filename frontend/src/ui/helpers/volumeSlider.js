@@ -132,12 +132,32 @@ export function createVolumeSlider() {
     slider.style.width = '6px';
     slider.style.height = '120px';
     slider.style.WebkitAppearance = 'slider-vertical';
+    slider.style.writingMode = 'bt-lr';
     slider.style.margin = '10px auto';
     slider.style.background = 'rgba(240, 230, 255, 0.5)';
     slider.style.borderRadius = '20px';
     slider.style.outline = 'none';
     slider.style.opacity = '0.85';
     slider.style.transition = 'all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    slider.style.transform = 'rotate(180deg)';
+
+    // Electronでのスライダーつまみ表示の問題を解決するためのハック
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+        #volumeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none !important;
+            appearance: none !important;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(147, 112, 219, 0.9);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            margin-top: -7px;
+        }
+    `;
+    document.head.appendChild(styleElement);
 
     // スライダー値の変更イベント
     slider.addEventListener('input', (e) => {
