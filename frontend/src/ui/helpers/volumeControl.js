@@ -217,7 +217,7 @@ function hideVolumePopup() {
 /**
  * 音量スライダーUIを更新する
  */
-function updateVolumeSlider() {
+async function updateVolumeSlider() {
     const currentVolume = getVolume();
 
     // 音量が0の場合は最小値（0.1）に設定する（ミュート防止）
@@ -228,69 +228,31 @@ function updateVolumeSlider() {
         volumePopup.removeChild(volumePopup.firstChild);
     }
 
-    // スライダーコンテナの作成
-    const sliderContainer = document.createElement('div');
-    sliderContainer.className = 'slider-container';
+    try {
+        // volumeSlider.jsから新しいカスタムスライダーを取得
+        const { createVolumeSlider } = await import('./volumeSlider.js');
+        const volumeSliderElements = createVolumeSlider();
 
-    // スライダーコントロールの作成
-    const sliderControls = document.createElement('div');
-    sliderControls.className = 'slider-controls';
+        // ポップアップにスライダーを追加
+        volumePopup.appendChild(volumeSliderElements.container || volumeSliderElements.volumePopup.firstChild);
 
-    // スライダー入力の作成
-    const slider = document.createElement('input');
-    slider.type = 'range';
-    slider.min = '0';
-    slider.max = '100';
-    slider.value = String(Math.round(safeVolume * 100));
-    slider.className = 'slider-input';
-    slider.id = 'volumeSlider';
-    slider.style.WebkitAppearance = 'slider-vertical';
-    slider.style.writingMode = 'bt-lr';
-    slider.style.transform = 'rotate(180deg)';
-
-    // Electronでのスライダーつまみ表示のためのインラインスタイル
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-        #volumeSlider::-webkit-slider-thumb {
-            -webkit-appearance: none !important;
-            appearance: none !important;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: rgba(147, 112, 219, 0.9);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            margin-top: -7px;
-        }
-    `;
-    document.head.appendChild(styleElement);
-
-    // スライダー値の変更イベント
-    slider.addEventListener('input', (e) => {
-        const newValue = parseInt(e.target.value, 10) / 100;
-        // 音量設定を更新（0の場合は最小値にする）
-        const safeNewValue = newValue <= 0 ? 0.1 : newValue;
-        setVolume(safeNewValue);
-
-        // アイコンを更新
-        volumeIcon.textContent = getVolumeIcon(safeNewValue);
-
-        // ミュート状態 or 音量変更時にアイコンをアニメーション
-        if (safeNewValue <= 0.1 || safeNewValue >= 0.95) {
-            volumeIcon.classList.add('pulse');
-            setTimeout(() => {
-                volumeIcon.classList.remove('pulse');
-            }, 2000);
+        // 初期値を設定
+        if (volumeSliderElements.updateVolume) {
+            volumeSliderElements.updateVolume(safeVolume);
         }
 
-        logDebug(`音量を${formatVolumeValue(safeNewValue)}に設定しました`);
-    });
+        logDebug('カスタム音量スライダーを更新しました');
+    } catch (error) {
+        logError(`音量スライダー更新エラー: ${error.message}`);
 
-    // 要素を組み合わせる
-    sliderControls.appendChild(slider);
-    sliderContainer.appendChild(sliderControls);
-    volumePopup.appendChild(sliderContainer);
+        // エラー時はシンプルな代替UIを表示
+        const errorMessage = document.createElement('div');
+        errorMessage.textContent = '音量: ' + Math.round(safeVolume * 100) + '%';
+        errorMessage.style.color = 'rgba(147, 112, 219, 0.9)';
+        errorMessage.style.padding = '10px';
+        errorMessage.style.textAlign = 'center';
+        volumePopup.appendChild(errorMessage);
+    }
 }
 
 /**
