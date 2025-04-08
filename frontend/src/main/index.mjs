@@ -547,11 +547,55 @@ function createWindow() {
     },
     frame: false,
     transparent: true,
-    backgroundColor: '#10ffffff', // 白色の透明度15%（HEX表記）
-    hasShadow: false,
+    backgroundColor: '#20fdf6f9', // ピンクがかった薄白（透明度20%）
+    hasShadow: true,
     resizable: true,
     alwaysOnTop: true,
-    icon: path.join(__dirname, '../frontend/public/assets/icon.ico')
+    icon: path.join(__dirname, '../frontend/public/assets/icon.ico'),
+    // Windows/macOS固有の設定
+    titleBarStyle: 'hidden',
+    titleBarOverlay: false,
+    fullscreenable: false,
+    // 角丸関連の設定（自動的にフォールバック）
+    roundedCorners: true
+  });
+
+  // Windows 11のネイティブ角丸を有効化
+  window.once('ready-to-show', () => {
+    if (process.platform === 'win32') {
+      console.log('🪟 Windows用の角丸最適化を適用します');
+
+      try {
+        // Windows 11向けの設定
+        const isWin11OrHigher = process.getSystemVersion &&
+          parseInt(process.getSystemVersion().split('.')[0]) >= 10 &&
+          parseInt(process.getSystemVersion().split('.')[2]) >= 22000;
+
+        if (isWin11OrHigher) {
+          console.log('✅ Windows 11以降のシステムを検出しました');
+          // Windows 11用のAPI呼び出し（実験的機能）
+          try {
+            if (window.setWindowsRoundedCorners) {
+              window.setWindowsRoundedCorners(true);
+              console.log('✅ Windows 11ネイティブ角丸を適用しました');
+            }
+          } catch (err) {
+            console.log('⚠️ Windows 11角丸設定エラー (無視可):', err.message);
+          }
+        } else {
+          // Windows 10以前の場合はCSSで対応
+          console.log('⚠️ Windows 10以前を検出: CSSフォールバック角丸を使用します');
+        }
+
+        // 透明背景の最適化
+        window.setBackgroundColor('#00FFFFFF');
+      } catch (error) {
+        console.log('⚠️ Windows検出エラー (無視可):', error.message);
+      }
+    }
+
+    // 全プラットフォーム共通の表示設定
+    window.show();
   });
 
   // CSP設定を適用（ウィンドウ作成後に呼び出す）

@@ -112,9 +112,194 @@ async function init() {
 // 初期化実行
 init();
 
+/**
+ * 背景演出の初期化と制御
+ */
+function initBackgroundEffects() {
+  console.log('✨ 背景演出を初期化します');
+
+  // グラデーション背景の追加
+  const gradientBg = document.createElement('div');
+  gradientBg.className = 'gradient-bg rounded-window';
+  document.body.appendChild(gradientBg);
+
+  // パーティクル要素のコンテナ
+  const particlesContainer = document.createElement('div');
+  particlesContainer.className = 'bg-particles rounded-window';
+  document.body.appendChild(particlesContainer);
+
+  // パーティクルの数
+  const particleCount = 15;
+  const pawPrintCount = 8;
+
+  // パーティクルを生成
+  for (let i = 0; i < particleCount; i++) {
+    createParticle(particlesContainer);
+  }
+
+  // 足跡を生成
+  for (let i = 0; i < pawPrintCount; i++) {
+    createPawPrint(particlesContainer);
+  }
+
+  // 定期的に新しいパーティクルを生成
+  setInterval(() => {
+    // 古いパーティクルを削除して新しいものを作成
+    const oldParticles = particlesContainer.querySelectorAll('.particle');
+    if (oldParticles.length > 30) {
+      oldParticles[0].remove();
+    }
+    createParticle(particlesContainer);
+
+    // たまに足跡も追加
+    if (Math.random() < 0.3) {
+      const oldPaws = particlesContainer.querySelectorAll('.paw-print');
+      if (oldPaws.length > 15) {
+        oldPaws[0].remove();
+      }
+      createPawPrint(particlesContainer);
+    }
+  }, 3000);
+
+  console.log('✅ 背景演出の初期化が完了しました');
+}
+
+/**
+ * ウィンドウスタイルの最適化
+ * 角丸や透明効果を確実に適用
+ */
+function optimizeWindowStyle() {
+  console.log('🪟 ウィンドウスタイルを最適化します');
+
+  // HTML/bodyに角丸クラスを追加
+  document.documentElement.classList.add('rounded-window');
+  document.body.classList.add('rounded-window');
+
+  // appコンテナにも角丸を適用
+  const appContainer = document.getElementById('app');
+  if (appContainer) {
+    appContainer.classList.add('rounded-window');
+  }
+
+  // CSSで角丸を強制適用
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    html, body, #app {
+      border-radius: 25px !important;
+      overflow: hidden !important;
+      background-color: transparent !important;
+    }
+    
+    /* グラデーション背景要素にも角丸を適用 */
+    .gradient-bg, .bg-particles {
+      border-radius: 25px !important;
+      overflow: hidden !important;
+    }
+    
+    /* Windows固有の角丸最適化 */
+    @media (-ms-high-contrast: none), (-ms-high-contrast: active) {
+      html, body, #app, .gradient-bg, .bg-particles {
+        border-radius: 25px !important;
+      }
+    }
+    
+    /* 角丸マスク（背景オーバーレイ） */
+    .window-mask {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      border-radius: 25px !important;
+      box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.01);
+    }
+  `;
+  document.head.appendChild(styleElement);
+
+  // 角丸マスクを追加
+  const windowMask = document.createElement('div');
+  windowMask.className = 'window-mask';
+  document.body.appendChild(windowMask);
+
+  console.log('✅ ウィンドウスタイルの最適化が完了しました');
+}
+
+/**
+ * パーティクル要素を作成
+ */
+function createParticle(container) {
+  const particle = document.createElement('div');
+  particle.className = 'particle';
+
+  // ランダムな位置とサイズ
+  const size = Math.random() * 8 + 3;
+  particle.style.width = `${size}px`;
+  particle.style.height = `${size}px`;
+  particle.style.left = `${Math.random() * 100}%`;
+  particle.style.top = `${Math.random() * 100}%`;
+
+  // ふわふわ感のためのアニメーション
+  const animDuration = Math.random() * 10 + 8;
+  const animDelay = Math.random() * 5;
+  particle.style.animation = `floaty ${animDuration}s infinite ease-in-out ${animDelay}s`;
+
+  // 淡いピンク系の色をランダムに
+  const hue = Math.random() * 20 + 340; // 340-360（赤～ピンク系）
+  const saturation = Math.random() * 30 + 70; // 70-100%
+  const lightness = Math.random() * 10 + 85; // 85-95%
+  const alpha = Math.random() * 0.2 + 0.1; // 0.1-0.3
+  particle.style.backgroundColor = `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
+
+  // 一定時間後に自動削除
+  setTimeout(() => {
+    particle.style.opacity = '0';
+    setTimeout(() => particle.remove(), 1000);
+  }, 20000 + Math.random() * 10000);
+
+  container.appendChild(particle);
+}
+
+/**
+ * 足跡要素を作成
+ */
+function createPawPrint(container) {
+  const pawPrint = document.createElement('div');
+  pawPrint.className = 'paw-print';
+
+  // ランダムな位置とサイズ
+  const size = Math.random() * 10 + 10;
+  pawPrint.style.width = `${size}px`;
+  pawPrint.style.height = `${size}px`;
+  pawPrint.style.left = `${Math.random() * 100}%`;
+  pawPrint.style.top = `${Math.random() * 100}%`;
+
+  // ランダムな回転
+  const rotation = Math.random() * 360;
+  pawPrint.style.transform = `rotate(${rotation}deg)`;
+
+  // 淡い透明度
+  pawPrint.style.opacity = `${Math.random() * 0.15 + 0.05}`;
+
+  // 一定時間後に自動削除
+  setTimeout(() => {
+    pawPrint.style.opacity = '0';
+    setTimeout(() => pawPrint.remove(), 1000);
+  }, 15000 + Math.random() * 10000);
+
+  container.appendChild(pawPrint);
+}
+
 // DOM構築後の初期化
 document.addEventListener('DOMContentLoaded', () => {
   console.log('🌟 DOMContentLoaded: UIの初期化を開始します');
+
+  // ウィンドウスタイルの最適化
+  optimizeWindowStyle();
+
+  // 背景演出の初期化
+  initBackgroundEffects();
 
   // 少し遅延を入れてDOM要素が完全に読み込まれるのを確保
   setTimeout(async () => {
