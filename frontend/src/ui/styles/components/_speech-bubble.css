@@ -466,19 +466,19 @@ body.mouse-active .speech-bubble.active {
 
 /* 音量アイコン */
 #volumeControlIcon {
-  position: fixed;
-  bottom: 20px;
-  right: 80px;
-  width: 36px;
-  height: 36px;
+  position: fixed !important;
+  bottom: 25px !important;
+  right: 20px !important;
+  width: 36px !important;
+  height: 36px !important;
   background: rgba(255, 255, 255, 0.5);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
   box-shadow: 0 2px 8px rgba(169, 144, 225, 0.15);
-  z-index: 9999;
+  z-index: 9999 !important;
   font-size: 18px;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   /* ふにゃっとした動き */
@@ -502,19 +502,19 @@ body.mouse-active .speech-bubble.active {
 
 /* 音量スライダーポップアップ */
 #volumeControlPopup {
-  position: fixed;
-  bottom: 70px;
-  right: 80px;
-  width: 36px;
-  height: auto;
-  min-height: 140px;
+  position: fixed !important;
+  bottom: 70px !important;
+  right: 20px !important;
+  width: 36px !important;
+  height: auto !important;
+  min-height: 140px !important;
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   border-radius: 22px;
   padding: 10px 0;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05), 0 0 5px rgba(169, 144, 225, 0.15);
-  z-index: 9999;
+  z-index: 9999 !important;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   transform-origin: bottom center;
   opacity: 0;
@@ -522,9 +522,9 @@ body.mouse-active .speech-bubble.active {
   pointer-events: none;
   border: 1px solid rgba(255, 255, 255, 0.25);
   -webkit-app-region: no-drag !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 #volumeControlPopup.active {

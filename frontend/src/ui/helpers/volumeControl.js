@@ -74,13 +74,6 @@ export function initVolumeControl() {
         volumeIcon.setAttribute('title', '音量調整');
 
         // 確実にクリック可能にする
-        volumeIcon.style.pointerEvents = 'auto';
-        volumeIcon.style.cursor = 'pointer';
-        volumeIcon.style.webkitAppRegion = 'no-drag';
-        volumeIcon.style.zIndex = '9999';
-        volumeIcon.style.position = 'fixed';
-        volumeIcon.style.bottom = '20px';
-        volumeIcon.style.right = '80px';
         volumeIcon.setAttribute('role', 'button');
         volumeIcon.setAttribute('tabindex', '0');
         volumeIcon.setAttribute('aria-label', '音量調整');
@@ -197,13 +190,6 @@ function showVolumePopup() {
         clearTimeout(hideTimer);
         hideTimer = null;
     }
-
-    // 表示前にポップアップの位置を音量アイコンの真上に再調整
-    const iconRect = volumeIcon.getBoundingClientRect();
-
-    // 音量アイコンの中央上に配置
-    volumePopup.style.left = `${iconRect.left + (iconRect.width / 2) - 20}px`; // 中央に配置（幅の半分を引く）
-    volumePopup.style.right = 'auto'; // CSSの右指定を上書き
 
     // アクティブクラスを追加して表示
     volumePopup.classList.add('active');

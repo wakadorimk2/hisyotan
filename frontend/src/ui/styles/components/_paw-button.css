@@ -6,6 +6,11 @@
   margin-bottom: 15px;
   -webkit-app-region: no-drag;
   /* ラッパーをno-dragに変更してクリック可能に */
+
+  /* 非表示にする */
+  display: none;
+  visibility: hidden;
+  opacity: 0;
 }
 
 /* 肉球アイコン */
@@ -26,8 +31,10 @@
   background: radial-gradient(circle, rgba(255, 230, 240, 0.8) 0%, rgba(255, 200, 220, 0) 70%);
   z-index: 998;
   pointer-events: none;
-  opacity: 0.7;
+  opacity: 0;
   animation: pulseBg 4s ease-in-out infinite;
+  display: none;
+  visibility: hidden;
 }
 
 /* ボタンのデフォルトスタイルをリセット */
