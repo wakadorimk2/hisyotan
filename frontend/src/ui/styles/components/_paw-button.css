@@ -75,6 +75,11 @@
   overflow: visible;
   pointer-events: auto !important;
   /* 確実にクリック可能にする */
+
+  /* 非表示にする */
+  display: none;
+  visibility: hidden;
+  opacity: 0;
 }
 
 /* ホバー時のスタイル */

@@ -1,14 +1,18 @@
 import { setupPawButtonEvents } from './pawButtonHandler.js';
 import { handleQuitButtonClick } from './quitButtonHandler.js';
-import * as emotionalBridge from '../../emotion/emotionalBridge.js';
-import { logDebug } from '../../core/logger.js';
-import { getRandomCutePhrase } from '../../emotion/emotionHandler.js';
-import { playPresetSound } from '../../emotion/audioReactor.js';
+import * as emotionalBridge from '@emotion/emotionalBridge.js';
+import { logDebug } from '@core/logger.js';
+import { getRandomCutePhrase } from '@emotion/emotionHandler.js';
+import { playPresetSound } from '@emotion/audioReactor.js';
+import { showHordeModeSettings } from '@renderer/assistantUI.js';
+
+// 処理済みフラグ
+let _eventListenersInitialized = false;
 
 // イベントリスナーの設定を分離
 export function setupEventListeners() {
   // ガード処理 - すでにリスナーが設定されているかをチェック
-  if (window._eventListenersInitialized) {
+  if (_eventListenersInitialized) {
     console.log('🔄 イベントリスナーはすでに設定済みです');
     return;
   }
@@ -68,21 +72,49 @@ export function setupEventListeners() {
       }
 
       imgElement._lastClickTime = now;
-      logDebug('立ち絵がクリックされました - 指さしポーズをランダム設定します');
+      logDebug('立ち絵がクリックされました - 反応処理を開始します');
 
-      // 指さしポーズをランダムに設定
       try {
-        emotionalBridge.setRandomTag('pose', 'POINTING');
-        console.log('🖼️ 指さしポーズをランダムに設定しました');
+        // 30%の確率で「ふにゃ」プリセット音声を冒頭に挿入
+        const isFunyaMode = Math.random() < 0.3;
 
-        // 「ぴょこっ」効果音を再生（クールダウンは audioReactor 側で制御）
-        playPresetSound('funya').then(() => {
-          logDebug('「ぴょこっ」効果音を再生しました');
-        }).catch(error => {
-          console.error('効果音再生エラー:', error);
-        });
+        // 1. 表情差分をランダムに切り替え
+        // 利用可能な表情タグ: DEFAULT, HAPPY, SURPRISED, SERIOUS, SLEEPY, RELIEVED, SMILE, ANGRY
+        const expressions = ['DEFAULT', 'HAPPY', 'SURPRISED', 'SERIOUS', 'SLEEPY', 'RELIEVED', 'SMILE', 'ANGRY'];
+        const randomExpression = expressions[Math.floor(Math.random() * expressions.length)];
+
+        if (isFunyaMode) {
+          // 「ふにゃ」モードの場合
+          console.log('🐈 「ふにゃ」モード発動！');
+
+          // 先に「ふにゃ」効果音を再生
+          playPresetSound('funya').then(() => {
+            logDebug('「ふにゃ」効果音を再生しました');
+
+            // 表情を驚きに変更
+            emotionalBridge.setExpressionByTag('SURPRISED');
+
+            // 少し遅延させてからランダムセリフを再生
+            setTimeout(() => {
+              speakRandomLine();
+              // 表情をランダムに変更
+              emotionalBridge.setExpressionByTag(randomExpression);
+            }, 1200);
+          }).catch(error => {
+            console.error('効果音再生エラー:', error);
+          });
+        } else {
+          // 通常モードの場合は直接ランダムセリフと表情変更
+          speakRandomLine();
+          emotionalBridge.setExpressionByTag(randomExpression);
+        }
+
+        // 指さしポーズもランダムに設定（既存機能を維持）
+        // 問題発生のため、ポーズはNEUTRALに固定
+        emotionalBridge.setPose('NEUTRAL');
+        console.log('🖼️ ポーズをNEUTRALに設定しました');
       } catch (error) {
-        console.error('❌ 指さしポーズ設定中にエラーが発生しました:', error);
+        console.error('❌ キャラクター反応処理中にエラーが発生しました:', error);
       }
     });
 
@@ -110,7 +142,7 @@ export function setupEventListeners() {
   }
 
   // 処理済みフラグを設定
-  window._eventListenersInitialized = true;
+  _eventListenersInitialized = true;
   console.log('🔄 イベントリスナーの設定が完了しました');
 }
 
@@ -167,4 +199,35 @@ export function setupQuitButtonEvents(quitButton) {
     console.log('🚪 終了ボタンがクリックされました');
     handleQuitButtonClick();
   });
+}
+
+// ランダムセリフを再生する関数
+function speakRandomLine() {
+  // speechManagerの存在確認
+  if (window.speechManager) {
+    // グローバルスコープから取得したSpeechManagerでランダムセリフを再生
+    try {
+      const phrases = [
+        { text: "おつかれさま〜…ぎゅってしてあげたい気分なの", emotion: "soft" },
+        { text: "すごいよ…ちゃんと頑張ってるの、見てるからね", emotion: "gentle" },
+        { text: "ふにゃ…今日はのんびりしよ？", emotion: "soft" },
+        { text: "ねぇ、ちょっとだけ甘えてもいい…？", emotion: "happy" },
+        { text: "ここにいるからね。ひとりじゃないよ", emotion: "normal" },
+        { text: "お水飲んだ？小休憩しよっか", emotion: "gentle" },
+        { text: "えらいえらい…よしよしっ", emotion: "happy" },
+        { text: "もし疲れたら、ぎゅってするからね🐾", emotion: "soft" }
+      ];
+
+      const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+      window.speechManager.speak(phrase.text, phrase.emotion, 5000, null, 'random_speak');
+      logDebug(`セリフ再生: "${phrase.text}"`);
+    } catch (error) {
+      logDebug(`セリフ再生エラー: ${error.message}`);
+    }
+  } else if (window.showRandomLine) {
+    // バックアップ: 古い関数を使用
+    window.showRandomLine();
+  } else {
+    logDebug('セリフ再生機能が利用できません');
+  }
 }

@@ -2,7 +2,7 @@
 // マウスイベントのハンドリング
 
 import { logDebug } from '@core/logger.js';
-import { showSettingsInBubble } from '@renderer/assistantUI.js';
+import { showHordeModeSettings } from '@renderer/assistantUI.js';
 
 // マウス操作検出のための変数
 let mouseTimer;
@@ -185,11 +185,11 @@ function setupPawEvents() {
       } catch (error) {
         logDebug(`設定UI表示エラー: ${error.message}`);
         // 新しい設定UI関数を使用
-        showSettingsInBubble();
+        showHordeModeSettings();
       }
     } else {
       // 新しい設定UI関数を使用
-      showSettingsInBubble();
+      showHordeModeSettings();
     }
   });
 }
