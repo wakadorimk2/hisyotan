@@ -98,9 +98,14 @@ export class SpeechManager {
    * モジュール初期化処理
    */
   init() {
-    // UI要素の初期化
-    initUIElements();
-    logDebug('SpeechManager: UI要素を初期化しました');
+    // UI要素の初期化 - エラーハンドリングを追加
+    try {
+      initUIElements();
+      logDebug('SpeechManager: UI要素を初期化しました');
+    } catch (error) {
+      logError(`SpeechManager: UI要素の初期化中にエラーが発生しました: ${error.message}`);
+      // 初期化エラーでもクラスの動作は継続する
+    }
   }
 
   /**

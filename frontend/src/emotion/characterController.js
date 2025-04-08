@@ -19,7 +19,7 @@ let currentMode = DisplayMode.IMAGE;
 
 // 現在のタグ状態
 const currentTags = {
-    expression: 'NORMAL',  // 表情タグ
+    expression: 'DEFAULT',  // 表情タグ
     pose: 'NEUTRAL',       // ポーズタグ
     extras: []             // エフェクト/小物タグ（配列）
 };
@@ -133,6 +133,19 @@ export function setRandomTag(category, tagPrefix) {
         return false;
     }
 
+    logDebug(`ランダムタグの設定を開始: カテゴリ=${category}, 接頭辞=${tagPrefix}`);
+
+    // 辞書のロードを確認
+    if (!dictionary) {
+        logDebug('差分辞書が未ロード - ロードを試みます');
+        loadDifferentialDictionary();
+
+        if (!dictionary) {
+            logError('差分辞書のロードに失敗しました');
+            return false;
+        }
+    }
+
     // 辞書からカテゴリに対応するオブジェクトを取得
     let categoryDict;
     switch (category) {
@@ -152,28 +165,47 @@ export function setRandomTag(category, tagPrefix) {
 
     if (!categoryDict) {
         logError('差分辞書がロードされていないか、カテゴリが見つかりません');
+        console.error('差分辞書:', dictionary);
         return false;
     }
 
-    // 接頭辞で始まるタグを抽出
-    const matchingTags = Object.keys(categoryDict).filter(tag => tag.startsWith(tagPrefix));
+    // 接頭辞で始まるタグを抽出（アンダースコア付きの形式「POINTING_01」も対応）
+    const matchingTags = Object.keys(categoryDict).filter(tag =>
+        tag.startsWith(tagPrefix) || tag.startsWith(`${tagPrefix}_`)
+    );
 
     if (matchingTags.length === 0) {
         logError(`接頭辞 "${tagPrefix}" に一致するタグが見つかりません`);
+        console.log('利用可能なタグ:', Object.keys(categoryDict));
         return false;
     }
+
+    logDebug(`接頭辞 "${tagPrefix}" に一致するタグ: ${matchingTags.join(', ')}`);
 
     // ランダムにタグを選択
     const randomIndex = Math.floor(Math.random() * matchingTags.length);
     const selectedTag = matchingTags[randomIndex];
 
-    // 選択されたタグのインデックスをログ出力（デバッグ用）
+    // 選択されたタグのバリエーション番号を取得（デバッグ用）
+    let variant = 0;
     const tagNumber = selectedTag.match(/\d+/);
-    const variant = tagNumber ? parseInt(tagNumber[0]) : 0;
+    if (tagNumber) {
+        variant = parseInt(tagNumber[0]);
+    } else if (selectedTag.includes('_')) {
+        // アンダースコアがある場合は、その後の部分を番号として扱う
+        const parts = selectedTag.split('_');
+        if (parts.length > 1 && !isNaN(parseInt(parts[parts.length - 1]))) {
+            variant = parseInt(parts[parts.length - 1]);
+        }
+    }
+
     logDebug(`ランダムタグを選択: ${selectedTag} (バリエーション ${variant}番)`);
 
     // 選択したタグを設定
-    return setTag(category, selectedTag);
+    const result = setTag(category, selectedTag);
+    logDebug(`タグ設定結果: ${result ? '成功' : '失敗'}`);
+
+    return result;
 }
 
 /**
@@ -346,49 +378,99 @@ export function getDisplayMode() {
 
 /**
  * キャラクター表示を更新する
- * @private
  */
 function updateCharacterDisplay() {
+    logDebug(`キャラクター表示を更新します - モード: ${currentMode}, タグ状態: ${JSON.stringify(currentTags)}`);
+
+    // 表示モードに応じた処理
     switch (currentMode) {
         case DisplayMode.IMAGE:
             updateStaticImage();
             break;
         case DisplayMode.LIVE2D:
-            // Live2Dモード実装時に追加
-            logDebug('Live2Dモードはまだ実装されていません');
+            // Live2D更新関数（将来実装）
+            console.log('Live2Dモードはまだ実装されていません');
             break;
         case DisplayMode.VRM:
-            // VRMモード実装時に追加
-            logDebug('VRMモードはまだ実装されていません');
+            // VRM更新関数（将来実装）
+            console.log('VRMモードはまだ実装されていません');
             break;
         default:
-            logError(`不明な表示モード: ${currentMode}`);
+            console.error(`未知の表示モード: ${currentMode}`);
+            break;
     }
+
+    // 代替テキストを更新
+    updateAltText();
 }
 
 /**
- * 静的画像モードでの表示更新
- * @private
+ * 静的画像を更新する
  */
 function updateStaticImage() {
+    if (!characterImageElement) {
+        logError('キャラクター画像要素が見つかりません');
+        return;
+    }
+
     try {
-        // 現在のタグから画像パスを生成
+        // 現在のタグ状態からパスを生成
         const imagePath = getImagePathFromTags();
 
-        // タイムスタンプ（キャッシュ防止）
-        const timestamp = new Date().getTime();
+        logDebug(`画像パスを生成しました: ${imagePath}`);
 
-        // 画像を更新
-        characterImageElement.src = `${imagePath}?t=${timestamp}`;
+        // 画像の更新
+        const currentSrc = characterImageElement.src || '';
+        const newSrc = imagePath;
 
-        // 代替テキスト更新
-        updateAltText();
+        // 現在のsrcから相対パスを抽出
+        const currentPath = currentSrc.split('/').slice(-1)[0];
+        const newPath = newSrc.split('/').slice(-1)[0];
 
-        logDebug(`画像を更新: ${imagePath}`);
-        return true;
+        logDebug(`画像の更新: ${currentPath} → ${newPath}`);
+
+        // 循環参照チェック用フラグ
+        let isFallbackActive = false;
+
+        if (currentSrc !== newSrc) {
+            characterImageElement.src = newSrc;
+            logDebug(`キャラクター画像を更新しました: ${newSrc}`);
+
+            // 読み込みのエラーハンドリング
+            characterImageElement.onerror = () => {
+                logError(`画像の読み込みに失敗しました: ${newSrc}`);
+
+                // 既にフォールバック処理中の場合は循環を避ける
+                if (isFallbackActive) {
+                    logError('フォールバックでも画像の読み込みに失敗しました。処理を中断します。');
+                    return;
+                }
+
+                // フォールバック処理開始
+                isFallbackActive = true;
+
+                // 秘書たん画像が見つからない場合はダミー画像を表示
+                try {
+                    const fallbackPath = `/assets/images/dummy.png`;
+                    characterImageElement.src = fallbackPath;
+                    logDebug(`ダミー画像に切り替えました: ${fallbackPath}`);
+
+                    // ダミー画像も見つからない場合の処理
+                    characterImageElement.onerror = () => {
+                        logError('ダミー画像も見つかりません');
+                        // エラー表示を抑制するために空のデータURIを設定
+                        characterImageElement.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+                    };
+                } catch (e) {
+                    logError(`フォールバック処理中にエラーが発生: ${e.message}`);
+                }
+            };
+        } else {
+            logDebug('画像パスに変更がないため、更新をスキップします');
+        }
     } catch (error) {
-        logError(`画像更新エラー: ${error.message}`);
-        return false;
+        logError(`静的画像の更新中にエラーが発生しました: ${error.message}`);
+        console.error('詳細エラー:', error);
     }
 }
 
@@ -425,27 +507,14 @@ function getImagePathFromTags() {
     }
 
     // 組み合わせが定義されていない場合は個別のタグから画像を合成
-    // 現在はポーズを修飾子として使用
-    if (dictionary.expressions[expressionTag] && dictionary.expressions[expressionTag].image) {
-        const expression = dictionary.expressions[expressionTag].image.filename;
-        const basePath = dictionary.modes.IMAGE.basePath;
+    // 新しいファイル命名規則に基づいて画像名を生成: funya_{EXPRESSION}_{POSE}_{EFFECT}.png
+    const effectTag = extrasTags.length > 0 ? extrasTags[0] : 'NONE';
 
-        // ポーズが存在し、pathModifierがある場合
-        let pathWithPose = expression;
-        if (dictionary.poses[poseTag] && dictionary.poses[poseTag].image.pathModifier) {
-            const poseModifier = dictionary.poses[poseTag].image.pathModifier;
-            // ファイル名の拡張子の前にポーズ修飾子を挿入
-            const extIndex = expression.lastIndexOf('.');
-            if (extIndex !== -1) {
-                pathWithPose = `${expression.substring(0, extIndex)}${poseModifier}${expression.substring(extIndex)}`;
-            }
-        }
+    // 新しいファイル名形式で画像パスを生成
+    const filename = `funya_${expressionTag}_${poseTag}_${effectTag}.png`;
+    logDebug(`新しいファイル名形式で画像パスを生成: ${filename}`);
 
-        return `${basePath}${pathWithPose}`;
-    }
-
-    // 該当する表現が辞書にない場合はフォールバック
-    return getImagePathFallback();
+    return `${dictionary.modes.IMAGE.basePath}${filename}`;
 }
 
 /**
@@ -454,33 +523,8 @@ function getImagePathFromTags() {
  * @returns {string} 画像ファイルパス
  */
 function getImagePathFallback() {
-    // expressionタグを既存の表情名に変換
-    let expressionPath = 'normal';
-
-    switch (currentTags.expression) {
-        case 'HAPPY':
-            expressionPath = 'happy';
-            break;
-        case 'SURPRISED':
-            expressionPath = 'surprised';
-            break;
-        case 'SERIOUS':
-            expressionPath = 'serious';
-            break;
-        case 'SLEEPY':
-            expressionPath = 'sleepy';
-            break;
-        case 'RELIEVED':
-            expressionPath = 'relieved';
-            break;
-        case 'SMILE':
-            expressionPath = 'smile';
-            break;
-        default:
-            expressionPath = 'normal';
-    }
-
-    return `/assets/images/secretary_${expressionPath}.png`;
+    // 新しいフォーマットにマッチするフォールバック画像を返す
+    return `/assets/images/funya_DEFAULT_NEUTRAL_NONE.png`;
 }
 
 /**
@@ -519,6 +563,119 @@ function loadDifferentialDictionary() {
     } catch (error) {
         logError(`差分辞書ロードエラー: ${error.message}`);
         dictionary = null;
+        return false;
+    }
+}
+
+/**
+ * 画像ファイル名からタグ情報を解析する
+ * @param {string} filename - 画像ファイル名（例: funya_HAPPY_POINTING_01_BLUSH.png）
+ * @returns {Object|null} タグ情報を含むオブジェクト、解析失敗時はnull
+ */
+export function parseTagsFromFilename(filename) {
+    try {
+        // ファイル名から拡張子と接頭辞を削除
+        const baseFilename = filename.replace(/\.[^/.]+$/, ''); // 拡張子削除
+
+        // funya_ で始まるファイル名のみを処理
+        if (!baseFilename.startsWith('funya_')) {
+            logDebug(`非対応のファイル名形式: ${filename}`);
+            return null;
+        }
+
+        // funya_ 接頭辞を削除した残りの部分をアンダースコアで分割
+        const parts = baseFilename.substring(6).split('_');
+
+        if (parts.length < 3) {
+            logDebug(`タグ要素が不足しているファイル名: ${filename}`);
+            return null;
+        }
+
+        // 基本的には [EXPRESSION, POSE, EFFECT] の順を想定
+        const tagInfo = {
+            expression: parts[0],
+            pose: parts.length > 2 ? `${parts[1]}${parts[2].match(/^\d+$/) ? '_' + parts[2] : ''}` : parts[1],
+            effect: parts.length > 3 ? parts[3] : 'NONE'
+        };
+
+        logDebug(`ファイル名からタグを解析: ${filename} -> ${JSON.stringify(tagInfo)}`);
+        return tagInfo;
+    } catch (error) {
+        logError(`ファイル名からのタグ解析エラー: ${error.message}`);
+        return null;
+    }
+}
+
+/**
+ * ファイル名から辞書を自動更新する
+ * @param {Array<string>} filenames - 画像ファイル名の配列
+ * @returns {boolean} 成功したかどうか
+ */
+export function updateDictionaryFromFilenames(filenames) {
+    try {
+        if (!dictionary) {
+            loadDifferentialDictionary();
+            if (!dictionary) {
+                logError('差分辞書のロードに失敗しました');
+                return false;
+            }
+        }
+
+        // 処理したファイル数をカウント
+        let processedCount = 0;
+
+        filenames.forEach(filename => {
+            const tagInfo = parseTagsFromFilename(filename);
+            if (!tagInfo) return;
+
+            const { expression, pose, effect } = tagInfo;
+
+            // expressions辞書に表情がなければ追加
+            if (expression && !dictionary.expressions[expression]) {
+                dictionary.expressions[expression] = {
+                    image: {
+                        filename: `funya_${expression}_NEUTRAL_NONE.png`,
+                        description: `${expression.toLowerCase()}表情`
+                    },
+                    live2d: { parameters: {} },
+                    vrm: { blendShapes: {} }
+                };
+                logDebug(`新しい表情を辞書に追加: ${expression}`);
+            }
+
+            // poses辞書にポーズがなければ追加
+            if (pose && !dictionary.poses[pose]) {
+                dictionary.poses[pose] = {
+                    image: {
+                        pathModifier: `_${pose}`,
+                        description: `${pose.toLowerCase()}ポーズ`
+                    },
+                    live2d: { motion: pose.toLowerCase(), parameters: {} },
+                    vrm: { pose: pose.toLowerCase(), parameters: {} }
+                };
+                logDebug(`新しいポーズを辞書に追加: ${pose}`);
+            }
+
+            // extras辞書にエフェクトがなければ追加
+            if (effect && effect !== 'NONE' && !dictionary.extras[effect]) {
+                dictionary.extras[effect] = {
+                    image: {
+                        overlay: `sfx_${effect.toLowerCase()}.png`,
+                        position: { x: 0, y: 0 },
+                        description: `${effect.toLowerCase()}エフェクト`
+                    },
+                    live2d: { overlay: null, parameters: {} }
+                };
+                logDebug(`新しいエフェクトを辞書に追加: ${effect}`);
+            }
+
+            processedCount++;
+        });
+
+        logDebug(`ファイル名から辞書を更新しました（処理ファイル数: ${processedCount}）`);
+        return true;
+    } catch (error) {
+        logError(`辞書の自動更新エラー: ${error.message}`);
         return false;
     }
 } 

@@ -30,7 +30,7 @@ export function setExpression(expression) {
     logDebug(`表情を変更: ${currentExpression} -> ${expression}`);
 
     // 画像が見つからない場合はnormalに戻す
-    if (!['normal', 'happy', 'surprised', 'serious', 'sleepy', 'relieved', 'smile'].includes(expression)) {
+    if (!['normal', 'happy', 'surprised', 'serious', 'sleepy', 'relieved', 'smile', 'angry'].includes(expression)) {
       logDebug(`未定義の表情「${expression}」が指定されました。normalを使用します。`);
       expression = 'normal';
     }
@@ -47,8 +47,11 @@ export function setExpression(expression) {
       // キャッシュ防止用タイムスタンプ
       const timestamp = new Date().getTime();
 
-      // HTTP経由で画像を読み込む（常に相対パスを使用）
-      const imagePath = `/assets/images/secretary_${expression}.png?t=${timestamp}`;
+      // 表情名を大文字に変換（HAPPY, SURPRISED等）
+      const expressionTag = expression === 'normal' ? 'DEFAULT' : expression.toUpperCase();
+
+      // 新しいファイル名形式で画像パスを生成
+      const imagePath = `/assets/images/funya_${expressionTag}_NEUTRAL_NONE.png?t=${timestamp}`;
       logDebug(`画像パス設定: ${imagePath}`);
       assistantImage.src = imagePath;
 
@@ -61,7 +64,9 @@ export function setExpression(expression) {
 
       // エラー発生時の最終手段として相対パスを設定
       try {
-        const relativePath = `/assets/images/secretary_${expression}.png`;
+        // 新しいファイル名形式でフォールバックパスを設定
+        const expressionTag = expression === 'normal' ? 'DEFAULT' : expression.toUpperCase();
+        const relativePath = `/assets/images/funya_${expressionTag}_NEUTRAL_NONE.png`;
         assistantImage.src = relativePath;
         logDebug(`エラー発生後の相対パス設定: ${relativePath}`);
       } catch (e) {

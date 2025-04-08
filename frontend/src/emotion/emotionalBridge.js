@@ -10,24 +10,26 @@ import * as characterController from './characterController.js';
 
 // 表情名からタグへのマッピング
 const expressionToTagMap = {
-    'normal': 'NORMAL',
+    'normal': 'DEFAULT',
     'happy': 'HAPPY',
     'surprised': 'SURPRISED',
     'serious': 'SERIOUS',
     'sleepy': 'SLEEPY',
     'relieved': 'RELIEVED',
-    'smile': 'SMILE'
+    'smile': 'SMILE',
+    'angry': 'ANGRY'
 };
 
 // タグから表情名へのマッピング
 const tagToExpressionMap = {
-    'NORMAL': 'normal',
+    'DEFAULT': 'normal',
     'HAPPY': 'happy',
     'SURPRISED': 'surprised',
     'SERIOUS': 'serious',
     'SLEEPY': 'sleepy',
     'RELIEVED': 'relieved',
-    'SMILE': 'smile'
+    'SMILE': 'smile',
+    'ANGRY': 'angry'
 };
 
 // 初期化フラグ
@@ -44,7 +46,7 @@ export function initEmotionalBridge(config = {}) {
 
         // 新しいcharacterControllerを初期化
         const initResult = characterController.initCharacterController({
-            initialExpression: 'NORMAL',
+            initialExpression: 'DEFAULT',
             ...config
         });
 
@@ -74,7 +76,7 @@ export function setExpression(expression) {
 
         // 新しい実装も呼び出し（タグに変換）
         if (isInitialized) {
-            const expressionTag = expressionToTagMap[expression] || 'NORMAL';
+            const expressionTag = expressionToTagMap[expression] || 'DEFAULT';
             characterController.setTag('expression', expressionTag);
         }
 
@@ -96,7 +98,7 @@ export function getCurrentExpression() {
 
 /**
  * タグベースで表情を設定する（新メソッド）
- * @param {string} expressionTag - 表情タグ（NORMAL, HAPPY, SURPRISED, SERIOUS, SLEEPY, RELIEVED, SMILE）
+ * @param {string} expressionTag - 表情タグ（DEFAULT, HAPPY, SURPRISED, SERIOUS, SLEEPY, RELIEVED, SMILE）
  * @returns {boolean} 成功したかどうか
  */
 export function setExpressionByTag(expressionTag) {
@@ -146,10 +148,26 @@ export function setPose(poseTag) {
 export function setRandomTag(category, tagPrefix) {
     try {
         if (!isInitialized) {
+            logDebug(`感情ブリッジが初期化されていないため、自動的に初期化します (${category}, ${tagPrefix})`);
             initEmotionalBridge();
         }
 
-        const result = characterController.setRandomTag(category, tagPrefix);
+        logDebug(`ランダムタグを設定しようとしています: カテゴリ=${category}, 接頭辞=${tagPrefix}`);
+
+        // タグ接頭辞が有効かチェック
+        const prefixToCheck = tagPrefix.trim().toUpperCase();
+
+        // 接頭辞が有効な値か確認
+        if (!prefixToCheck) {
+            logError('ランダムタグの設定に失敗: 接頭辞が無効です');
+            return false;
+        }
+
+        logDebug(`正規化したタグ接頭辞: ${prefixToCheck}`);
+
+        // characterControllerのsetRandomTag関数を呼び出す
+        const result = characterController.setRandomTag(category, prefixToCheck);
+        logDebug(`setRandomTag結果: ${result ? '成功' : '失敗'}`);
 
         // 既存実装にも反映（表情カテゴリの場合）
         if (result && category === 'expression') {
@@ -161,6 +179,7 @@ export function setRandomTag(category, tagPrefix) {
         return result;
     } catch (error) {
         logError(`ランダムタグ設定エラー: ${error.message}`);
+        console.error('ランダムタグ設定の詳細エラー:', error);
         return false;
     }
 }

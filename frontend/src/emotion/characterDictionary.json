@@ -8,24 +8,24 @@
     "modes": {
         "IMAGE": {
             "basePath": "/assets/images/",
-            "filenamePattern": "secretary_${expression}.png",
-            "fallbackImage": "secretary_normal.png"
+            "filenamePattern": "funya_${expression}_${pose}_${effect}.png",
+            "fallbackImage": "funya_DEFAULT_NEUTRAL_NONE.png"
         },
         "LIVE2D": {
             "basePath": "/assets/live2d/",
             "modelPath": "secretary/secretary.model3.json",
-            "fallbackExpression": "NORMAL"
+            "fallbackExpression": "DEFAULT"
         },
         "VRM": {
             "basePath": "/assets/vrm/",
             "modelPath": "secretary/secretary.vrm",
-            "fallbackExpression": "NORMAL"
+            "fallbackExpression": "DEFAULT"
         }
     },
     "expressions": {
-        "NORMAL": {
+        "DEFAULT": {
             "image": {
-                "filename": "secretary_normal.png",
+                "filename": "funya_DEFAULT_NEUTRAL_NONE.png",
                 "description": "通常表情"
             },
             "live2d": {
@@ -48,7 +48,7 @@
         },
         "HAPPY": {
             "image": {
-                "filename": "secretary_happy.png",
+                "filename": "funya_HAPPY_NEUTRAL_NONE.png",
                 "description": "嬉しい表情"
             },
             "live2d": {
@@ -71,7 +71,7 @@
         },
         "SURPRISED": {
             "image": {
-                "filename": "secretary_surprised.png",
+                "filename": "funya_SURPRISED_NEUTRAL_NONE.png",
                 "description": "驚いた表情"
             },
             "live2d": {
@@ -94,7 +94,7 @@
         },
         "SERIOUS": {
             "image": {
-                "filename": "secretary_serious.png",
+                "filename": "funya_SERIOUS_NEUTRAL_NONE.png",
                 "description": "真面目な表情"
             },
             "live2d": {
@@ -117,7 +117,7 @@
         },
         "SLEEPY": {
             "image": {
-                "filename": "secretary_sleepy.png",
+                "filename": "funya_SLEEPY_NEUTRAL_NONE.png",
                 "description": "眠そうな表情"
             },
             "live2d": {
@@ -140,7 +140,7 @@
         },
         "RELIEVED": {
             "image": {
-                "filename": "secretary_relieved.png",
+                "filename": "funya_RELIEVED_NEUTRAL_NONE.png",
                 "description": "安心した表情"
             },
             "live2d": {
@@ -163,7 +163,7 @@
         },
         "SMILE": {
             "image": {
-                "filename": "secretary_smile.png",
+                "filename": "funya_SMILE_NEUTRAL_NONE.png",
                 "description": "微笑んだ表情"
             },
             "live2d": {
@@ -183,13 +183,36 @@
                     "angry": 0
                 }
             }
+        },
+        "ANGRY": {
+            "image": {
+                "filename": "funya_ANGRY_NEUTRAL_NONE.png",
+                "description": "怒った表情"
+            },
+            "live2d": {
+                "parameters": {
+                    "ParamMouthForm": -0.8,
+                    "ParamEyeLOpen": 0.7,
+                    "ParamEyeROpen": 0.7,
+                    "ParamBrowLY": -0.4,
+                    "ParamBrowRY": -0.4
+                }
+            },
+            "vrm": {
+                "blendShapes": {
+                    "happy": 0,
+                    "sad": 0,
+                    "surprised": 0,
+                    "angry": 1
+                }
+            }
         }
     },
     "poses": {
         "NEUTRAL": {
             "image": {
-                "pathModifier": "",
-                "description": "通常のポーズ（修飾子なし）"
+                "pathModifier": "_NEUTRAL",
+                "description": "通常のポーズ"
             },
             "live2d": {
                 "motion": "idle",
@@ -202,7 +225,7 @@
         },
         "ARMSCROSSED": {
             "image": {
-                "pathModifier": "_arms",
+                "pathModifier": "_ARMSCROSSED",
                 "description": "腕を組んだポーズ"
             },
             "live2d": {
@@ -216,7 +239,7 @@
         },
         "SEIZA": {
             "image": {
-                "pathModifier": "_seiza",
+                "pathModifier": "_SEIZA",
                 "description": "正座のポーズ"
             },
             "live2d": {
@@ -228,9 +251,9 @@
                 "parameters": {}
             }
         },
-        "POINTING1": {
+        "POINTING_01": {
             "image": {
-                "pathModifier": "_pointing1",
+                "pathModifier": "_POINTING_01",
                 "description": "指さしポーズ1番"
             },
             "live2d": {
@@ -246,9 +269,9 @@
                 }
             }
         },
-        "POINTING2": {
+        "POINTING_02": {
             "image": {
-                "pathModifier": "_pointing2",
+                "pathModifier": "_POINTING_02",
                 "description": "指さしポーズ2番"
             },
             "live2d": {
@@ -264,9 +287,9 @@
                 }
             }
         },
-        "POINTING3": {
+        "POINTING_03": {
             "image": {
-                "pathModifier": "_pointing3",
+                "pathModifier": "_POINTING_03",
                 "description": "指さしポーズ3番"
             },
             "live2d": {
@@ -282,9 +305,9 @@
                 }
             }
         },
-        "POINTING4": {
+        "POINTING_04": {
             "image": {
-                "pathModifier": "_pointing4",
+                "pathModifier": "_POINTING_04",
                 "description": "指さしポーズ4番"
             },
             "live2d": {
@@ -300,9 +323,9 @@
                 }
             }
         },
-        "POINTING5": {
+        "POINTING_05": {
             "image": {
-                "pathModifier": "_pointing5",
+                "pathModifier": "_POINTING_05",
                 "description": "指さしポーズ5番"
             },
             "live2d": {
@@ -320,7 +343,7 @@
         }
     },
     "extras": {
-        "SFX_ZZZ": {
+        "ZZZ": {
             "image": {
                 "overlay": "sfx_zzz.png",
                 "position": {
@@ -362,16 +385,30 @@
                 "overlay": "effects/sweat.json",
                 "parameters": {}
             }
+        },
+        "NONE": {
+            "image": {
+                "overlay": null,
+                "position": {
+                    "x": 0,
+                    "y": 0
+                },
+                "description": "エフェクトなし"
+            },
+            "live2d": {
+                "overlay": null,
+                "parameters": {}
+            }
         }
     },
     "combinations": {
         "SLEEPY_WITH_ZZZ": {
             "tags": [
                 "SLEEPY",
-                "SFX_ZZZ"
+                "ZZZ"
             ],
             "image": {
-                "filename": "secretary_sleepy_sfx_zzz.png",
+                "filename": "funya_SLEEPY_NEUTRAL_ZZZ.png",
                 "description": "眠そうな表情＋睡眠エフェクト"
             }
         },
@@ -381,7 +418,7 @@
                 "SEIZA"
             ],
             "image": {
-                "filename": "secretary_happy_seiza.png",
+                "filename": "funya_HAPPY_SEIZA_NONE.png",
                 "description": "正座で嬉しそうな表情"
             }
         }

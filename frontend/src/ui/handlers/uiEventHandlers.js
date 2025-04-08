@@ -2,7 +2,6 @@ import { setupPawButtonEvents } from './pawButtonHandler.js';
 import { handleQuitButtonClick } from './quitButtonHandler.js';
 import * as emotionalBridge from '../../emotion/emotionalBridge.js';
 import { logDebug } from '../../core/logger.js';
-import { speak } from '../../emotion/speechManager.js';
 import { getRandomCutePhrase } from '../../emotion/emotionHandler.js';
 
 // イベントリスナーの設定を分離
@@ -35,8 +34,11 @@ export function setupEventListeners() {
   const imgElement = document.getElementById('assistantImage') || assistantImage;
   if (imgElement instanceof HTMLElement) {
     console.log('🖼️ assistantImageにイベントリスナーを設定します');
-    // CSS -webkit-app-regionを使用してドラッグ可能にする
-    imgElement.style.webkitAppRegion = 'drag';
+    // ドラッグとクリックの競合を解決
+    imgElement.style.webkitAppRegion = 'no-drag'; // drag→no-dragに変更
+
+    // 立ち絵本体にクリックイベントをより明示的に設定
+    imgElement.style.pointerEvents = 'auto';
 
     imgElement.addEventListener('contextmenu', (event) => {
       event.preventDefault();
@@ -45,8 +47,14 @@ export function setupEventListeners() {
 
     // 立ち絵のクリックイベントを追加
     imgElement.addEventListener('click', (event) => {
+      // デバッグログを追加
+      console.log('🖼️ 立ち絵がクリックされました！', { x: event.clientX, y: event.clientY });
+
       // クリック操作を優先するため、ドラッグフラグがある場合はスキップ
-      if (imgElement._isDragging) return;
+      if (imgElement._isDragging) {
+        console.log('🖼️ ドラッグ中のためクリックをスキップします');
+        return;
+      }
 
       // クールタイムチェック（連打防止）
       const now = Date.now();
@@ -62,12 +70,23 @@ export function setupEventListeners() {
       logDebug('立ち絵がクリックされました - 指さしポーズをランダム設定します');
 
       // 指さしポーズをランダムに設定
-      emotionalBridge.setRandomTag('pose', 'POINTING');
+      try {
+        emotionalBridge.setRandomTag('pose', 'POINTING');
+        console.log('🖼️ 指さしポーズをランダムに設定しました');
+      } catch (error) {
+        console.error('❌ 指さしポーズ設定中にエラーが発生しました:', error);
+      }
 
       // かわいいセリフをランダムに表示
       const phraseObj = getRandomCutePhrase();
       if (phraseObj && phraseObj.text) {
-        speak(phraseObj.text, 'normal', 5000);
+        // グローバルwindow.speechManagerを使って speak を呼び出す
+        // 循環参照を避けるため、直接importしない
+        if (window.speechManager && window.speechManager.speak) {
+          window.speechManager.speak(phraseObj.text);
+        } else {
+          logDebug('speechManager がまだ初期化されていないため、セリフ表示をスキップします');
+        }
       }
     });
   } else {

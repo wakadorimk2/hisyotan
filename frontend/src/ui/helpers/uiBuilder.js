@@ -323,8 +323,15 @@ export function initUIElements() {
     if (key === 'assistantImage') window.assistantImage = element;
   }
 
-  // イベントリスナーの設定
-  setupEventListeners();
+  // イベントリスナーの設定 - 循環参照を避けるため遅延実行
+  setTimeout(() => {
+    try {
+      console.log('🔄 イベントリスナーを遅延設定します');
+      setupEventListeners();
+    } catch (error) {
+      console.error('❌ イベントリスナー設定中にエラーが発生しました:', error);
+    }
+  }, 100);
 
   // 初期化済みフラグをセット
   isUIInitialized = true;
