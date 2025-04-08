@@ -172,59 +172,38 @@ function startWelcomeMessageProtection() {
  * アシスタントUIの初期化処理
  */
 export function initAssistantUI() {
-  try {
-    console.log('アシスタントUIを初期化します');
-
-    // UIの準備
-    createUI();
-
-    // イベントハンドラの設定
-    setupEventListeners();
-
-    // 吹き出し要素の初期化
-    initUIElements();
-
-    // スピーチテキスト監視を開始
-    if (typeof observeSpeechTextAutoRecovery === 'function') {
-      observeSpeechTextAutoRecovery();
-      console.log('スピーチテキスト自動復旧の監視を開始しました');
-    } else {
-      console.error('observeSpeechTextAutoRecovery関数が見つかりません');
-    }
-
-    // ウェルカムメッセージはdelayを設けて安定させる
-    setTimeout(() => {
-      // 初期化時のウェルカムメッセージ表示（すでに表示済みでなければ）
-      if (!window.hasShownWelcomeMessage) {
-        console.log('🌸 ウェルカムメッセージを表示します（初期化）');
-
-        // electronAPI.speakの存在チェック
-        if (typeof window.electronAPI?.speak === 'function') {
-          window.electronAPI.speak('お疲れ様です！休憩も大切ですよ✨', 'smile');
-        } else {
-          console.warn('⚠️ window.electronAPI.speak が未定義です。代替手段を使用します。');
-
-          // speechManager.speakを使用（代替手段）
-          if (window.speechManager?.speak) {
-            window.speechManager.speak('お疲れ様です！休憩も大切ですよ✨', 'smile');
-          } else {
-            // 最終手段：直接テキスト表示
-            console.log('⚠️ 代替手段も使用できません。直接テキスト表示を行います。');
-            setText('お疲れ様です！休憩も大切ですよ✨');
-          }
-        }
-
-        // ウェルカムメッセージ表示済みフラグを設定
-        window.hasShownWelcomeMessage = true;
-      } else {
-        console.log('🌸 ウェルカムメッセージはすでに表示済みです（スキップ）');
-      }
-    }, 800); // 800ms待ってから表示（UI初期化が完了するのを待つ）
-
-    console.log('アシスタントUIの初期化が完了しました');
-    return true;
-  } catch (error) {
-    console.error('アシスタントUI初期化エラー:', error);
-    return false;
+  // DOMContentLoadedイベントを待つ
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeUI);
+  } else {
+    initializeUI();
   }
+}
+
+function initializeUI() {
+  const speechBubble = document.getElementById('speechBubble');
+  const speechText = document.getElementById('speechText');
+
+  if (!speechBubble || !speechText) {
+    console.error('必要なDOM要素が見つかりません');
+    return;
+  }
+
+  // 初期化処理
+  console.log('🌸 assistantUI初期化開始');
+
+  // ウェルカムメッセージの設定
+  const welcomeMessage = 'こんにちは！ふにゃと一緒に楽しく過ごしましょうね！';
+  setText(welcomeMessage);
+
+  // データ属性に初期メッセージであることを記録
+  speechText.dataset.isWelcomeMessage = 'true';
+
+  // 吹き出しが非表示にならないように監視
+  startWelcomeMessageProtection();
+
+  // 初期化済みフラグを設定
+  window._assistantUIInitialized = true;
+
+  console.log('🌸 assistantUI初期化完了');
 } 

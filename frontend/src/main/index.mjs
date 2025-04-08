@@ -533,95 +533,46 @@ function createWindow() {
   console.log('🪟 メインウィンドウを作成します');
 
   // メインウィンドウの設定
-  const window = new BrowserWindow({
-    width: 300,
-    height: 500,
+  const mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      sandbox: isDev ? false : true,
-      preload: path.join(__dirname, 'preload/preload.js'),
+      sandbox: true,
+      allowRunningInsecureContent: false,
       webSecurity: true,
-      allowRunningInsecureContent: isDev,
-      webviewTag: true
+      preload: path.join(__dirname, 'preload', 'preload.js')
     },
-    frame: false,
-    transparent: true,
-    backgroundColor: '#20fdf6f9', // ピンクがかった薄白（透明度20%）
-    hasShadow: true,
-    resizable: true,
-    alwaysOnTop: true,
-    icon: path.join(__dirname, '../frontend/public/assets/icon.ico'),
-    // Windows/macOS固有の設定
-    titleBarStyle: 'hidden',
-    titleBarOverlay: false,
-    fullscreenable: false,
-    // 角丸関連の設定（自動的にフォールバック）
-    roundedCorners: true
+    icon: path.join(__dirname, '..', 'assets', 'icon.png')
   });
 
-  // Windows 11のネイティブ角丸を有効化
-  window.once('ready-to-show', () => {
-    if (process.platform === 'win32') {
-      console.log('🪟 Windows用の角丸最適化を適用します');
-
-      try {
-        // Windows 11向けの設定
-        const isWin11OrHigher = process.getSystemVersion &&
-          parseInt(process.getSystemVersion().split('.')[0]) >= 10 &&
-          parseInt(process.getSystemVersion().split('.')[2]) >= 22000;
-
-        if (isWin11OrHigher) {
-          console.log('✅ Windows 11以降のシステムを検出しました');
-          // Windows 11用のAPI呼び出し（実験的機能）
-          try {
-            if (window.setWindowsRoundedCorners) {
-              window.setWindowsRoundedCorners(true);
-              console.log('✅ Windows 11ネイティブ角丸を適用しました');
-            }
-          } catch (err) {
-            console.log('⚠️ Windows 11角丸設定エラー (無視可):', err.message);
-          }
-        } else {
-          // Windows 10以前の場合はCSSで対応
-          console.log('⚠️ Windows 10以前を検出: CSSフォールバック角丸を使用します');
-        }
-
-        // 透明背景の最適化
-        window.setBackgroundColor('#00FFFFFF');
-      } catch (error) {
-        console.log('⚠️ Windows検出エラー (無視可):', error.message);
+  // CSPの設定
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self';" +
+          "script-src 'self' 'unsafe-inline' 'unsafe-eval';" +
+          "style-src 'self' 'unsafe-inline';" +
+          "img-src 'self' data:;" +
+          "font-src 'self' data:;" +
+          "connect-src 'self' https://api.voicevox.jp;"
+        ]
       }
-    }
-
-    // 全プラットフォーム共通の表示設定
-    window.show();
+    });
   });
 
-  // CSP設定を適用（ウィンドウ作成後に呼び出す）
-  setContentSecurityPolicy();
-
-  // フォーカスが失われたときに常に最前面に表示されるようにする
-  window.on('blur', () => {
-    console.log('🔍 ウィンドウがフォーカスを失いました。alwaysOnTopを再設定します');
-    // 一度falseにしてから再度trueに設定することで最前面表示を強制する
-    window.setAlwaysOnTop(false);
-    // 少し遅延を入れて設定する
-    setTimeout(() => {
-      window.setAlwaysOnTop(true, 'screen-saver'); // screen-saverは最も高い優先度
-      console.log('✅ alwaysOnTopを再設定しました (screen-saver)');
-    }, 100);
-  });
-
-  // 開発モードでの設定
+  // 開発モードの場合はデベロッパーツールを開く
   if (isDev) {
-    window.loadURL('http://localhost:5173');
-    window.webContents.openDevTools();
-  } else {
-    window.loadFile(path.join(__dirname, '../dist/index.html'));
+    mainWindow.webContents.openDevTools();
   }
 
-  return window;
+  // メインウィンドウにindex.htmlを読み込む
+  mainWindow.loadFile(path.join(__dirname, '..', 'index.html'));
+
+  return mainWindow;
 }
 
 /**

@@ -48,11 +48,9 @@ contextBridge.exposeInMainWorld('electron', {
     invoke: async (channel, ...args) => {
       console.log(`🔄 IPC invoke: ${channel}`, args);
       try {
-        const result = await ipcRenderer.invoke(channel, ...args);
-        console.log(`✅ IPC invoke成功: ${channel}`, result);
-        return result;
+        return await ipcRenderer.invoke(channel, ...args);
       } catch (error) {
-        console.error(`❌ IPC invokeエラー: ${channel}`, error);
+        console.error(`IPC invoke error: ${channel}`, error);
         throw error;
       }
     }
@@ -67,17 +65,9 @@ contextBridge.exposeInMainWorld('electron', {
 
     // テーマ変更イベントを監視
     onThemeChanged: (callback) => {
-      const themeChangeHandler = () => {
+      nativeTheme.on('updated', () => {
         callback(nativeTheme.shouldUseDarkColors);
-      };
-
-      // イベントリスナーを登録
-      nativeTheme.on('updated', themeChangeHandler);
-
-      // 登録解除用関数を返す
-      return () => {
-        nativeTheme.off('updated', themeChangeHandler);
-      };
+      });
     }
   }
 });

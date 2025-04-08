@@ -47,125 +47,36 @@ function formatVolumeValue(volume) {
  * 音量コントロール機能を初期化する
  */
 export function initVolumeControl() {
-    // 既に初期化済みかチェック
-    if (volumeIcon) return;
+    const sliderElement = document.querySelector('.volume-slider');
 
-    logDebug('音量コントロールの初期化を開始');
-
-    try {
-        // 既存の音量アイコン要素を念のため削除
-        const existingIcon = document.getElementById('volumeControlIcon');
-        if (existingIcon) {
-            existingIcon.parentNode.removeChild(existingIcon);
-            logDebug('既存の音量アイコン要素を削除しました');
-        }
-
-        const existingPopup = document.getElementById('volumeControlPopup');
-        if (existingPopup) {
-            existingPopup.parentNode.removeChild(existingPopup);
-            logDebug('既存の音量ポップアップ要素を削除しました');
-        }
-
-        // 音量アイコン要素の作成
-        volumeIcon = document.createElement('div');
-        volumeIcon.id = 'volumeControlIcon';
-        volumeIcon.className = 'float-up';
-        volumeIcon.textContent = getVolumeIcon(getVolume());
-        volumeIcon.setAttribute('title', '音量調整');
-
-        // 確実にクリック可能にする
-        volumeIcon.setAttribute('role', 'button');
-        volumeIcon.setAttribute('tabindex', '0');
-        volumeIcon.setAttribute('aria-label', '音量調整');
-
-        // ポップアップ要素の作成
-        volumePopup = document.createElement('div');
-        volumePopup.id = 'volumeControlPopup';
-        volumePopup.className = '';
-        volumePopup.style.zIndex = '9999';
-
-        // ポップアップ内のスライダーを初期化
-        updateVolumeSlider();
-
-        // ボディに追加
-        document.body.appendChild(volumeIcon);
-        document.body.appendChild(volumePopup);
-
-        // クリックイベントの設定 - バブリングを防止し、デバッグログを追加
-        const clickHandler = (e) => {
-            logDebug('音量アイコンがクリックされました');
-            e.stopPropagation(); // イベントのバブリングを防止
-            e.preventDefault(); // デフォルトの動作を防止
-            toggleVolumePopup();
-            return false; // イベントの伝播を完全に防止
-        };
-
-        volumeIcon.addEventListener('click', clickHandler, true);
-        volumeIcon.addEventListener('mousedown', (e) => {
-            logDebug('音量アイコンがマウスダウンされました');
-            e.stopPropagation();
-        }, true);
-
-        // キーボードアクセシビリティ
-        volumeIcon.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                logDebug('音量アイコンがキーボードでアクティベートされました');
-                e.preventDefault();
-                toggleVolumePopup();
-            }
-        });
-
-        // タッチデバイス用のイベント追加
-        volumeIcon.addEventListener('touchend', (e) => {
-            logDebug('音量アイコンがタッチされました');
-            e.preventDefault();
-            toggleVolumePopup();
-        }, true);
-
-        // 外部クリックでポップアップを閉じる
-        document.addEventListener('click', (e) => {
-            if (
-                volumePopup.classList.contains('active') &&
-                e.target !== volumeIcon &&
-                e.target !== volumePopup &&
-                !volumePopup.contains(e.target)
-            ) {
-                hideVolumePopup();
-            }
-        });
-
-        logDebug('音量コントロールの初期化完了');
-
-        // 初期化後に追加の確認
-        setTimeout(() => {
-            const iconElement = document.getElementById('volumeControlIcon');
-            if (iconElement) {
-                const styles = window.getComputedStyle(iconElement);
-                logDebug(`音量アイコンの状態確認: display=${styles.display}, zIndex=${styles.zIndex}, pointerEvents=${styles.pointerEvents}, right=${styles.right}, bottom=${styles.bottom}`);
-
-                // 音量アイコンの位置を視覚的にわかりやすく一瞬だけ強調
-                iconElement.style.transition = 'all 0.3s ease';
-                iconElement.style.transform = 'scale(1.2)';
-                iconElement.style.boxShadow = '0 0 10px rgba(147, 112, 219, 0.8)';
-
-                setTimeout(() => {
-                    iconElement.style.transform = '';
-                    iconElement.style.boxShadow = '';
-                }, 1000);
-
-                // クリック可能かどうかデバッグモードでテスト
-                if (iconElement.getBoundingClientRect().width > 0) {
-                    logDebug('音量アイコンは正常に表示されています');
-                } else {
-                    logError('音量アイコンのサイズが異常です');
-                }
-            } else {
-                logError('音量アイコン要素が見つかりません');
-            }
-        }, 1000);
-    } catch (error) {
-        logError(`音量コントロール初期化エラー: ${error.message}`);
+    if (!sliderElement) {
+        console.error('音量スライダー要素が見つかりません');
+        return;
     }
+
+    // 音量アイコンの初期化
+    volumeIcon = document.querySelector('.volume-icon');
+    if (!volumeIcon) {
+        console.error('音量アイコン要素が見つかりません');
+        return;
+    }
+
+    // 音量ポップアップの初期化
+    volumePopup = document.querySelector('.volume-popup');
+    if (!volumePopup) {
+        console.error('音量ポップアップ要素が見つかりません');
+        return;
+    }
+
+    // イベントリスナーの設定
+    sliderElement.addEventListener('input', handleVolumeChange);
+    volumeIcon.addEventListener('click', toggleVolumePopup);
+
+    // 初期音量の設定
+    const initialVolume = getVolume();
+    updateVolumeUI(initialVolume);
+
+    console.log('🌸 音量コントロールの初期化が完了しました');
 }
 
 /**
