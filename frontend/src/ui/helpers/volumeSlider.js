@@ -43,9 +43,12 @@ function formatVolumeValue(volume) {
  * @returns {Object} - スライダー関連の要素と制御メソッド
  */
 function createCustomSlider(initialValue, onChangeCallback) {
+    logDebug('🔍 createCustomSlider が呼び出されました: initialValue=' + initialValue);
+
     // スライダーコンテナ
     const sliderContainer = document.createElement('div');
     sliderContainer.className = 'slider-container custom-slider-container';
+    sliderContainer.id = 'volumeSlider'; // 既存コードと互換性を持たせるためにIDを設定
     sliderContainer.style.position = 'relative';
     sliderContainer.style.width = '100%';
     sliderContainer.style.height = '120px';
@@ -53,6 +56,7 @@ function createCustomSlider(initialValue, onChangeCallback) {
     sliderContainer.style.flexDirection = 'column';
     sliderContainer.style.alignItems = 'center';
     sliderContainer.style.justifyContent = 'center';
+    sliderContainer.style.border = '1px dashed rgba(169, 144, 225, 0.3)'; // デバッグ用に境界を表示
 
     // スライダートラック（背景バー）
     const sliderTrack = document.createElement('div');
@@ -80,7 +84,7 @@ function createCustomSlider(initialValue, onChangeCallback) {
     sliderThumb.style.position = 'absolute';
     sliderThumb.style.width = '20px';
     sliderThumb.style.height = '20px';
-    sliderThumb.style.background = 'rgba(147, 112, 219, 0.9)';
+    sliderThumb.style.background = 'hotpink'; // 目立つ色に変更してデバッグ
     sliderThumb.style.borderRadius = '50%';
     sliderThumb.style.boxShadow = '0 2px 5px rgba(0, 0, 0, 0.2)';
     sliderThumb.style.border = '2px solid rgba(255, 255, 255, 0.8)';
@@ -89,6 +93,11 @@ function createCustomSlider(initialValue, onChangeCallback) {
     sliderThumb.style.transition = 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)';
     sliderThumb.style.left = '50%';
     sliderThumb.style.transform = 'translateX(-50%)';
+    sliderThumb.style.visibility = 'visible'; // 初期状態でも必ず表示
+    sliderThumb.style.display = 'block'; // 確実に表示するためdisplayも設定
+    sliderThumb.style.bottom = '50px'; // 初期位置を中央に設定
+
+    logDebug('🔴 スライダーつまみ要素を生成しました');
 
     // スライダー値表示（オプション）
     const sliderValue = document.createElement('div');
@@ -103,14 +112,22 @@ function createCustomSlider(initialValue, onChangeCallback) {
     sliderValue.style.transition = 'opacity 0.3s ease';
 
     // 要素を組み立て
+    logDebug('🔄 スライダー要素を組み立てます');
     sliderTrack.appendChild(sliderFill);
     sliderContainer.appendChild(sliderTrack);
-    sliderContainer.appendChild(sliderThumb);
+    sliderContainer.appendChild(sliderThumb); // つまみを追加
     sliderContainer.appendChild(sliderValue);
+
+    // DOM追加後の確認
+    logDebug(`📊 DOM構成確認: sliderContainer子要素数=${sliderContainer.childElementCount}`);
+    if (sliderContainer.contains(sliderThumb)) {
+        logDebug('✅ sliderThumbはsliderContainerに含まれています');
+    } else {
+        logDebug('❌ sliderThumbがsliderContainerに含まれていません');
+    }
 
     // 現在の値
     let currentValue = initialValue || 0;
-    updateSliderUI(currentValue);
 
     // スライダーの値とUIを更新する関数
     function updateSliderUI(value) {
@@ -118,12 +135,25 @@ function createCustomSlider(initialValue, onChangeCallback) {
         value = Math.max(0, Math.min(100, value));
         currentValue = value;
 
+        // デバッグ出力
+        logDebug(`📝 スライダー値を更新: ${value}%`);
+
         // つまみと塗りつぶしバーの位置を更新
-        const trackHeight = sliderTrack.offsetHeight;
+        const trackHeight = sliderTrack.offsetHeight || 100; // offsetHeightが0の場合は100をデフォルト値とする
         const position = (value / 100) * trackHeight;
 
-        sliderThumb.style.bottom = `${position - 10}px`; // つまみの中心が位置に来るよう調整
+        logDebug(`📏 スライダーの位置計算: trackHeight=${trackHeight}, position=${position}, value=${value}`);
+
+        // つまみの位置計算を修正（位置が負にならないように補正）
+        const thumbPosition = Math.max(0, position - 10); // マイナス値にならないよう制限
+        sliderThumb.style.bottom = `${thumbPosition}px`;
         sliderFill.style.height = `${position}px`;
+
+        // CSSで必ず表示されるように強制
+        sliderThumb.style.visibility = 'visible';
+        sliderThumb.style.display = 'block'; // 確実に表示するためdisplayも設定
+        sliderFill.style.visibility = 'visible';
+        sliderTrack.style.visibility = 'visible';
 
         // 値表示を更新
         sliderValue.textContent = `${value}%`;
@@ -133,6 +163,9 @@ function createCustomSlider(initialValue, onChangeCallback) {
             onChangeCallback(value / 100);
         }
     }
+
+    // 初期値を設定
+    updateSliderUI(currentValue);
 
     // ドラッグ操作の状態
     let isDragging = false;
@@ -256,12 +289,13 @@ function createCustomSlider(initialValue, onChangeCallback) {
         }
     });
 
-    // API
+    // 設定されたイベントリスナーを返却
     return {
         container: sliderContainer,
-        setValue: (value) => {
-            updateSliderUI(value);
-        },
+        thumb: sliderThumb,
+        track: sliderTrack,
+        fill: sliderFill,
+        setValue: updateSliderUI,
         getValue: () => currentValue
     };
 }
@@ -273,81 +307,46 @@ function createCustomSlider(initialValue, onChangeCallback) {
 export function createVolumeSlider() {
     logDebug('🎚️ 音量スライダーを作成します');
 
-    // 音量ボタンを作成
-    const volumeButton = document.createElement('button');
-    volumeButton.id = 'volumeControlIcon';
-    volumeButton.textContent = getVolumeIcon(getVolume());
-    volumeButton.setAttribute('role', 'button');
-    volumeButton.setAttribute('tabindex', '0');
-    volumeButton.setAttribute('aria-label', '音量設定');
-
-    // 必要最小限のスタイルをインラインで設定（CSSが読み込まれない場合の対策）
-    volumeButton.style.webkitAppRegion = 'no-drag';
-    volumeButton.style.position = 'fixed';
-    volumeButton.style.bottom = '90px';
-    volumeButton.style.right = '20px';
-    volumeButton.style.width = '36px';
-    volumeButton.style.height = '36px';
-    volumeButton.style.borderRadius = '50%';
-    volumeButton.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
-    volumeButton.style.border = 'none';
-    volumeButton.style.boxShadow = '0 2px 8px rgba(169, 144, 225, 0.15)';
-    volumeButton.style.zIndex = '9999';
-    volumeButton.style.cursor = 'pointer';
-    volumeButton.style.display = 'flex';
-    volumeButton.style.alignItems = 'center';
-    volumeButton.style.justifyContent = 'center';
-    volumeButton.style.fontSize = '18px';
-    volumeButton.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
-
-    // 音量スライダーポップアップ
-    const volumePopup = document.createElement('div');
-    volumePopup.id = 'volumeControlPopup';
-
-    // 必要最小限のスタイルをインラインで設定
-    volumePopup.style.position = 'fixed';
-    volumePopup.style.bottom = '130px';
-    volumePopup.style.right = '20px';
-    volumePopup.style.width = '36px';
-    volumePopup.style.minHeight = '140px';
-    volumePopup.style.backgroundColor = 'rgba(255, 255, 255, 0.25)';
-    volumePopup.style.backdropFilter = 'blur(3px)';
-    volumePopup.style.webkitBackdropFilter = 'blur(3px)';
-    volumePopup.style.borderRadius = '22px';
-    volumePopup.style.padding = '10px 0';
-    volumePopup.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.05), 0 0 5px rgba(169, 144, 225, 0.15)';
-    volumePopup.style.zIndex = '9998';
-    volumePopup.style.transition = 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
-    volumePopup.style.opacity = '0';
-    volumePopup.style.transform = 'translateY(10px) scale(0.8)';
-    volumePopup.style.pointerEvents = 'none';
-    volumePopup.style.border = '1px solid rgba(255, 255, 255, 0.25)';
-    volumePopup.style.webkitAppRegion = 'no-drag';
-    volumePopup.style.display = 'flex';
-    volumePopup.style.alignItems = 'center';
-    volumePopup.style.justifyContent = 'center';
-
     // 音量変更ハンドラ
     const handleVolumeChange = (newVolume) => {
         setVolume(newVolume);
-        volumeButton.textContent = getVolumeIcon(newVolume);
         logDebug(`音量を${formatVolumeValue(newVolume)}に設定しました`);
     };
 
     // カスタムスライダーを作成
     const currentVolume = Math.round(getVolume() * 100);
-    const customSlider = createCustomSlider(currentVolume, handleVolumeChange);
+    const slider = createCustomSlider(currentVolume, handleVolumeChange);
 
-    // ポップアップにスライダーを追加
-    volumePopup.appendChild(customSlider.container);
+    // スライダーオブジェクトの中身をログ出力（デバッグ用）
+    logDebug('🔍 slider変数の中身: ' + JSON.stringify(Object.keys(slider)));
+    logDebug(`🔍 slider.container: ${slider.container ? '存在します' : '存在しません'}`);
+    logDebug(`🔍 slider.thumb: ${slider.thumb ? '存在します' : '存在しません'}`);
 
+    // スライダー要素の存在を確認
+    if (slider.container && slider.thumb) {
+        logDebug('✅ スライダーとつまみ要素が正常に生成されました');
+        logDebug(`📊 container.childElementCount=${slider.container.childElementCount}`);
+
+        // つまみ要素を直接操作して目立たせる（デバッグ用）
+        slider.thumb.style.background = 'hotpink';
+        slider.thumb.style.border = '2px dashed yellow';
+        slider.thumb.style.width = '24px';
+        slider.thumb.style.height = '24px';
+    } else {
+        logDebug('❌ スライダー要素生成に問題があります');
+    }
+
+    // 確実に表示するために、追加のスタイルを設定
+    slider.container.style.opacity = '1';
+    slider.container.style.visibility = 'visible';
+
+    // 直接要素を返す形に変更し、thumb要素も含める
     return {
-        volumeButton,
-        volumePopup,
+        slider: slider.container,
+        thumb: slider.thumb, // つまみ要素への参照も返す
         updateVolume: (newVolume) => {
             const volumeValue = Math.round(newVolume * 100);
-            customSlider.setValue(volumeValue);
-            volumeButton.textContent = getVolumeIcon(newVolume);
+            slider.setValue(volumeValue);
         }
     };
 } 

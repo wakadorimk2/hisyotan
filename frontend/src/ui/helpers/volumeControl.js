@@ -224,34 +224,119 @@ async function updateVolumeSlider() {
     const safeVolume = currentVolume <= 0 ? 0.1 : currentVolume;
 
     // 既存のスライダーコンテナを削除
+    logDebug('🧹 既存のスライダーを削除します');
     while (volumePopup.firstChild) {
         volumePopup.removeChild(volumePopup.firstChild);
     }
 
     try {
+        // ポップアップ自体のスタイルを事前に確認
+        const popupStyles = window.getComputedStyle(volumePopup);
+        logDebug(`🔍 ポップアップの現在のスタイル: display=${popupStyles.display}, visibility=${popupStyles.visibility}`);
+
         // volumeSlider.jsから新しいカスタムスライダーを取得
-        const { createVolumeSlider } = await import('./volumeSlider.js');
-        const volumeSliderElements = createVolumeSlider();
-
-        // ポップアップにスライダーを追加
-        volumePopup.appendChild(volumeSliderElements.container || volumeSliderElements.volumePopup.firstChild);
-
-        // 初期値を設定
-        if (volumeSliderElements.updateVolume) {
-            volumeSliderElements.updateVolume(safeVolume);
+        logDebug('📦 volumeSlider.jsモジュールを読み込みます');
+        let createVolumeSlider;
+        try {
+            const module = await import('./volumeSlider.js');
+            createVolumeSlider = module.createVolumeSlider;
+            logDebug(`🔍 インポート成功: module=${Object.keys(module).join(',')}`);
+        } catch (importError) {
+            logError(`🚨 volumeSlider.jsのインポートエラー: ${importError.message}`);
+            logError(`🚨 エラースタック: ${importError.stack}`);
+            throw new Error(`モジュールのインポートに失敗しました: ${importError.message}`);
         }
 
-        logDebug('カスタム音量スライダーを更新しました');
+        // スライダー要素を生成して追加
+        try {
+            if (typeof createVolumeSlider === 'function') {
+                logDebug('🔧 カスタムスライダーを生成します');
+                const sliderElement = createVolumeSlider();
+
+                // デバッグのために重要な属性を確認
+                if (sliderElement) {
+                    logDebug(`🔍 スライダー要素生成結果: id=${sliderElement.id}, class=${sliderElement.className}`);
+                    logDebug(`🔍 子要素数: ${sliderElement.childElementCount}`);
+
+                    // カスタムスライダーのサムが存在するか確認
+                    const thumb = sliderElement.querySelector('.custom-slider-thumb');
+                    if (thumb) {
+                        logDebug('✅ カスタムスライダーのサムが存在します');
+                        // サムに必要なクラスを確実に適用
+                        thumb.classList.add('custom-slider-thumb');
+                        thumb.style.visibility = 'visible';
+                        thumb.style.display = 'block';
+                    } else {
+                        logDebug('⚠️ カスタムスライダーのサムが見つかりません');
+                    }
+
+                    volumePopup.appendChild(sliderElement);
+                    return; // 成功したら終了
+                } else {
+                    logError('🚨 スライダー要素が生成できませんでした');
+                }
+            } else {
+                logError('🚨 createVolumeSlider関数が見つかりません');
+            }
+        } catch (error) {
+            logError(`🚨 カスタムスライダー生成エラー: ${error.message}`);
+        }
+
+        // ここに到達した場合は、フォールバックスライダーを使用する
+        logDebug('⚠️ フォールバックスライダーを使用します');
+        createFallbackSlider();
+
     } catch (error) {
         logError(`音量スライダー更新エラー: ${error.message}`);
+        // エラー発生時もフォールバックスライダーを表示
+        createFallbackSlider();
+    }
 
-        // エラー時はシンプルな代替UIを表示
-        const errorMessage = document.createElement('div');
-        errorMessage.textContent = '音量: ' + Math.round(safeVolume * 100) + '%';
-        errorMessage.style.color = 'rgba(147, 112, 219, 0.9)';
-        errorMessage.style.padding = '10px';
-        errorMessage.style.textAlign = 'center';
-        volumePopup.appendChild(errorMessage);
+    // フォールバックスライダーを作成する関数
+    function createFallbackSlider() {
+        logDebug('📝 フォールバックスライダーを作成します');
+
+        // スライダーコンテナ
+        const sliderContainer = document.createElement('div');
+        sliderContainer.className = 'slider-container';
+
+        // スライダーコントロール
+        const sliderControls = document.createElement('div');
+        sliderControls.className = 'slider-controls';
+
+        // 標準的なrange入力を作成
+        const sliderInput = document.createElement('input');
+        sliderInput.type = 'range';
+        sliderInput.id = 'volumeSlider';
+        sliderInput.className = 'slider-input'; // 重要: CSSが適用されるようにクラスを設定
+        sliderInput.min = '0';
+        sliderInput.max = '100';
+        sliderInput.value = String(Math.round(safeVolume * 100));
+        sliderInput.setAttribute('aria-label', '音量');
+        sliderInput.style.visibility = 'visible';
+        sliderInput.style.display = 'block';
+
+        // スライダー入力変更イベント
+        sliderInput.addEventListener('input', function () {
+            const value = parseInt(this.value, 10) / 100;
+            setVolume(value);
+            volumeIcon.textContent = getVolumeIcon(value);
+
+            // 設定を保存
+            localStorage.setItem('assistantVolume', this.value);
+
+            // Electron経由で音量を設定
+            if (window.electron && window.electron.ipcRenderer) {
+                window.electron.ipcRenderer.send('set-volume', parseInt(this.value, 10));
+            }
+        });
+
+        // 要素を組み立て
+        sliderControls.appendChild(sliderInput);
+        sliderContainer.appendChild(sliderControls);
+        volumePopup.appendChild(sliderContainer);
+
+        logDebug('✅ フォールバックスライダーの作成完了');
     }
 }
 

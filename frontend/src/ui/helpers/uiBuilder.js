@@ -264,7 +264,18 @@ export function initUIElements() {
     } catch (error) {
       console.error('❌ イベントリスナー設定中にエラーが発生しました:', error);
     }
-  }, 100);
+
+    // 音量コントロールの初期化も実行（エラーが発生しても確実に実行するため別途呼び出し）
+    try {
+      const { initVolumeControl } = require('../helpers/volumeControl.js');
+      if (typeof initVolumeControl === 'function') {
+        console.log('🔊 音量コントロールを初期化します');
+        initVolumeControl();
+      }
+    } catch (err) {
+      console.error('❌ 音量コントロール初期化エラー:', err);
+    }
+  }, 300); // 遅延時間を増やす
 
   // funyaBubbleを初期化
   setTimeout(() => {

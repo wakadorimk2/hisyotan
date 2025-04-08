@@ -137,7 +137,7 @@ export function setupEventListeners() {
   }
 
   // 吹き出し
-  const bubble = document.getElementById('speechBubble') || speechBubble;
+  const bubble = document.getElementById('speechBubble');
   if (bubble instanceof HTMLElement) {
     console.log('💬 speechBubbleにイベントリスナーを設定します');
     // CSS -webkit-app-regionを使用してドラッグ可能にする
