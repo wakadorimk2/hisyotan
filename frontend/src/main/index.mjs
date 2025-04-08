@@ -523,6 +523,8 @@ function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    frame: false,
+    transparent: true,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -531,7 +533,7 @@ function createWindow() {
       webSecurity: true,
       preload: path.join(__dirname, 'preload', 'preload.js')
     },
-    icon: path.join(__dirname, '..', 'assets', 'icon.png')
+    icon: path.join(__dirname, '..', 'assets', 'icons', 'icon.png')
   });
 
   // CSPの設定
