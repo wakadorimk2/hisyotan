@@ -4,7 +4,8 @@
   width: 64px;
   height: 64px;
   margin-bottom: 15px;
-  -webkit-app-region: no-drag; /* ラッパーをno-dragに変更してクリック可能に */
+  -webkit-app-region: no-drag;
+  /* ラッパーをno-dragに変更してクリック可能に */
 }
 
 /* 肉球アイコン */
@@ -12,7 +13,7 @@
   font-size: 30px;
   color: white;
   pointer-events: none;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
   animation: pulsePaw 3s ease-in-out infinite;
 }
 
@@ -30,7 +31,8 @@
 }
 
 /* ボタンのデフォルトスタイルをリセット */
-#paw-button, #quit-button {
+#paw-button,
+#quit-button {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -52,14 +54,15 @@
   background-color: rgba(255, 192, 203, 0.9);
   background-image: radial-gradient(circle, #ffb6c1 30%, #ff69b4 100%);
   cursor: pointer;
-  z-index: var(--z-index-overlay);
+  z-index: 9998;
+  /* 音量ボタン(9999)の下に配置 */
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 28px;
   font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
   color: white;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
   transition: transform var(--transition-duration) cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transform-origin: center;
   -webkit-app-region: no-drag;
@@ -70,22 +73,24 @@
   line-height: 1;
   text-align: center;
   overflow: visible;
+  pointer-events: auto !important;
+  /* 確実にクリック可能にする */
 }
 
 /* ホバー時のスタイル */
 #paw-button:hover {
   transform: scale(1.1) translateY(-5px);
   box-shadow: 0 8px 20px rgba(255, 150, 180, 0.6),
-              inset 0 -2px 5px rgba(255, 120, 160, 0.2),
-              inset 0 2px 5px rgba(255, 255, 255, 0.7);
+    inset 0 -2px 5px rgba(255, 120, 160, 0.2),
+    inset 0 2px 5px rgba(255, 255, 255, 0.7);
 }
 
 /* クリック時のスタイル */
 #paw-button:active {
   transform: scale(0.95);
   box-shadow: 0 2px 10px rgba(255, 150, 180, 0.3),
-              inset 0 -1px 3px rgba(255, 120, 160, 0.1),
-              inset 0 1px 3px rgba(255, 255, 255, 0.5);
+    inset 0 -1px 3px rgba(255, 120, 160, 0.1),
+    inset 0 1px 3px rgba(255, 255, 255, 0.5);
 }
 
 /* 終了ボタン */
@@ -114,7 +119,7 @@
   text-align: center;
   overflow: visible;
   font-weight: normal;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 #quit-button:hover {
@@ -139,7 +144,8 @@
   pointer-events: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid rgba(255, 200, 220, 0.5);
-  z-index: 1600; /* 最前面に表示 */
+  z-index: 1600;
+  /* 最前面に表示 */
   width: auto;
   min-width: 160px;
   line-height: 1.4;
@@ -170,20 +176,45 @@
 
 /* 肉球ふわふわアニメーション */
 @keyframes floatPaw {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 /* 肉球の鼓動アニメーション */
 @keyframes pulsePaw {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.1); opacity: 1; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
 }
 
 /* 背景の輝きアニメーション */
 @keyframes pulseBg {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.2); opacity: 0.8; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
 }
 
 /* メニューボタン（設定、その他機能用） */
@@ -231,4 +262,4 @@
 #statusIndicator.error {
   background-color: #f44336;
   box-shadow: 0 0 8px rgba(244, 67, 54, 0.8);
-} 
+}

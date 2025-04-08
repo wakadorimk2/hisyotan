@@ -20,6 +20,11 @@ let lastSpeechText = '';
 let lastSpeechTimestamp = 0;
 const DUPLICATE_SPEECH_THRESHOLD = 500; // ミリ秒単位での重複防止時間閾値
 
+// 音量設定（0.0〜1.0）
+let volume = localStorage.getItem('voiceVolume') !== null
+    ? parseFloat(localStorage.getItem('voiceVolume'))
+    : 1.0;
+
 /**
  * AudioContextの初期化
  * @returns {AudioContext} 初期化されたAudioContext
@@ -88,7 +93,7 @@ async function playAudioBuffer(audioBuffer) {
 
         // 音量ノードを追加
         const gainNode = context.createGain();
-        gainNode.gain.value = 1.0; // 最大音量
+        gainNode.gain.value = volume; // 現在の音量設定を適用
 
         // ノードを接続
         sourceNode.connect(gainNode);
@@ -96,7 +101,7 @@ async function playAudioBuffer(audioBuffer) {
 
         // 再生中フラグをセット
         isPlaying = true;
-        logDebug('音声再生を開始します');
+        logDebug(`音声再生を開始します (音量: ${volume})`);
 
         // 再生開始
         sourceNode.start(0);
@@ -354,4 +359,28 @@ export function isSpeaking() {
 export function clearAudioCache() {
     audioCache.clear();
     logDebug('音声キャッシュをクリアしました');
+}
+
+/**
+ * 音量を設定する
+ * @param {number} newVolume - 新しい音量値（0.0〜1.0）
+ */
+export function setVolume(newVolume) {
+    // 値の範囲を0.0〜1.0に制限
+    const validVolume = Math.max(0.0, Math.min(1.0, newVolume));
+    volume = validVolume;
+
+    // 設定をlocalStorageに保存
+    localStorage.setItem('voiceVolume', volume.toString());
+
+    logDebug(`音量を設定しました: ${volume}`);
+    return volume;
+}
+
+/**
+ * 現在の音量を取得する
+ * @returns {number} 現在の音量値（0.0〜1.0）
+ */
+export function getVolume() {
+    return volume;
 } 

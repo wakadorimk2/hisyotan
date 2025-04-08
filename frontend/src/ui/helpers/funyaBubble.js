@@ -36,6 +36,9 @@ let isSpeakingInProgress = false;
 let lastDisplayedText = '';
 let lastDisplayedTime = 0;
 
+// 吹き出しの自動非表示を無効にするフラグ
+let keepBubbleVisibleFlag = false;
+
 /**
  * ランダムなメッセージを取得
  * @returns {string} ランダムなメッセージ
@@ -225,10 +228,14 @@ export function showFunyaBubble(text, duration = 5000, withVoice = true, emotion
         }
     }
 
-    // 指定時間後に自動的に非表示
-    timeout = setTimeout(() => {
-        hideFunyaBubble();
-    }, duration);
+    // 指定時間後に自動的に非表示（強制表示モードでない場合のみ）
+    if (!keepBubbleVisibleFlag) {
+        timeout = setTimeout(() => {
+            hideFunyaBubble();
+        }, duration);
+    } else {
+        logDebug('🔒 吹き出しの自動非表示が無効化されているため、タイマーをセットしません');
+    }
 
     return bubbleElement;
 }
@@ -237,6 +244,12 @@ export function showFunyaBubble(text, duration = 5000, withVoice = true, emotion
  * 吹き出しを非表示にする
  */
 export function hideFunyaBubble() {
+    // 強制表示モードの場合は非表示にしない
+    if (keepBubbleVisibleFlag) {
+        logDebug('🔒 吹き出しの自動非表示が無効化されているため、非表示処理をスキップします');
+        return;
+    }
+
     if (bubbleElement) {
         bubbleElement.classList.remove('show');
         bubbleElement.classList.add('hide');
@@ -333,6 +346,29 @@ export function stopFunyaWatchingMode() {
 
     // 吹き出しを非表示
     updateBubbleVisibility(false);
+}
+
+/**
+ * 吹き出しの自動非表示を無効にする
+ * 設定UIが表示されている間など、吹き出しを表示し続けたい場合に使用
+ */
+export function keepBubbleVisible() {
+    keepBubbleVisibleFlag = true;
+    logDebug('🔒 吹き出しの自動非表示を無効化しました');
+
+    // 既存のタイマーをクリア
+    if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+    }
+}
+
+/**
+ * 吹き出しの自動非表示を有効に戻す
+ */
+export function allowBubbleHide() {
+    keepBubbleVisibleFlag = false;
+    logDebug('🔓 吹き出しの自動非表示を再有効化しました');
 }
 
 // アプリの起動時に自動的に開始

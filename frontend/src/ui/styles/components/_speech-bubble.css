@@ -360,3 +360,234 @@ body.mouse-active .speech-bubble.active {
   animation: none;
   transition: none;
 }
+
+/* ボリュームスライダー用スタイル */
+.slider-container {
+  margin: 5px 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  box-shadow: none;
+}
+
+.slider-container:hover {
+  background: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+/* スライダーコントロールを中央揃えに */
+.slider-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.slider-input {
+  flex-grow: 1;
+  width: 6px;
+  height: 120px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(240, 230, 255, 0.5);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  outline: none;
+  opacity: 0.85;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  margin: 10px auto;
+  writing-mode: bt-lr;
+  /* IE */
+  -webkit-appearance: slider-vertical;
+  /* WebKit */
+}
+
+.slider-input::-webkit-slider-runnable-track {
+  width: 6px;
+  cursor: pointer;
+  background: rgba(240, 230, 255, 0.5);
+  border-radius: 20px;
+}
+
+.slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 0;
+  margin-left: -6px;
+  /* つまみの位置を調整 - 中央に配置 */
+  border-radius: 50%;
+  background: rgba(169, 144, 225, 0.7);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.slider-input:hover {
+  opacity: 1;
+  width: 8px;
+  background: rgba(240, 230, 255, 0.7);
+  box-shadow: 0 0 10px rgba(169, 144, 225, 0.2), 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+.slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  background: rgba(147, 112, 219, 0.8);
+  box-shadow: 0 0 8px rgba(147, 112, 219, 0.4), 0 0 4px rgba(255, 255, 255, 0.3);
+}
+
+.slider-input::-webkit-slider-thumb:active {
+  transform: scale(0.9);
+  background: rgba(138, 92, 214, 0.8);
+}
+
+/* ラベルと数値表示を非表示 */
+.slider-label,
+.slider-value {
+  display: none;
+}
+
+.slider-description {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #a199af;
+  font-style: italic;
+}
+
+/* 音量アイコン */
+#volumeControlIcon {
+  position: fixed;
+  bottom: 20px;
+  right: 80px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(169, 144, 225, 0.15);
+  z-index: 9999;
+  font-size: 18px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* ふにゃっとした動き */
+  opacity: 0.8;
+  pointer-events: auto !important;
+  -webkit-app-region: no-drag !important;
+  user-select: none;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+}
+
+#volumeControlIcon:hover {
+  transform: scale(1.1) translateY(-2px);
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 12px rgba(169, 144, 225, 0.3), 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+#volumeControlIcon:active {
+  transform: scale(0.95);
+}
+
+/* 音量スライダーポップアップ */
+#volumeControlPopup {
+  position: fixed;
+  bottom: 70px;
+  right: 80px;
+  width: 36px;
+  height: auto;
+  min-height: 140px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  border-radius: 22px;
+  padding: 10px 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05), 0 0 5px rgba(169, 144, 225, 0.15);
+  z-index: 9999;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: bottom center;
+  opacity: 0;
+  transform: translateY(10px) scale(0.8);
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  -webkit-app-region: no-drag !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#volumeControlPopup.active {
+  opacity: 1;
+  transform: translateY(-25px) scale(1);
+  pointer-events: all;
+}
+
+/* 音量アイコンの矢印装飾（PopUpへの誘導） */
+#volumeControlIcon::after {
+  content: '▲';
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) scale(0);
+  font-size: 10px;
+  color: rgba(147, 112, 219, 0.8);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+#volumeControlIcon:hover::after {
+  transform: translateX(-50%) scale(1);
+  opacity: 0.7;
+}
+
+/* ポップアップが表示されているときのアイコンスタイル */
+#volumeControlIcon.popup-active {
+  background: rgba(242, 235, 255, 0.9);
+  box-shadow: 0 2px 10px rgba(169, 144, 225, 0.4);
+}
+
+/* アニメーション */
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.float-up {
+  animation: floatUp 0.4s ease-out forwards;
+}
+
+.pulse {
+  animation: pulse 1s ease-in-out 2;
+}

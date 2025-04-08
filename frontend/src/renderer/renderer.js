@@ -15,6 +15,7 @@ import apiClient from '../core/apiClient.js';
 import speechManager from '../emotion/speechManager.js';
 import { initAssistantUI } from './assistantUI.js';
 import { startFunyaWatchingMode, showFunyaBubble } from '../ui/helpers/funyaBubble.js';
+import { initVolumeControl } from '../ui/helpers/volumeControl.js';
 
 // デバッグ情報
 console.log('🌸 renderer.js が読み込まれました');
@@ -61,6 +62,29 @@ if (!window.speechManager) {
     checkVoicevoxConnection: async () => false,
     setConfig: (config) => console.log('フォールバックsetConfig:', config)
   };
+}
+
+/**
+ * アプリケーションの初期化
+ */
+async function initializeApp() {
+  try {
+    console.log('🚀 アプリケーションを初期化します');
+
+    // 音量コントロールの初期化
+    console.log('🔊 音量コントロールを初期化します');
+    initVolumeControl();
+
+    // VOICEVOXへの接続確認
+    if (window.speechManager && typeof window.speechManager.checkVoicevoxConnection === 'function') {
+      const voicevoxConnected = await window.speechManager.checkVoicevoxConnection();
+      console.log(`VOICEVOX接続状態: ${voicevoxConnected ? '✅ 接続済み' : '❌ 未接続'}`);
+    }
+
+    console.log('✅ アプリケーションの初期化が完了しました');
+  } catch (error) {
+    console.error('⚠️ アプリケーションの初期化エラー:', error);
+  }
 }
 
 /**

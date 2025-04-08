@@ -7,8 +7,8 @@
 
 import { setupEventListeners } from '../handlers/uiEventHandlers.js';
 
-// 初期化済みフラグ
-let isUIInitialized = false;
+// 初期化済みフラグ（エクスポートしてどこからでもアクセスできるように）
+export let isUIInitialized = false;
 
 /**
  * UI要素を作成
@@ -260,8 +260,8 @@ export function updateBubblePosition() {
 export function initUIElements() {
   console.log('🌸 assistantUI: UI要素を初期化します');
 
-  // 既に初期化済みの場合は早期リターン
-  if (isUIInitialized && document.getElementById('paw-button')) {
+  // 初期化済みの場合は早期リターン（変数参照エラーを防ぐために明示的に変数をチェック）
+  if (typeof isUIInitialized !== 'undefined' && isUIInitialized && document.getElementById('paw-button')) {
     console.log('🔄 UI要素はすでに初期化済みです');
     return;
   }

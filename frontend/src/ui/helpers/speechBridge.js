@@ -8,6 +8,8 @@
 import { showFunyaBubble, hideFunyaBubble } from './funyaBubble.js';
 import { logDebug } from '../../core/logger.js';
 import { speak, speakWithObject } from '../../emotion/speechManager.js';
+import { renderSettingUI } from './settingPanel.js';
+import { showVolumeSettingInPanel } from './volumeControl.js';
 
 // 無限ループ防止のためのフラグ
 let isProcessingSpeech = false;
@@ -150,6 +152,27 @@ export function showHordeModeSettings(currentValue = false, onChangeCallback = n
     // 実装を促すメッセージを表示
     showFunyaBubble('ホードモード設定は現在移行中です✨', 5000, false);
     speak('ホードモード設定は現在移行中です');
+}
+
+/**
+ * 音量設定パネルを表示する
+ */
+export function showVolumeSettings() {
+    logDebug('🔊 音量設定パネルを表示します');
+
+    try {
+        // 音量設定のペイロードを取得
+        const volumeSettingPayload = showVolumeSettingInPanel();
+
+        // 設定パネルに表示
+        renderSettingUI(volumeSettingPayload);
+
+        // 説明メッセージを表示
+        showFunyaBubble('音量をお好みの大きさに調整できます ✨', 5000, false);
+    } catch (error) {
+        logDebug(`音量設定パネル表示エラー: ${error.message}`);
+        showFunyaBubble('音量設定の表示中にエラーが発生しました 😢', 3000, false);
+    }
 }
 
 // 注: 循環参照を避けるためにデフォルトエクスポートは行わない
