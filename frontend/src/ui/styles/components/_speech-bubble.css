@@ -422,8 +422,7 @@ body.mouse-active .speech-bubble.active {
   appearance: none;
   width: 18px;
   height: 18px;
-  margin-top: 0;
-  margin-left: -6px;
+  transform: translateX(5px);
   /* つまみの位置を調整 - 中央に配置 */
   border-radius: 50%;
   background: rgba(169, 144, 225, 0.7);
@@ -441,13 +440,13 @@ body.mouse-active .speech-bubble.active {
 }
 
 .slider-input::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
+  transform: translateX(5px) scale(1.15);
   background: rgba(147, 112, 219, 0.8);
   box-shadow: 0 0 8px rgba(147, 112, 219, 0.4), 0 0 4px rgba(255, 255, 255, 0.3);
 }
 
 .slider-input::-webkit-slider-thumb:active {
-  transform: scale(0.9);
+  transform: translateX(5px) scale(0.9);
   background: rgba(138, 92, 214, 0.8);
 }
 
