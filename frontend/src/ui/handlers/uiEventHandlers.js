@@ -3,6 +3,7 @@ import { handleQuitButtonClick } from './quitButtonHandler.js';
 import * as emotionalBridge from '../../emotion/emotionalBridge.js';
 import { logDebug } from '../../core/logger.js';
 import { getRandomCutePhrase } from '../../emotion/emotionHandler.js';
+import { playPresetSound } from '../../emotion/audioReactor.js';
 
 // イベントリスナーの設定を分離
 export function setupEventListeners() {
@@ -56,10 +57,10 @@ export function setupEventListeners() {
         return;
       }
 
-      // クールタイムチェック（連打防止）
+      // クールタイムチェック（連打防止）- UI表示用
       const now = Date.now();
       const lastClick = imgElement._lastClickTime || 0;
-      const cooldown = 1000; // 1秒間のクールタイム
+      const cooldown = 800; // UIポーズ変更のクールタイム（0.8秒）
 
       if (now - lastClick < cooldown) {
         logDebug('クリック連打防止: クールタイム中のためスキップします');
@@ -73,24 +74,24 @@ export function setupEventListeners() {
       try {
         emotionalBridge.setRandomTag('pose', 'POINTING');
         console.log('🖼️ 指さしポーズをランダムに設定しました');
+
+        // 「ぴょこっ」効果音を再生（クールダウンは audioReactor 側で制御）
+        playPresetSound('funya').then(() => {
+          logDebug('「ぴょこっ」効果音を再生しました');
+        }).catch(error => {
+          console.error('効果音再生エラー:', error);
+        });
       } catch (error) {
         console.error('❌ 指さしポーズ設定中にエラーが発生しました:', error);
       }
-
-      // かわいいセリフをランダムに表示
-      const phraseObj = getRandomCutePhrase();
-      if (phraseObj && phraseObj.text) {
-        // グローバルwindow.speechManagerを使って speak を呼び出す
-        // 循環参照を避けるため、直接importしない
-        if (window.speechManager && window.speechManager.speak) {
-          window.speechManager.speak(phraseObj.text);
-        } else {
-          logDebug('speechManager がまだ初期化されていないため、セリフ表示をスキップします');
-        }
-      }
     });
+
+    // ドラッグ処理を設定
+    setupDragBehavior(imgElement);
+
+    console.log('🖼️ assistantImageのイベント設定が完了しました');
   } else {
-    console.log('ℹ️ assistantImage要素が見つかりません。UI初期化後に再試行します');
+    console.log('ℹ️ assistantImageが見つかりません。UI初期化後に再試行します');
   }
 
   // 吹き出し
@@ -108,10 +109,57 @@ export function setupEventListeners() {
     console.log('ℹ️ speechBubble要素が見つかりません。UI初期化後に再試行します');
   }
 
-  // 設定済みフラグを設定
+  // 処理済みフラグを設定
   window._eventListenersInitialized = true;
+  console.log('🔄 イベントリスナーの設定が完了しました');
 }
 
+// ドラッグ処理の設定を分離
+function setupDragBehavior(element) {
+  if (!element) return;
+
+  let isDragging = false;
+  let startPos = { x: 0, y: 0 };
+
+  // マウスダウン時の処理
+  element.addEventListener('mousedown', (e) => {
+    // 左クリックの場合のみドラッグ処理を行う
+    if (e.button === 0) {
+      // 開始位置を記録
+      startPos = { x: e.clientX, y: e.clientY };
+      console.log('🖱️ 立ち絵のマウスダウンを検出', startPos);
+    }
+  });
+
+  // マウス移動時の処理
+  document.addEventListener('mousemove', (e) => {
+    // 左ボタンが押されている場合のみドラッグ判定
+    if (e.buttons === 1 && startPos.x !== 0) {
+      // 少し動いたらドラッグと判定
+      const diffX = Math.abs(e.clientX - startPos.x);
+      const diffY = Math.abs(e.clientY - startPos.y);
+
+      // 5px以上動いたらドラッグと判定
+      if (diffX > 5 || diffY > 5) {
+        element._isDragging = true;
+
+        // Electronにウィンドウドラッグの開始を通知
+        if (window.electron && window.electron.ipcRenderer) {
+          window.electron.ipcRenderer.send('start-window-drag');
+        }
+      }
+    }
+  });
+
+  // マウスアップ時の処理
+  document.addEventListener('mouseup', () => {
+    // フラグをリセット
+    setTimeout(() => {
+      element._isDragging = false;
+      startPos = { x: 0, y: 0 };
+    }, 100);
+  });
+}
 
 // 終了ボタンのイベント設定を分離
 export function setupQuitButtonEvents(quitButton) {

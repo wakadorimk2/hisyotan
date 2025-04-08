@@ -41,16 +41,74 @@ const voiceMap = {
 let currentSE = null;
 let currentVoice = null;
 
+// 音声再生履歴と調整のための変数
+let lastPlayTime = 0;
+let consecutivePlayCount = 0;
+const AUDIO_COOLDOWN = 800; // 音声再生の最小間隔（ミリ秒）
+
+// 連続再生時の音量調整設定
+const VOLUME_ADJUSTMENTS = [
+  1.0,    // 初回: 100%
+  0.8,    // 2回目: 80%
+  0.6,    // 3回目以降: 60%
+];
+
+/**
+ * 連続再生回数に基づいて音量を調整する
+ * @returns {number} 調整後の音量（0.0～1.0）
+ */
+function getAdjustedVolume() {
+  const index = Math.min(consecutivePlayCount, VOLUME_ADJUSTMENTS.length - 1);
+  return VOLUME_ADJUSTMENTS[index];
+}
+
+/**
+ * 連続再生の状態を更新する
+ * @returns {boolean} クールダウン中かどうか
+ */
+function updatePlaybackState() {
+  const now = Date.now();
+  const timeSinceLastPlay = now - lastPlayTime;
+
+  // クールダウンチェック
+  if (timeSinceLastPlay < AUDIO_COOLDOWN) {
+    logDebug(`音声クールダウン中: 前回から${timeSinceLastPlay}ms (クールダウン: ${AUDIO_COOLDOWN}ms)`);
+    return true; // クールダウン中
+  }
+
+  // 連続再生カウントの更新
+  if (timeSinceLastPlay < 3000) { // 3秒以内なら連続再生とみなす
+    consecutivePlayCount = Math.min(consecutivePlayCount + 1, VOLUME_ADJUSTMENTS.length - 1);
+    logDebug(`連続再生${consecutivePlayCount + 1}回目: 音量${getAdjustedVolume() * 100}%`);
+  } else {
+    // 3秒以上経過していたらリセット
+    consecutivePlayCount = 0;
+    logDebug('再生間隔リセット: 音量100%');
+  }
+
+  lastPlayTime = now;
+  return false; // クールダウン終了
+}
+
 /**
  * 感情に応じた音声リアクションを再生する関数
  * 
  * @param {string} emotion - 感情タイプ (surprised, worried, fearful, funya, happy, sad など)
  * @param {number} delay - SEとVOICEVOX音声の間の遅延時間（ミリ秒）
+ * @param {boolean} ignoreCooldown - クールダウンを無視するかどうか
  * @return {boolean} - 再生開始に成功したかどうか
  */
-export function reactWithVoice(emotion, delay = 500) {
+export function reactWithVoice(emotion, delay = 500, ignoreCooldown = false) {
   try {
     logDebug(`音声リアクション開始: 感情=${emotion}, 遅延=${delay}ms`);
+
+    // クールダウンチェック
+    if (!ignoreCooldown && updatePlaybackState()) {
+      return false; // クールダウン中は再生しない
+    }
+
+    // 音量調整
+    const volume = getAdjustedVolume();
 
     // 前の再生があれば停止
     stopCurrentPlayback();
@@ -60,6 +118,8 @@ export function reactWithVoice(emotion, delay = 500) {
     // SEの再生
     if (presetMap[emotion]) {
       currentSE = new Audio(presetMap[emotion]);
+      currentSE.volume = volume; // 音量調整を適用
+
       currentSE.addEventListener('ended', () => {
         currentSE = null;
         logDebug(`SE再生完了: ${presetMap[emotion]}`);
@@ -73,7 +133,7 @@ export function reactWithVoice(emotion, delay = 500) {
 
       currentSE.play()
         .then(() => {
-          logDebug(`SE再生開始: ${presetMap[emotion]}`);
+          logDebug(`SE再生開始: ${presetMap[emotion]} (音量: ${volume * 100}%)`);
           playbackStarted = true;
         })
         .catch(err => {
@@ -88,6 +148,8 @@ export function reactWithVoice(emotion, delay = 500) {
         if (!voiceMap[emotion]) return;
 
         currentVoice = new Audio(voiceMap[emotion]);
+        currentVoice.volume = volume; // 音量調整を適用
+
         currentVoice.addEventListener('ended', () => {
           currentVoice = null;
           logDebug(`音声再生完了: ${voiceMap[emotion]}`);
@@ -101,7 +163,7 @@ export function reactWithVoice(emotion, delay = 500) {
 
         currentVoice.play()
           .then(() => {
-            logDebug(`音声再生開始: ${voiceMap[emotion]}`);
+            logDebug(`音声再生開始: ${voiceMap[emotion]} (音量: ${volume * 100}%)`);
           })
           .catch(err => {
             logDebug(`音声再生失敗: ${err.message}`);
@@ -144,14 +206,23 @@ export function stopCurrentPlayback() {
  * 指定した感情タイプのSEのみを再生する
  * 
  * @param {string} emotion - 感情タイプ
+ * @param {boolean} ignoreCooldown - クールダウンを無視するかどうか
  * @return {boolean} - 再生開始に成功したかどうか
  */
-export function playSE(emotion) {
+export function playSE(emotion, ignoreCooldown = false) {
   try {
     if (!presetMap[emotion]) {
       logDebug(`指定された感情タイプのSEがありません: ${emotion}`);
       return false;
     }
+
+    // クールダウンチェック
+    if (!ignoreCooldown && updatePlaybackState()) {
+      return false; // クールダウン中は再生しない
+    }
+
+    // 音量調整
+    const volume = getAdjustedVolume();
 
     // 前のSEがあれば停止
     if (currentSE) {
@@ -161,6 +232,8 @@ export function playSE(emotion) {
     }
 
     currentSE = new Audio(presetMap[emotion]);
+    currentSE.volume = volume; // 音量調整を適用
+
     currentSE.addEventListener('ended', () => {
       currentSE = null;
       logDebug(`SE再生完了: ${presetMap[emotion]}`);
@@ -168,7 +241,7 @@ export function playSE(emotion) {
 
     currentSE.play()
       .then(() => {
-        logDebug(`SE再生開始: ${presetMap[emotion]}`);
+        logDebug(`SE再生開始: ${presetMap[emotion]} (音量: ${volume * 100}%)`);
       })
       .catch(err => {
         logDebug(`SE再生失敗: ${err.message}`);
@@ -187,14 +260,23 @@ export function playSE(emotion) {
  * 指定した感情タイプの音声のみを再生する
  * 
  * @param {string} emotion - 感情タイプ
+ * @param {boolean} ignoreCooldown - クールダウンを無視するかどうか
  * @return {boolean} - 再生開始に成功したかどうか
  */
-export function playVoice(emotion) {
+export function playVoice(emotion, ignoreCooldown = false) {
   try {
     if (!voiceMap[emotion]) {
       logDebug(`指定された感情タイプの音声がありません: ${emotion}`);
       return false;
     }
+
+    // クールダウンチェック
+    if (!ignoreCooldown && updatePlaybackState()) {
+      return false; // クールダウン中は再生しない
+    }
+
+    // 音量調整
+    const volume = getAdjustedVolume();
 
     // 前の音声があれば停止
     if (currentVoice) {
@@ -204,6 +286,8 @@ export function playVoice(emotion) {
     }
 
     currentVoice = new Audio(voiceMap[emotion]);
+    currentVoice.volume = volume; // 音量調整を適用
+
     currentVoice.addEventListener('ended', () => {
       currentVoice = null;
       logDebug(`音声再生完了: ${voiceMap[emotion]}`);
@@ -211,7 +295,7 @@ export function playVoice(emotion) {
 
     currentVoice.play()
       .then(() => {
-        logDebug(`音声再生開始: ${voiceMap[emotion]}`);
+        logDebug(`音声再生開始: ${voiceMap[emotion]} (音量: ${volume * 100}%)`);
       })
       .catch(err => {
         logDebug(`音声再生失敗: ${err.message}`);
@@ -282,9 +366,10 @@ export function reactToGameEvent(gameEvent) {
  * 指定した名前のプリセット音声を再生する
  * 
  * @param {string} presetName - プリセット音声の名前 (altu, funya, gasp, kya, scream, sigh など)
+ * @param {boolean} ignoreCooldown - クールダウンを無視するかどうか
  * @return {Promise<boolean>} - 再生開始に成功したかどうかを返すPromise
  */
-export function playPresetSound(presetName) {
+export function playPresetSound(presetName, ignoreCooldown = false) {
   // eslint-disable-next-line no-unused-vars
   return new Promise((resolve, _) => {
     try {
@@ -296,7 +381,16 @@ export function playPresetSound(presetName) {
         return;
       }
 
-      logDebug(`プリセット音声再生開始: ${presetName} => ${soundPath}`);
+      // クールダウンチェック
+      if (!ignoreCooldown && updatePlaybackState()) {
+        resolve(false); // クールダウン中は再生しない
+        return;
+      }
+
+      // 音量調整
+      const volume = getAdjustedVolume();
+
+      logDebug(`プリセット音声再生開始: ${presetName} => ${soundPath} (音量: ${volume * 100}%)`);
 
       // 前のSEがあれば停止
       if (currentSE) {
@@ -306,6 +400,7 @@ export function playPresetSound(presetName) {
       }
 
       currentSE = new Audio(soundPath);
+      currentSE.volume = volume; // 音量調整を適用
 
       currentSE.addEventListener('ended', () => {
         currentSE = null;
