@@ -43,6 +43,7 @@ export default defineConfig({
   // エイリアスの設定（相対パスを@付きのパスで置き換え可能に）
   resolve: {
     alias: {
+      '@features': resolve(__dirname, 'frontend/src/features'),
       '@core': resolve(__dirname, 'frontend/src/core'),
       '@ui': resolve(__dirname, 'frontend/src/ui'),
       '@emotion': resolve(__dirname, 'frontend/src/emotion'),
