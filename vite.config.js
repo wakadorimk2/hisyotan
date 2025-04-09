@@ -44,6 +44,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@features': resolve(__dirname, 'frontend/src/features'),
+      '@shared': resolve(__dirname, 'frontend/src/shared'),
       '@core': resolve(__dirname, 'frontend/src/core'),
       '@ui': resolve(__dirname, 'frontend/src/ui'),
       '@emotion': resolve(__dirname, 'frontend/src/emotion'),

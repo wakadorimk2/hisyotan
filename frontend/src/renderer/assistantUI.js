@@ -4,9 +4,7 @@
  */
 
 // 必要なモジュールのインポート
-import { observeSpeechTextAutoRecovery } from '../ui/helpers/speechObserver.js';
-import { createUI, initUIElements } from '../ui/helpers/uiBuilder.js';
-import { setupEventListeners } from '../ui/handlers/uiEventHandlers.js';
+import { createUI } from '../ui/helpers/uiBuilder.js';
 import { showHordeModeSettings, showBubble, setText } from '../ui/helpers/speechBridge.js';
 import { showAssistantImage } from '../ui/helpers/assistantImage.js';
 import { cleanupDuplicateElements, verifyAndFixUIStructure } from '../ui/helpers/uiVerifier.js';

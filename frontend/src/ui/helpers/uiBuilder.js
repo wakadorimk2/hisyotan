@@ -5,7 +5,7 @@
  * 
  */
 
-import { setupEventListeners } from '../handlers/uiEventHandlers.js';
+import { setupEventListeners } from '@features/ui/handlers/uiEventHandlers.js';
 import { startFunyaWatchingMode, showFunyaBubble } from '../helpers/funyaBubble.js';
 import { createVolumeSlider } from '../helpers/volumeSlider.js';
 
@@ -119,7 +119,7 @@ export function createUI() {
   });
 
   // 音量スライダーを作成（volumeSlider.jsから取得）
-  const { volumeButton, volumePopup } = createVolumeSlider();
+  const { slider: volumeSlider } = createVolumeSlider();
 
   // 要素をラッパーに追加
   characterSpeechWrapper.appendChild(assistantImage);
@@ -129,8 +129,7 @@ export function createUI() {
   container.appendChild(characterSpeechWrapper);
   container.appendChild(pawButtonWrapper); // ボタンラッパーを追加
   container.appendChild(quitButton);
-  container.appendChild(volumeButton); // 音量ボタンを追加
-  container.appendChild(volumePopup); // 音量スライダーポップアップを追加
+  container.appendChild(volumeSlider); // 音量スライダーを追加
 
   // コンテナをドキュメントに追加
   document.body.appendChild(container);
