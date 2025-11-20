@@ -11,8 +11,7 @@
 
 <img width="339" height="470" alt="スクリーンショット 2025-04-09 030322" src="https://github.com/user-attachments/assets/1bac4187-ba7f-402d-998b-aafeb098f538" />
 
-![Adobe Express - IMG_6766](https://github.com/user-attachments/assets/cffb7197-ce7f-40b9-8d58-882c5589e2b6)
-
+![Adobe Express - IMG_6761](https://github.com/user-attachments/assets/c119f6f1-5ad8-48b4-a813-0c9fe429c6b8)
 
 ---
 
