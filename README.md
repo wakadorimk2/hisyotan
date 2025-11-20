@@ -9,6 +9,8 @@
 ちょっとした音声や表情で「そばにいるよ」って伝えてくれるAI秘書。  
 ゲームの中でも、作業中でも、ふにゃっと支えてくれる存在です✨
 
+<img width="339" height="470" alt="スクリーンショット 2025-04-09 030322" src="https://github.com/user-attachments/assets/1bac4187-ba7f-402d-998b-aafeb098f538" />
+
 ---
 
 ## 🧭 構成ガイド
