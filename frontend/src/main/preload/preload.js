@@ -225,4 +225,36 @@ contextBridge.exposeInMainWorld('electronAPI', {
       return false;
     }
   }
-}); 
+});
+
+// speechManagerがレンダラで初期化される前に呼び出されても安全なポーリングAPIを公開
+contextBridge.exposeInMainWorld('speechManagerBridge', {
+  /**
+   * レンダラのspeechManagerが利用可能になるまで待機する
+   * @param {number} timeoutMs - 最大待機時間
+   * @param {number} intervalMs - ポーリング間隔
+   * @returns {Promise<object|null>} 利用可能なspeechManagerオブジェクト、またはnull
+   */
+  waitForReady: async (timeoutMs = 3000, intervalMs = 100) => {
+    const normalize = () => {
+      if (window.SpeechManager && !window.speechManager) {
+        window.speechManager = window.SpeechManager;
+      }
+      return window.speechManager || window.SpeechManager || null;
+    };
+
+    const direct = normalize();
+    if (direct) return direct;
+
+    const started = Date.now();
+    while (Date.now() - started < timeoutMs) {
+      const manager = normalize();
+      if (manager) return manager;
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+
+    console.error('speechManagerBridge.waitForReady: speechManager not available within timeout');
+    return null;
+  }
+});
+console.log('🎤 preload: speechManagerBridge is exposed (before renderer boot)'); 

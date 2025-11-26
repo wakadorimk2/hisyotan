@@ -96,6 +96,10 @@ try {
     console.error('❌ speechManagerのインポートに失敗しました');
   } else {
     window.speechManager = speechManager;
+    window.SpeechManager = window.speechManager;
+    if (!window.speechManagerReady) {
+      window.speechManagerReady = Promise.resolve(window.speechManager);
+    }
     console.log('🎤 SpeechManager をグローバルに登録しました:',
       Object.keys(speechManager).join(', '));
 
@@ -130,6 +134,10 @@ if (!window.speechManager) {
     checkVoicevoxConnection: async () => false,
     setConfig: (config) => console.log('フォールバックsetConfig:', config)
   };
+  window.SpeechManager = window.speechManager;
+  if (!window.speechManagerReady) {
+    window.speechManagerReady = Promise.resolve(window.speechManager);
+  }
 }
 
 /**
