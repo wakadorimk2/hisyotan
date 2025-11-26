@@ -59,11 +59,20 @@ contextBridge.exposeInMainWorld('electron', {
   theme: {
     // 現在のテーマがダークモードかどうかを取得 -> bugでクラッシュする?(https://github.com/electron/electron/issues/46429)
     isDarkMode: () => {
+      if (!nativeTheme || typeof nativeTheme.shouldUseDarkColors === 'undefined') {
+        return false;
+      }
       return nativeTheme.shouldUseDarkColors;
     },
 
     // テーマ変更イベントを監視
     onThemeChanged: (callback) => {
+      if (!nativeTheme || typeof nativeTheme.on !== 'function') {
+        console.warn('nativeThemeが利用できないため、テーマ変更イベントを購読できません');
+        callback(false);
+        return;
+      }
+
       nativeTheme.on('updated', () => {
         callback(nativeTheme.shouldUseDarkColors);
       });
