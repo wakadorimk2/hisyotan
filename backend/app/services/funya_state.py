@@ -5,9 +5,10 @@
 """
 
 import logging
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, TYPE_CHECKING, Union
 
-from ..modules.funya_watcher import FunyaWatcher
+if TYPE_CHECKING:
+    from ..modules.funya_watcher import FunyaWatcher
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
@@ -28,10 +29,10 @@ class FunyaStateService:
     def _initialize(self) -> None:
         """初期化"""
         # ふにゃ見守りモードのインスタンス
-        self._watcher: Optional[FunyaWatcher] = None
+        self._watcher: Optional["FunyaWatcher"] = None
         logger.info("✅ ふにゃ状態サービスを初期化しました")
 
-    def get_watcher(self) -> Optional[FunyaWatcher]:
+    def get_watcher(self) -> Optional["FunyaWatcher"]:
         """
         ふにゃ見守りモードのインスタンスを取得
 
@@ -40,7 +41,7 @@ class FunyaStateService:
         """
         return self._watcher
 
-    def set_watcher(self, watcher: FunyaWatcher) -> None:
+    def set_watcher(self, watcher: "FunyaWatcher") -> None:
         """
         ふにゃ見守りモードのインスタンスを設定
 

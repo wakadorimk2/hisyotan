@@ -8,6 +8,13 @@ import asyncio
 import logging
 import os
 
+# FunyaWatcher を無効化する環境フラグ
+DISABLE_FUNYA_WATCHER = os.getenv("DISABLE_FUNYA_WATCHER", "0").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+
 # ロガーの設定
 logger = logging.getLogger(__name__)
 
@@ -47,7 +54,6 @@ async def init_services() -> None:
     各種サービスの初期化
     """
     from ..config import get_settings
-    from ..modules.funya_watcher import FunyaWatcher
     from ..modules.voice.voicevox_starter import start_voicevox_in_thread
     from ..services.funya_state import get_funya_state_service
     from ..services.voice import get_voice_service
@@ -66,21 +72,27 @@ async def init_services() -> None:
         logger.info("音声サービスを初期化しました")
 
         # ふにゃ見守りモードの初期化と開始
-        try:
-            # ふにゃ見守りモードの初期化
-            funya_watcher = FunyaWatcher(
-                inactivity_threshold=30,  # 30秒の無操作でふにゃモード発動
-            )
+        if DISABLE_FUNYA_WATCHER:
+            logger.info("FunyaWatcher is disabled in this environment.")
+        else:
+            try:
+                # FunyaWatcher のインポートは必要な場合にのみ行う
+                from ..modules.funya_watcher import FunyaWatcher
 
-            # ふにゃ状態サービスにインスタンスを設定
-            funya_service = get_funya_state_service()
-            funya_service.set_watcher(funya_watcher)
+                # ふにゃ見守りモードの初期化
+                funya_watcher = FunyaWatcher(
+                    inactivity_threshold=30,  # 30秒の無操作でふにゃモード発動
+                )
 
-            # 見守りを開始
-            funya_watcher.start()
-            logger.info("ふにゃ見守りモードを初期化して開始しました")
-        except Exception as e:
-            logger.error(f"ふにゃ見守りモードの初期化中にエラーが発生: {e}")
+                # ふにゃ状態サービスにインスタンスを設定
+                funya_service = get_funya_state_service()
+                funya_service.set_watcher(funya_watcher)
+
+                # 見守りを開始
+                funya_watcher.start()
+                logger.info("ふにゃ見守りモードを初期化して開始しました")
+            except Exception as e:
+                logger.error(f"ふにゃ見守りモードの初期化中にエラーが発生: {e}")
 
         # WebSocketマネージャーの初期化は自動的に行われます
         logger.info("各種サービスの初期化が完了しました")
