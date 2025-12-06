@@ -28,7 +28,6 @@ RUN pip install --upgrade pip && \
 COPY backend ./backend
 COPY assets ./assets
 COPY config ./config
-COPY yolov8n.pt yolov8s.pt ./ || true
 
 EXPOSE 8080
 CMD ["sh", "-c", "uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8080}"]
