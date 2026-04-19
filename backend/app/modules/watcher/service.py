@@ -115,6 +115,8 @@ class WatcherService:
                 self._settings.WATCHER_DIFF_RESIZE_W,
                 self._settings.WATCHER_DIFF_RESIZE_H,
             ),
+            strong_diff_multiplier=self._settings.WATCHER_STRONG_DIFF_MULTIPLIER,
+            reenqueue_cooldown_sec=self._settings.WATCHER_REENQUEUE_COOLDOWN_SEC,
         )
         window = WindowWatcher(
             dispatch=self._dispatch,

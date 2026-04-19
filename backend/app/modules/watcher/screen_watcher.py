@@ -47,6 +47,8 @@ class ScreenWatcher:
         resize: tuple[int, int] = (240, 135),
         cpu_high_threshold: float = 70.0,
         cpu_check_interval: float = 10.0,
+        strong_diff_multiplier: float = 2.0,
+        reenqueue_cooldown_sec: float = 5.0,
     ) -> None:
         self._dispatch = dispatch
         self._get_phase = get_phase
@@ -59,11 +61,14 @@ class ScreenWatcher:
         self._resize = resize
         self._cpu_high_threshold = cpu_high_threshold
         self._cpu_check_interval = cpu_check_interval
+        self._strong_diff_multiplier = strong_diff_multiplier
+        self._reenqueue_cooldown_sec = reenqueue_cooldown_sec
 
         # state machine
         self._state: Literal["idle", "animating"] = "idle"
         self._recent_diffs: deque[float] = deque(maxlen=3)
         self._calm_streak: int = 0  # animating → idle 復帰判定用
+        self._last_enqueue_ts: float = 0.0
 
         # adaptive interval (CPU 高負荷時に伸縮)
         self._interval_multiplier: float = 1.0
@@ -107,12 +112,16 @@ class ScreenWatcher:
         """グレースケール 2 枚の絶対差の平均値"""
         return float(np.mean(cv2.absdiff(prev, cur)))
 
-    def _update_state(self, score: float) -> bool:
+    def _update_state(self, score: float, now: float) -> bool:
         """
         state machine 更新。enqueue すべきなら True を返す。
 
         idle → animating: latest > threshold AND latest >= recent_avg * 2.0
         animating → idle: recent_avg < threshold * 0.5 が 3 連続
+        animating 中の強制発火: latest >= threshold * strong_diff_multiplier
+                              かつ 前回 enqueue から reenqueue_cooldown_sec 経過
+                              (ゲーム画面など継続的に動く場面でメニュー開閉や
+                               大きな変化を取りこぼさないため)
         """
         prev_avg = (
             sum(self._recent_diffs) / len(self._recent_diffs)
@@ -127,6 +136,7 @@ class ScreenWatcher:
             if score > self._diff_threshold and jump:
                 self._state = "animating"
                 self._calm_streak = 0
+                self._last_enqueue_ts = now
                 return True
             return False
 
@@ -140,6 +150,16 @@ class ScreenWatcher:
                 logger.debug("ScreenWatcher state → idle")
         else:
             self._calm_streak = 0
+
+        # 強い急変 (しきい値の N 倍超) は短いクールダウン経て通す
+        cooldown_elapsed = (
+            now - self._last_enqueue_ts >= self._reenqueue_cooldown_sec
+        )
+        strong_change = score >= self._diff_threshold * self._strong_diff_multiplier
+        if cooldown_elapsed and strong_change:
+            self._last_enqueue_ts = now
+            return True
+
         return False
 
     async def _capture_and_reduce(
@@ -189,12 +209,19 @@ class ScreenWatcher:
                     prev_small = small
                     continue
 
-                should_enqueue = self._update_state(score)
+                now = time.time()
+                should_enqueue = self._update_state(score, now)
                 prev_small = small
 
                 if not should_enqueue:
+                    logger.debug(
+                        f"diff={score:.2f} state={self._state} skip"
+                    )
                     continue
 
+                logger.info(
+                    f"diff={score:.2f} state={self._state} → enqueue"
+                )
                 event = WatcherEvent(
                     kind=WatcherEventKind.SCREEN_DIFF,
                     score=score,

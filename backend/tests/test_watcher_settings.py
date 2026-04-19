@@ -14,6 +14,8 @@ def test_watcher_settings_defaults() -> None:
     assert s.WATCHER_QUEUE_MAX_SIZE == 64
     assert s.WATCHER_DIFF_RESIZE_W == 240
     assert s.WATCHER_DIFF_RESIZE_H == 135
+    assert s.WATCHER_STRONG_DIFF_MULTIPLIER == 2.0
+    assert s.WATCHER_REENQUEUE_COOLDOWN_SEC == 5.0
 
 
 def test_watcher_settings_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
