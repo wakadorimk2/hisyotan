@@ -83,7 +83,7 @@ function loadEnvVars() {
 
 // アプリ起動時に環境変数を読み込む
 const envVars = loadEnvVars();
-console.log(`🌸 バックエンドポート設定: ${process.env.PORT || '(デフォルト:8000)'}`);
+console.log(`🌸 バックエンドポート設定: ${process.env.PORT || '(デフォルト:8001)'}`);
 
 // バックエンド初期化状態フラグ
 let isBackendInitialized = false;
@@ -131,7 +131,7 @@ let backendPID = null;
 async function startBackendServer() {
   try {
     // ポート環境変数を取得
-    const backendPort = parseInt(process.env.PORT || '8000', 10);
+    const backendPort = parseInt(process.env.PORT || '8001', 10);
     console.log(`🔍 バックエンドポートをチェックします: ${backendPort}`);
 
     // ポートが既に使用されているか確認
@@ -274,7 +274,7 @@ async function checkPortInUse(port) {
 // バックエンド接続確認
 async function checkBackendConnection(port) {
   try {
-    const backendPort = port || parseInt(process.env.PORT || '8000', 10);
+    const backendPort = port || parseInt(process.env.PORT || '8001', 10);
     console.log(`バックエンド接続確認中... ポート: ${backendPort}`);
 
     // タイムアウト付きの接続確認
@@ -325,7 +325,7 @@ async function getBackendPID() {
     const timeoutId = setTimeout(() => controller.abort(), 3000);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/pid', {
+      const response = await fetch('http://127.0.0.1:8001/api/pid', {
         signal: controller.signal
       });
 
@@ -547,7 +547,7 @@ function createWindow() {
           "style-src 'self' 'unsafe-inline';" +
           "img-src 'self' data:;" +
           "font-src 'self' data:;" +
-          "connect-src 'self' http://127.0.0.1:8000 http://localhost:8000 ws://localhost:* ws://127.0.0.1:*;"
+          "connect-src 'self' http://127.0.0.1:8001 http://localhost:8001 ws://localhost:* ws://127.0.0.1:*;"
         ]
       }
     });

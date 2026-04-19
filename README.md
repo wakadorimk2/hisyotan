@@ -96,15 +96,14 @@ pnpm install
 ### 起動
 
 ```bash
-# バックエンド単体 (port 8000 が iphlpsvc で塞がれている場合は 8001 を指定)
+# バックエンド単体 (port 8001)
 pnpm run dev:backend
-# もしくは: .venv\Scripts\python.exe -m uvicorn backend.main:app --port 8001
 
 # Electron 起動
 pnpm run dev:electron
 ```
 
-注記: Windows で Hyper-V / WSL2 を有効にしていると、IP Helper (`iphlpsvc`) が 8000 / 8080 / 5173 などの定番ポートを LISTEN してバックエンドが bind 失敗することがある。代替ポートで起動するか、Hyper-V を切る運用で回避する。詳細は [`docs/reboot/03_open_questions.md`](docs/reboot/03_open_questions.md) §F-1 を参照。
+注記: backend は **port 8001**、Vite dev server は **port 5174** をデフォルトに採用している。Windows で Hyper-V / WSL2 を有効にしていると、IP Helper (`iphlpsvc`) が 8000 / 8080 / 5173 などの定番ポートを LISTEN してバックエンドや Vite が bind 失敗するため、意図的に 8001 / 5174 に恒久シフトした。別の値で起動したい場合は `PORT` / `BACKEND_PORT` / `FRONTEND_PORT` 環境変数で上書き可能。詳細は [`docs/reboot/03_open_questions.md`](docs/reboot/03_open_questions.md) §F-1 を参照。
 
 ---
 

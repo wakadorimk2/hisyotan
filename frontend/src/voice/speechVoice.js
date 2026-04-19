@@ -183,7 +183,7 @@ export async function speakText(text, emotion = 'normal', speakerId = 8, signal 
         }
 
         // バックエンドAPIのベースURLを設定
-        const apiBaseUrl = 'http://127.0.0.1:8000';
+        const apiBaseUrl = 'http://127.0.0.1:8001';
 
         logDebug(`VOICEVOX音声合成APIを呼び出します (話者ID: ${speakerId}, 感情: ${emotion})`);
 
@@ -321,7 +321,7 @@ export function stopSpeaking() {
  */
 export async function checkVoicevoxConnection() {
     try {
-        const apiBaseUrl = 'http://127.0.0.1:8000';
+        const apiBaseUrl = 'http://127.0.0.1:8001';
 
         // 接続確認用のエンドポイントを呼び出す
         const response = await fetch(`${apiBaseUrl}/api/voice/status`, {

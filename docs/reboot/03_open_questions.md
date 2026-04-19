@@ -251,6 +251,12 @@
 
 **推奨**: (a) が現実的。Step 2 で `PORT=8001` を `.env` で明示 + README 記載。
 
+**決定 (2026-04-19、わかどりちゃん確認)**: **(a) を採用、8001 / 5174 に恒久シフト済み**。
+- backend default port: 8001 (`backend/main.py` / `package.json#dev:backend` / `scripts/dev/*` / `config/config.json` / `frontend/src/**` 一括更新)
+- Vite dev server port: 5174 (`package.json#dev`, `dev:frontend`, VITE_DEV_SERVER_URL / `paw-preload.js` / `scripts/dev/dev-electron.js` 一括更新)
+- 環境変数 `PORT` / `BACKEND_PORT` / `FRONTEND_PORT` で上書き可能
+- CSP の `connect-src` も 8001 に更新済み
+
 ### F-2. easyocr 依存で torch / torchvision が副次的にインストールされる
 
 **現状**: Step 1 で `torch`, `torchvision`, `ultralytics`, `pyautogui` を requirements.txt から削除したが、`easyocr` が torch を必須依存として持つため `pip install -r requirements.txt` 後に `torch-2.11.0` と `torchvision-0.26.0` が入ってしまう。仕様書の DoD「`pip list | grep torch` が空」は満たせない。

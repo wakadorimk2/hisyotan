@@ -67,7 +67,7 @@ export async function requestVoiceSynthesis(text, emotion = 'normal', speakerId 
     }
     
     // バックエンドAPIのベースURLを設定
-    const apiBaseUrl = 'http://127.0.0.1:8000';
+    const apiBaseUrl = 'http://127.0.0.1:8001';
     
     logDebug(`VOICEVOX音声合成APIを呼び出します (話者ID: ${speakerId}, 感情: ${emotion})`);
     
@@ -258,7 +258,7 @@ export function stopCurrentPlayback() {
 export async function checkVoicevoxConnection() {
   try {
     // バックエンドAPIのURLを直接指定
-    const apiBaseUrl = 'http://127.0.0.1:8000';
+    const apiBaseUrl = 'http://127.0.0.1:8001';
     const response = await fetch(`${apiBaseUrl}/api/voice/check-connection`);
     
     if (response.ok) {
@@ -298,7 +298,7 @@ export function clearAudioCache() {
 export async function reactToZombie(count, distance = 0, force = false) {
   try {
     // バックエンドAPIのベースURLを設定
-    const apiBaseUrl = 'http://127.0.0.1:8000';
+    const apiBaseUrl = 'http://127.0.0.1:8001';
     
     logDebug(`ゾンビ検出リアクション: count=${count}, distance=${distance}`);
     

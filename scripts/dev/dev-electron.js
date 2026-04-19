@@ -13,8 +13,8 @@ const startElectron = require('./start-electron');
 
 // 使用するポート設定
 const PORTS = {
-  backend: process.env.BACKEND_PORT || 8000,
-  frontend: process.env.FRONTEND_PORT || 5173
+  backend: process.env.BACKEND_PORT || 8001,
+  frontend: process.env.FRONTEND_PORT || 5174
 };
 
 // 実行中のプロセス一覧

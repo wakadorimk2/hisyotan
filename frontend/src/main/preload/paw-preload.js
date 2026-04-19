@@ -47,7 +47,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
       // 相対パスをHTTP URLに変換（preload.jsのコンテキストではwindow.locationは使えない）
       // 開発モードのベースURL
-      const baseUrl = 'http://localhost:5173';
+      const baseUrl = 'http://localhost:5174';
       const assetUrl = new URL(normalizedPath, baseUrl).toString();
       return Promise.resolve(assetUrl);
     } catch (error) {

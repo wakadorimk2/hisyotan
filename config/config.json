@@ -12,7 +12,7 @@
     "alwaysOnTop": true
   },
   "api": {
-    "baseUrl": "http://localhost:8000",
+    "baseUrl": "http://localhost:8001",
     "timeout": 5000
   },
   "paths": {

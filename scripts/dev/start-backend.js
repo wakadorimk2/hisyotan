@@ -47,7 +47,7 @@ const startBackend = async (config) => {
 
 // 単体実行の場合のエントリーポイント
 if (require.main === module) {
-  const port = process.env.BACKEND_PORT || 8000;
+  const port = process.env.BACKEND_PORT || 8001;
 
   startBackend({ port })
     .then(({ process, ready }) => {

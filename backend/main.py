@@ -234,16 +234,16 @@ async def main() -> None:
     parser = argparse.ArgumentParser(description="秘書たんバックエンドサーバー")
     parser.add_argument("--host", type=str, default="127.0.0.1", help="ホストアドレス")
 
-    # .env から PORT 環境変数を取得（デフォルト: 8000）
+    # .env から PORT 環境変数を取得（デフォルト: 8001。Windows Hyper-V 環境で 8000 が iphlpsvc に塞がれるため）
     try:
         port_env = os.getenv("PORT")
         default_port = (
-            int(port_env) if port_env and port_env.strip().isdigit() else 8000
+            int(port_env) if port_env and port_env.strip().isdigit() else 8001
         )
         print(f"使用するポート: {default_port} (環境変数: '{port_env}')")
     except (ValueError, TypeError) as e:
         print(f"ポート番号の解析エラー: {e}")
-        default_port = 8000
+        default_port = 8001
 
     parser.add_argument(
         "--port",
