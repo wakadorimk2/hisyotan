@@ -253,9 +253,10 @@
 
 **決定 (2026-04-19、わかどりちゃん確認)**: **(a) を採用、8001 / 5174 に恒久シフト済み**。
 - backend default port: 8001 (`backend/main.py` / `package.json#dev:backend` / `scripts/dev/*` / `config/config.json` / `frontend/src/**` 一括更新)
-- Vite dev server port: 5174 (`package.json#dev`, `dev:frontend`, VITE_DEV_SERVER_URL / `paw-preload.js` / `scripts/dev/dev-electron.js` 一括更新)
+- Vite dev server port: 5174 (`package.json#dev`, `dev:frontend`, VITE_DEV_SERVER_URL / `paw-preload.js` / `scripts/dev/dev-electron.js` / `vite.config.js` 一括更新)
 - 環境変数 `PORT` / `BACKEND_PORT` / `FRONTEND_PORT` で上書き可能
 - CSP の `connect-src` も 8001 に更新済み
+- **動作確認済み (2026-04-19)**: `pnpm run dev:electron` で 8001 / 5174 起動成功、backend/frontend/Electron すべて立ち上がる
 
 ### F-2. easyocr 依存で torch / torchvision が副次的にインストールされる
 
@@ -296,6 +297,8 @@
 
 **推奨**: pnpm を入れる（lock ファイルとの整合性のため）。READMEにも pnpm 前提の記載あり。
 
+**解決 (2026-04-19)**: わかどりちゃんが pnpm を導入、`pnpm install` / `pnpm run dev:electron` が正常動作を確認。
+
 ### F-5. 立ち絵アセットの実体未確認
 
 **現状**: README / コード上で `assets/images/` や `frontend/public/...` にある立ち絵 (`secretary_*.png` 等) を参照するが、ワークツリーで実体を確認できていない。Step 5 の起動疎通で Electron を立ち上げなかったため、画面に立ち絵が描画されるかは未検証。
@@ -303,3 +306,10 @@
 **判断したい**: C-4 と合わせ、アセットを git LFS / 別 repo / ローカル配布のどれで管理するか。
 
 **推奨**: Step 2 着手前に実ファイルの所在を確認し、運用方針を決定。
+
+**解決 (2026-04-19、わかどりちゃん確認)**:
+- 調査の結果、立ち絵は `6cf4907 レガシーコードを削除` (2025-04-04) で git から一斉削除されていた
+- `d0c5a36` (LFS 導入時点で実体 blob として残っていた) から `git checkout d0c5a36 -- assets/images/` で 9 ファイル (preview + secretary_* 8種) を復元
+- `frontend/public/assets/images/` にコピーし Vite dev server が `/assets/images/*.png` を serve できる状態に配置
+- `.gitattributes` で該当 PNG を LFS 追跡から除外 (`-filter -diff -merge`)、通常 git blob として管理 (合計 13MB、最大 1.7MB / ファイル)
+- Electron で立ち絵が表示され VOICEVOX 音声合成も成功することを 2026-04-19 に確認

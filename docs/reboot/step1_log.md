@@ -145,3 +145,43 @@ DoD 達成状況:
 3. **easyocr 去就**: OCR モジュールの用途確認、削除なら torch も一緒に消える (F-2)
 4. **立ち絵アセットの所在**: git LFS / 別 repo / ローカル配布の方針確定 (F-5 / C-4)
 5. **watcher モジュール新規実装**: `docs/reboot/legacy_snippets.md` の WS broadcast + mss キャプチャループを参考に、gaming-agnostic な差分検知 + Vision LLM 問い合わせに作り直す
+
+---
+
+## 19:00〜 追加作業: Electron 起動で発覚した問題の後処理
+
+Task 5 完了後、わかどりちゃんが `pnpm run dev:electron` で実機動作確認を実施、3 つの問題が発覚し対応:
+
+### F-1 恒久対応 (ポート 8001 / 5174)
+- `package.json` / `backend/main.py` / `config/config.json` / `scripts/dev/*` / `frontend/src/**` (apiClient, speechVoice, voicevoxClient, main/index.mjs, paw-preload, CSP) / `vite.config.js` の 8000 → 8001, 5173 → 5174 を一斉更新
+- コミット: `f1532a6 chore: backend を port 8001 / Vite を port 5174 に恒久シフト` + `17e23fc fix: vite.config.js の server.port / hmr.port / clientPort を 5174 に追従`
+
+### python 3.14 が uvicorn を見つけられない問題
+- `scripts/dev/start-backend.js` の `spawn('python', ...)` がシステム PATH の python (3.14、uvicorn 未インストール) を拾っていた
+- `.venv/Scripts/python.exe` を `path.resolve` で算出して明示指定
+- `package.json#dev:backend` も同様に置換
+- コミット: `11429d6 fix: バックエンド起動で .venv の Python を明示的に使う`
+
+### 立ち絵表示されない問題 (F-5 解決)
+- `assets/` 自体が存在せず立ち絵が表示されない
+- git 履歴調査で `6cf4907 レガシーコードを削除` (2025-04-04) で一斉削除されていたと判明
+- `git checkout d0c5a36 -- assets/images/` で 9 ファイル復元、`frontend/public/assets/images/` にも配置
+- `.gitattributes` に `assets/images/*.png -filter -diff -merge` と frontend 側も追加して LFS 追跡を外し通常 blob として管理 (わかどりちゃん判断)
+- コミット: `feat: 立ち絵アセット 9 ファイルを復元し通常 git blob として追加`
+
+### /api/voice/status → /api/voice/check-connection
+- `frontend/src/voice/speechVoice.js:327` が削除済みエンドポイント `/api/voice/status` を叩いて 404
+- backend に実在する `/api/voice/check-connection` に修正
+- コミット: `67e7bd5 fix: checkVoicevoxConnection を削除された /api/voice/status から /api/voice/check-connection に更新`
+
+### VOICEVOX 起動
+- わかどりちゃんが VOICEVOX をインストール (`C:\Users\wakad\AppData\Local\Programs\VOICEVOX\vv-engine\run.exe`)
+- Task 3 で追加した default_paths の `%LOCALAPPDATA%\Programs\VOICEVOX\vv-engine\run.exe` と完全一致、コード変更不要で起動成功
+- `POST /api/voice/synthesize` が 200 を複数回返していることを `pnpm run dev:electron` のログで確認
+
+### 最終動作確認 (2026-04-19)
+- Electron ウィンドウに立ち絵 (secretary_normal.png) 表示
+- 吹き出し発話「おつかれさま〜…ぎゅってしてあげたい気分なの」等の再生成功
+- VOICEVOX 経由の音声合成 (`POST /api/voice/synthesize` → 200) 複数回成功
+- `/api/funya/status` / `/api/voice/check-connection` ともに 200
+- Step 1 のゴール「既存の立ち絵 / 吹き出し / 発話 / VOICEVOX が従来通り動く」を完全達成
