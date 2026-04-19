@@ -2,3 +2,7 @@
 *.pt filter=lfs diff=lfs merge=lfs -text
 *.png filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
+
+# 立ち絵アセットは LFS 追跡を外して通常 git blob として扱う (最大 1.7MB で合計 13MB 程度、LFS 運用コストを避けるため)
+assets/images/*.png -filter -diff -merge
+frontend/public/assets/images/*.png -filter -diff -merge

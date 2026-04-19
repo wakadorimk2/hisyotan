@@ -8,7 +8,7 @@ import axios from 'axios';
 // APIクライアントの設定
 // 環境変数からAPIのベースURLを取得（デフォルトは127.0.0.1）
 const API_HOST = window.electron?.apiHost || '127.0.0.1';
-const BASE_URL = `http://${API_HOST}:8000`;
+const BASE_URL = `http://${API_HOST}:8001`;
 
 console.log(`🔌 API接続先: ${BASE_URL}`);
 

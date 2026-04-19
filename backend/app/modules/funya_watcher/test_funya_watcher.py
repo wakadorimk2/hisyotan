@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
         # 見守りを開始
         watcher.start()
-        print("🔍 APIからステータス確認: http://localhost:8000/api/funya/status")
+        print("🔍 APIからステータス確認: http://localhost:8001/api/funya/status")
 
         # メインスレッドはキープ
         while True:
