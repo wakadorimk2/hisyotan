@@ -1,259 +1,153 @@
-# ふにゃ秘書たん README (リファイン案)
+# 秘書たん (chill-assistant)
 
-## 🐾 はじめに：ふにゃっと、そばにいる秘書たん
+## 🐾 はじめに
 
-おつかれさま。作業中、ふと心が疲れることってあるよね。  
-そんなとき、あなたの画面のすみに「ふにゃ秘書たん」がふにゃっと現れます。
+画面のすみに、ふにゃっと秘書たん。  
+作業中にあなたの画面を見守って、ときどき声をかけてくれるローカル AI 秘書アシスタント。
 
-この子は、リアルタイムにあなたを見守り、  
-ちょっとした音声や表情で「そばにいるよ」って伝えてくれるAI秘書。  
-ゲームの中でも、作業中でも、ふにゃっと支えてくれる存在です✨
+2026年4月、ゲーム専用（7 Days to Die + YOLO ゾンビ検出）から **汎用相棒 × ローカル Vision LLM** へ路線転換中 🐈️✨
 
-<img width="339" height="470" alt="スクリーンショット 2025-04-09 030322" src="https://github.com/user-attachments/assets/1bac4187-ba7f-402d-998b-aafeb098f538" />
+---
 
-![Adobe Express - IMG_6761](https://github.com/user-attachments/assets/c119f6f1-5ad8-48b4-a813-0c9fe429c6b8)
+## 🔄 リブートロードマップ (2026年4月〜)
+
+このプロジェクトは現在、旧 YOLO/zombie 検出パイプラインを破棄し、ローカル Vision LLM (Qwen3-VL-8B + LM Studio) ベースの watcher / companion モジュールに作り直している最中。
+
+| Step | 内容 | 状態 |
+|---|---|---|
+| Step 0 | LM Studio + Qwen3-VL-8B の生存確認 PoC | ✅ 完了 |
+| Step 1 | YOLO/zombie 系破棄・依存整理・疎通確認 | ✅ 完了 (2026-04-19) |
+| Step 2 | watcher モジュール新規実装 (画面キャプチャ + 差分検知) | 🔜 次 |
+| Step 3 | companion モジュール新規実装 (LM Studio 連携・発話生成) | 📝 予定 |
+| Step 4 | Step 2+3 の統合・発話体験チューニング | 📝 予定 |
+| Step 5 | 運用機能 (時間帯ミュート / 設定 UI / 統計) 追加 | 📝 予定 |
+
+詳細は [`docs/reboot/`](docs/reboot/) 配下を参照:
+- [`00_survey_report.md`](docs/reboot/00_survey_report.md) — 旧コードの全体調査
+- [`01_module_inventory.md`](docs/reboot/01_module_inventory.md) — モジュール棚卸し
+- [`02_migration_plan_draft.md`](docs/reboot/02_migration_plan_draft.md) — 移行プラン素案
+- [`03_open_questions.md`](docs/reboot/03_open_questions.md) — 未解決の判断ポイント
+- [`legacy_snippets.md`](docs/reboot/legacy_snippets.md) — Step 2 で移植するレガシースニペット
+- [`step1_log.md`](docs/reboot/step1_log.md) — Step 1 作業ログ
 
 ---
 
 ## 🧭 構成ガイド
 
-プロジェクトは「感情認識と反応」を中心としたモジュール構成で設計されています。フロントエンドとバックエンドの責務が明確に分離され、拡張性と可読性を重視しています。
+### 📦 バックエンド (FastAPI + pydantic-settings)
 
-### 📦 バックエンド構成 (FastAPI + モジュール分割)
+- `app/config/` — 設定管理 (`pydantic_settings.BaseSettings`)
+- `app/core/` — FastAPI アプリ生成、`asynccontextmanager lifespan` によるライフサイクル管理、ロガー
+- `app/modules/voice/` — VOICEVOX 連携、音声合成・再生・キャッシュ、プリセット感情
+- `app/modules/emotion/` — 感情推定 (今後拡張予定)
+- `app/modules/ocr/` — 画面内テキストの OCR (pytesseract ベース)
+- `app/modules/funya_watcher/` — キー入力アイドル検知 (pynput、ふにゃモード発動)
+- `app/routers/` — API エンドポイント定義 (voice / health / funya / ocr / websocket)
+- `app/services/` — 音声/状態管理サービス
+- `app/ws/` — WebSocket 接続管理と通知ブロードキャスト
 
-バックエンドは機能ごとに明確に分離されたモジュール構造を採用しています：
+### 🖥️ フロントエンド (Vite + Electron)
 
-- **`app/modules/voice/`**：音声合成・再生・キャッシュ管理・定型リアクション
-- **`app/modules/emotion/`**：感情推定（今後はUIや演出にも拡張予定）
-- **`app/modules/zombie/`**：ゾンビ検出・分類・YOLOv8モデルの推論管理
-- **`app/routers/`**：APIエンドポイント定義（RESTful API）
-- **`app/services/`**：補助的なサービスロジック（Voice処理など）
-- **`app/ws/`**：WebSocket通信の管理（リアルタイムUI連携）
-
-この構成により、各モジュールは独自の責務に集中し、相互依存性を最小限に抑えています。新機能の追加も、対応するモジュールを拡張するだけで容易に行えます。✨
-
-### 🖥️ フロントエンド構成 (Vite + Electron)
-
-フロントエンドも機能別に分割され、感情に応じたUI変化を実現する没入型アシスタント設計です：
-
-- **`src/emotion/`**：感情推定・表情制御・VOICEVOXクライアント
-  - 秘書たんの「気持ち」を管理し、表情や声のトーンに反映させます
-  - バックエンドからの感情推定結果をUIや音声に変換する役割を担います
-
-- **`src/ui/`**：UIコンポーネント・アニメーション・吹き出し表示など
-  - 秘書たんの見た目や動きを制御するコンポーネント群
-  - 感情状態に基づいた表情変化やアニメーションを実現
-
-- **`src/renderer/`**：Electron側のUI制御・表示レンダリング
-  - Electronウィンドウと表示要素の橋渡し役
-  - 複数ウィンドウの管理や画面配置の制御を担当
-
-- **`src/core/`**：API通信・ロギングなど基礎ユーティリティ
-  - アプリ全体で使用される共通機能・ユーティリティを提供
-  - バックエンドとの通信やデータの受け渡しを管理
-
-- **`src/voice/`**：音声再生関連のユーティリティ
-  - 音声データの再生や管理を担当（一部統合予定）
-
-この構成により、秘書たんは単なる「表示」ではなく、感情を持ち、状況に応じた反応を示す没入型アシスタントとして機能します。ユーザーの作業状況やゲーム内イベントに合わせて、秘書たんの表情・声・動きが自然に変化する仕組みです。🌸✨
-
----
-
-## 📖 プロジェクト概要
-
-- **アプリ構成**：Electron (フロントエンドはVite) + FastAPI バックエンドのハイブリッド
-- **AI連携**：VOICEVOX で自然な音声合成＆表情豊かなリアクション
-- **ゲーム連携**：7 Days to Die のゾンビ検出によるイベント対応
-- **世界観**：いつでも画面のそばで見守る、やさしい癒やし系秘書
-
----
-
-## 🗂 ディレクトリ構成まとめ
-
-```
-hisyotan-desktop/
-├── backend/                   # FastAPIベースのバックエンド
-│   ├── app/
-│   │   ├── core/             # 初期化処理など
-│   │   ├── voice/            # VOICEVOX連携
-│   │   ├── zombie/           # YOLOv8を使ったゾンビ検出
-│   │   ├── routers/          # APIルーティング
-│   │   └── ws/               # WebSocketハンドラ
-│   ├── ml/                    # 機械学習（モデル訓練・推論）
-│   ├── models/                # 学習済みモデルの保存場所
-│   ├── data/                  # 推論結果やキャッシュ
-│   └── main.py                # バックエンドのメインエントリ
-├── frontend/                  # フロントエンド (Electron + Vite)
-│   ├── src/
-│   │   ├── core/             # 共通ユーティリティ、ロガーなど
-│   │   ├── emotion/          # 感情状態の管理や表情ロジック
-│   │   ├── main/             # Electronの起動・ウィンドウ制御
-│   │   ├── renderer/         # レンダリング処理
-│   │   ├── ui/               # 吹き出しUIやアニメーション
-│   │   └── voice/            # 音声合成・再生のインターフェース
-│   ├── config/               # フロントエンドの各種設定
-│   └── index.html            # エントリーポイントHTML
-├── assets/                    # 画像・音声などのリソース
-│   ├── images/               # キャラクター表情差分など
-│   ├── sounds/
-│   │   ├── presets/          # 効果音や固定音声
-│   │   └── generated/        # VOICEVOXで生成された音声
-│   └── models/               # ゲーム検出用のYOLOモデル
-├── scripts/                   # PowerShell起動スクリプトなど
-│   ├── start.ps1             # 全体起動をまとめた便利スクリプト
-│   └── diagnose.ps1          # 環境診断用
-├── tools/                     # 機能テスト・メンテナンス用
-├── main.js                    # Electronエントリーポイント (移動検討中)
-├── package.json               # 依存関係・スクリプト定義
-├── vite.config.js             # Viteの設定
-├── config.json                # アプリ全体設定
-└── README.md                  # このファイル
-```
+- `src/core/` — API / ロガーなど共通ユーティリティ
+- `src/emotion/` — 感情推定、SpeechManager、VOICEVOX クライアント、音声リアクション
+- `src/main/` — Electron 起動・ウィンドウ管理
+- `src/renderer/` — レンダリング
+- `src/ui/` — 吹き出し UI、立ち絵、アニメーション
+- `src/features/` — 肉球ボタン等の UI インタラクション
+- `src/shared/` — 共通ハンドラ (マウスイベント等)
 
 ---
 
 ## ✨ 主な特徴
 
-1. **ふにゃっとした癒やし**：
-   - 画面の片隅に秘書たんがちょこんといて、声かけや表情で癒やしてくれます
-2. **音声合成 (VOICEVOX)**：
-   - やさしい声、びっくり声など感情を乗せて喋らせることが可能
-3. **ゲーム連携**：
-   - 7 Days to Die でのゾンビ数に応じてリアクション、警告など
-4. **カスタマイズ可能**：
-   - 画像差し替えや音声設定を変えて、自分だけの秘書たんを作れます
+- **完全ローカル**: LLM 本家 API 呼び出しなし。Qwen3-VL-8B を LM Studio 経由で叩く
+- **秘書たん口調**: 40 字以内の日本語、やさしく寄り添う発話
+- **VOICEVOX 音声合成**: 感情プリセット別のピッチ/イントネーション制御
+- **透過ウィンドウ**: Electron の frameless + transparent で画面端に常駐
+- **ふにゃモード**: キー入力なし 30 秒でふにゃっと寝る
 
 ---
 
-## 🔧 インストール＆起動
+## 🔧 インストール & 起動
 
-### 前提条件
-- Node.js (v14以上)
-- Python 3.9 以上 (FastAPI, YOLO関連)
-- VOICEVOX (ローカルエンジン推奨)
+### 前提
+- Node.js (v18+ 推奨) と pnpm
+- Python 3.12 系
+- VOICEVOX (ローカルエンジン)
+- LM Studio (Step 3 以降で使用)
 
 ### セットアップ
 
 ```bash
-# リポジトリをクローン
-git clone https://github.com/youraccount/hisyotan-desktop.git
-cd hisyotan-desktop
+# クローン
+git clone https://github.com/youraccount/chill-assistant.git
+cd chill-assistant
 
-# フロントエンド依存関係
-pnpm install
-
-# バックエンド依存関係
+# Python 仮想環境 (3.12)
+py -3.12 -m venv .venv
+.venv\Scripts\activate
+pip install --upgrade pip
 pip install -r requirements.txt
 
-# もし機械学習 (ゾンビ検出) を使うなら
-pip install -r backend/ml/requirements.txt
+# フロントエンド
+pnpm install
 ```
 
-### 開発モード
+### 起動
 
 ```bash
-# バックエンド & フロントエンド一括起動
-pnpm run dev:all
+# バックエンド単体 (port 8000 が iphlpsvc で塞がれている場合は 8001 を指定)
+pnpm run dev:backend
+# もしくは: .venv\Scripts\python.exe -m uvicorn backend.main:app --port 8001
 
-# Electron単体起動
+# Electron 起動
 pnpm run dev:electron
 ```
+
+注記: Windows で Hyper-V / WSL2 を有効にしていると、IP Helper (`iphlpsvc`) が 8000 / 8080 / 5173 などの定番ポートを LISTEN してバックエンドが bind 失敗することがある。代替ポートで起動するか、Hyper-V を切る運用で回避する。詳細は [`docs/reboot/03_open_questions.md`](docs/reboot/03_open_questions.md) §F-1 を参照。
 
 ---
 
 ## 💻 基本の使い方
 
-1. アプリ起動後、ふにゃ秘書たんのウィンドウが表示されます  
-2. 右上の設定アイコンから、透明度やサイズ、音声パラメータを調整できます  
-3. バックエンドが起動中であれば、ゾンビ検出や音声合成が動作  
-4. スリープ状態では秘書たんがすやすや…何かイベントがあればふにゃっと起きます  
-
----
-
-## 🧠 ゾンビ検出 (ML) 概要
-
-- `backend/ml/` に YOLOv8 ベースのモデルと学習スクリプト  
-- `backend/app/zombie/` で推論処理し、結果をWebSocketでフロントに送信  
-- フロントエンドの `emotion/` と連携し、驚いた表情や警戒モードへ自動切り替え  
+1. 起動するとふにゃ秘書たんが画面端に現れる
+2. 肉球ボタン左クリック → ランダム発話
+3. 肉球ボタン右クリック → 設定パネル
+4. 立ち絵はドラッグでウィンドウ移動
 
 ---
 
 ## 🗣 VOICEVOX 連携
 
-- `backend/app/voice/` が VOICEVOX エンジンに対してAPIを投げる  
-- 生成した音声データをWebSocket経由またはREST経由でフロントエンドに送信  
-- フロントで音声を再生し、キャラクターの吹き出しUIと同期  
+- `backend/app/modules/voice/` が VOICEVOX に音声合成リクエストを送る
+- 感情プリセット (通常 / にこにこ / 警戒・心配 / びっくり / やさしい / 眠そう / 不安・怯え / 疑問・思案) でピッチ / イントネーション / 速度を切替
+- `voicevox_starter.py` が起動時に `%LOCALAPPDATA%\Programs\VOICEVOX\vv-engine\run.exe` 等のデフォルトパスから自動起動
 
 ---
 
-## 📋 今後の展望
+## 🛠 開発者向け
 
-- **Electronエントリの再配置**：`/frontend/src/main/` に移すことで構成を一元化  
-- **設定ファイル統合**：`/frontend/config/` とルートの `config.json` の重複解消  
-- **ショート動画やスクショ**：使い方や動きを実演するコンテンツ充実  
-- **さらなるAI化**：LLMと連携し、秘書たんの応答バリエーションを増やす  
+### 設定管理 (pydantic-settings)
 
----
+`backend/app/config/settings.py` の `Settings` クラスが `BaseSettings` ベース。`.env` の環境変数を自動読み込み。`get_settings()` は `@lru_cache` でシングルトン化。
 
-## 🤝 貢献ガイド
+### ライフサイクル
 
-1. Issue や Pull Request は大歓迎です  
-2. バグ修正・新機能提案など気軽にどうぞ  
-3. 世界観を壊さない、やさしい雰囲気を守るアプローチを心がけてください🌸  
+`backend/app/core/app.py` で `asynccontextmanager` lifespan を FastAPI に渡す。`startup_handler.on_startup` で VOICEVOX 起動・FunyaWatcher 初期化、`shutdown_handler.on_shutdown` でクリーンアップ。
+
+### WebSocket
+
+`backend/app/ws/manager.py` の `ConnectionManager.broadcast()` で全クライアント通知、`send_notification()` で型付きトーストを送信。フロントエンドは `/ws` に接続、`ping` / `status` コマンドを受け付ける。
 
 ---
 
 ## 📝 ライセンス
 
-- このプロジェクトは MIT License で配布しています  
-- 詳細は `LICENSE` ファイルをご覧ください  
+MIT License (詳細は `LICENSE` 参照)
 
 ---
 
-あなただけの"ふにゃっと秘書体験"を作りながら、  
-少しでも毎日の疲れを和らげられたら嬉しいなっ🐈️✨
+## 🤝 貢献
 
-## 🐛 バグ修正の概要（〜2023.4.4）
-
-以下の不具合・要望に対する修正を行いました：
-
-1. **DOM要素不足エラーの解決**
-   - `speechBubble` と `errorBubble` 要素が見つからなかった問題を修正
-   - UI生成時に適切な要素IDが設定されているか確認
-
-2. **肉球ボタン（pawButton）の機能実装**
-   - 左クリックでランダムセリフを再生するイベントハンドラを修正
-   - 右クリックで設定UIを表示するコンテキストメニュー機能を実装
-   - `webkit-app-region` を `no-drag` に設定して、肉球ボタンのクリックイベントが正常に動作するよう修正
-
-3. **×ボタンでの完全終了を改善**
-   - PowerShellスクリプト `stop_hisyotan.ps1` を修正して、プロセス終了処理を改善
-   - uvicornの `force_exit` 問題を解決するため、SIGINT（Ctrl+C）を優先的に送るよう修正
-   - バックエンドプロセスを適切に終了する処理を追加
-
-4. **音声合成エラーの解決**
-   - `VoiceSynthesisRequest` モデルに `emotion` フィールドを追加
-   - `emotion` パラメータを適切に処理できるよう修正
-
-5. **立ち絵の縦横比の修正**
-   - CSS `object-fit: contain` を追加して縦横比を維持する設定を追加
-   - `width: auto` を設定して、画像の自然な縦横比を保持
-
-6. **吹き出し位置の調整**
-   - キャラクターの頭上に吹き出しが適切に表示されるようCSS位置を修正
-   - 絶対位置指定に変更し、適切なtop/right値を設定
-   - 吹き出しの矢印位置も右側に調整
-
-### 📝 修正ファイル
-- `backend/app/models/voice.py` - 音声合成リクエストモデルに `emotion` フィールド追加
-- `frontend/src/renderer/assistantUI.js` - 肉球ボタンのイベントハンドラ修正
-- `frontend/src/ui/styles/components/_assistant.css` - 立ち絵の縦横比修正
-- `frontend/src/ui/styles/components/_speech-bubble.css` - 吹き出し位置調整
-- `tools/stop_hisyotan.ps1` - プロセス終了処理の改善
-
-### 🔧 動作確認ポイント
-- 肉球ボタンをクリックした際にランダムセリフが表示されるか
-- 肉球ボタンを右クリックした際に設定メニューが表示されるか
-- ×ボタンをクリックした際に、アプリやバックエンドが完全に終了するか
-- 立ち絵の縦横比が適切に維持されているか
-- 吹き出しがキャラクターの頭上に適切に表示されるか
+- Issue / Pull Request 歓迎
+- 世界観（やさしく寄り添う秘書たん）を壊さないやさしい雰囲気でお願いします 🐈️✨
