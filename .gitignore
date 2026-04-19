@@ -70,3 +70,11 @@ backend/data/datasets/yolov8/labels/val/*.txt
 
 # Claudeのローカル設定ファイル
 *.local.json
+
+# PoC: Vision LLM ランタイム検証 (Step 0)
+poc/runtime_check/models/*.gguf
+poc/runtime_check/models/*.bin
+poc/runtime_check/results/*
+!poc/runtime_check/results/.gitkeep
+# リネーム済サンプル（原本の日付ファイル名のみ track）
+poc/runtime_check/samples/0?_*.jpg

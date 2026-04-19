@@ -1,0 +1,18 @@
+# PoC: LM Studio 経由 Vision LLM ランタイム生存確認
+# 本体の requirements.txt とは独立。PoC 専用 venv (.venv/) に入れる。
+#
+# ## 前提
+# - LM Studio が手動でインストール・起動済みで、OpenAI 互換 API が
+#   http://localhost:1234/v1 で listen している
+# - Qwen2.5-VL 7B (Q4_K_M + mmproj) が LM Studio 上でロード済み
+# - Python 3.10〜3.12 (既存 .venv は 3.12.10)
+#
+# ## インストール
+#   python -m pip install -r requirements_poc.txt
+#
+# llama-cpp-python / torch / transformers は一切不要。
+# LM Studio が推論を受け持ち、Python 側は HTTP クライアントだけでよい。
+
+openai>=1.40.0
+requests>=2.31.0
+pillow>=10.0.0
