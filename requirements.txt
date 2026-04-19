@@ -1,20 +1,39 @@
-fastapi==0.104.1
-uvicorn==0.23.2
-pydantic==2.4.2
-opencv-python==4.8.1.78
-numpy==1.24.3
-mss==9.0.1
-pyautogui==0.9.54
-pytesseract==0.3.10
-easyocr==1.7.1
-ultralytics==8.0.207
-torch==2.1.0
-requests==2.31.0
-python-multipart==0.0.6
-pillow==10.1.0
-pyaudio==0.2.13
-pydub==0.25.1
-websockets==11.0.3
-psutil==5.9.6
-pynput==1.7.6
-python-dotenv==1.0.0 
+# Web framework
+fastapi>=0.115,<0.116
+uvicorn>=0.30,<0.32
+
+# 設定管理 (pydantic-settings 使用)
+pydantic>=2.9,<3.0
+pydantic-settings>=2.5,<3.0
+
+# LM Studio 互換 API クライアント (Step 3 で companion モジュールが使用予定)
+openai>=1.50,<2.0
+
+# 画像処理 / 画面キャプチャ
+opencv-python>=4.10,<5.0
+numpy>=1.26,<2.0
+mss>=9.0,<10.0
+pillow>=10.4,<11.0
+
+# OCR (backend/app/modules/ocr/ocr_text.py で使用中)
+pytesseract>=0.3.13
+easyocr>=1.7.1,<2.0
+
+# HTTP / Upload
+requests>=2.32,<3.0
+python-multipart>=0.0.10
+
+# 音声
+pyaudio>=0.2.14,<0.3
+pydub>=0.25.1,<0.26
+
+# WebSocket
+websockets>=13,<14
+
+# システム / 入力
+psutil>=6.0,<7.0
+pynput>=1.7.7,<2.0
+python-dotenv>=1.0.1,<2.0
+
+# 非同期 HTTP (voicevox_starter の is_voicevox_ready で使用)
+aiohttp>=3.10,<4.0
